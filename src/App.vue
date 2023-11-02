@@ -1,61 +1,49 @@
 <template>
   <div>
-    <div v-if="!isLoading">
+    <div v-show="!isLoading">
       <button id="my_button">Run JS in Python</button>
-      <button id="my_button2" @click="printInterpreter">
-        Run Python in JS
-      </button>
+      <button @click="handleMultiply">Run Python in JS</button>
     </div>
     <div id="my-id">
-      {{ isLoading ? "Loading..." : "" }}
+      {{ isLoading ? 'Loading...' : '' }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  hooks,
-  PyWorker,
-} from "https://pyscript.net/snapshots/2023.09.1.RC2/core.js";
+console.log('Vue App setup...')
 
-import { ref } from "vue";
+import { ref } from 'vue'
+import { _Window } from '@/types'
 
-const isLoading = ref(true);
-const mainInterpreter: any = ref(null);
-const workerInterpreter: any = ref(null);
+const isLoading = ref(true)
+const mainInterpreter: any = ref(null)
+const _window = window as _Window
 
-console.log("Vue App setup...");
-console.log(hooks);
+const init = async () => {
+  setTimeout(() => {
+    mainInterpreter.value = _window.pyscript.interpreter
+    isLoading.value = false
 
-const worker = PyWorker("/src/worker.py", { config: "/src/pyconfig.json" });
+    // This is a way in which we can access any PyScript global
+    console.log(_window.pyGlobals.get('some_global'))
+  }, 0)
+}
 
-worker.sync.alert_message = (message: string) => {
-  alert(message);
-};
+// Detect when PyScript has finished initializing
+const startEl = document.getElementById('start')
+if (startEl) {
+  startEl.onclick = init
+} else {
+  throw 'Failed to detect PyScript initialization'
+}
 
-hooks.onInterpreterReady.add((utils: any, element: any) => {
-  console.log("Main thread ready!");
-  console.log(element);
-  mainInterpreter.value = utils.interpreter;
-  isLoading.value = false;
-});
-
-const printInterpreter = () => {
-  const mult = mainInterpreter.value.globals.get("multiplyTwoNumbers");
-  const a = 2;
-  const b = 4;
-  alert(`Multiplying ${a} and ${b} in Python: ` + mult?.(a, b));
-};
-
-hooks.onWorkerReady.add((utils: any, element: any) => {
-  console.log("Worker thread ready!");
-  console.log(element);
-  console.log(utils);
-  workerInterpreter.value = utils.interpreter;
-  // element.sync.alert_message = (message: string) => {
-  //   console.log(message);
-  // };
-});
+const handleMultiply = () => {
+  const mult = mainInterpreter.value.globals.get('multiplyTwoNumbers')
+  const a = 2
+  const b = 4
+  alert(`Multiplying ${a} and ${b} in Python: ` + mult?.(a, b))
+}
 </script>
 
 <style lang="scss" scoped></style>

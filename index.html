@@ -6,28 +6,29 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- LATEST SNAPSHOT -->
   <!-- https://github.com/pyscript/pyscript/tree/main/pyscript.core/docs -->
-  <link rel="stylesheet" href="https://pyscript.net/snapshots/2023.09.1.RC2/core.css">
+  <!-- <link rel="stylesheet" href="https://pyscript.net/snapshots/2023.09.1.RC2/core.css">
   <script type="module" src="https://pyscript.net/snapshots/2023.09.1.RC2/core.js"></script>
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.20.0/full/pyodide.js"></script>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.20.0/full/pyodide.js"></script> -->
 
-  <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/@pyscript/core"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@pyscript/core/dist/core.css"> -->
+  <!-- LATEST VERSION (STABLE) -->
+  <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css">
+  <script defer src="https://pyscript.net/latest/pyscript.js"></script>
   <title>HydroServer QC</title>
 </head>
 
 <body>
+  <div hidden id="start"></div>
   <div id="app"></div>
   <script>
-    name = "Jeff" //A JS variable
-    // Define a JS Function
-    function addTwoNumbers(x, y) {
-      return x + y;
+    function createObject(variableName, object) {
+      eval(variableName + " = object")
     }
   </script>
   <script type="py" src="/src/main.py"></script>
   <script type="module" src="/src/main.ts"></script>
-  <!-- <script type="py" src="/src/worker.py" worker config="/src/pyconfig.json"></script> -->
+  <script type="py" src="/src/worker.py" worker config="/src/pyconfig.json"></script>
 </body>
 
 </html>

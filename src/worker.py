@@ -1,22 +1,17 @@
 print("Worker thread...")
-import js
-# import sys
-from pyscript import display, sync, window, document, when
+from js import createObject, someFunction
+from pyscript import when, Element
+from pyodide.ffi import create_proxy
 
-# display(sys.version)
-
+# Note: when binding events, the HTML component must be rendered and not hidden in the document
 @when("click", "#my_button")
 def click_handler(event):
-    # for attr in dir(js):
-    #   print("obj.%s = %r" % (attr, getattr(js, attr)))
-    sync.alert_message("Hello from Python!")
+    someFunction("Hello from Python!")
 
-my_element = document.querySelector("#my-id")
-my_element.innerText = "Modifying DOM from Python. Here is your host name: " + window.location.hostname
+some_global = "This is a test global variable in Python"
 
-# Import and use JS function in Python
-# from js import name, addTwoNumbers, console
-# console.log("Hello " + name + ".Adding 1 and 2 in Javascript: " + str(addTwoNumbers(1, 2)))
+# Expose globals
+createObject("pyGlobals", create_proxy(globals()))
 
-# def multiplyTwoNumbers(x, y):
-#   return (x * y)
+# Signal start
+Element("start").element.click()
