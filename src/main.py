@@ -1,4 +1,8 @@
 print("Main thread...")
 
-def multiplyTwoNumbers(x, y):
-  return (x * y)
+def handleDelete(data, index):
+  if len(data) >= index + 1:
+    del data[index]
+
+def handleAddOne(data, index):
+  data[index][1] = data[index][1] + 1

@@ -11,7 +11,7 @@ def click_handler(event):
 some_global = "This is a test global variable in Python"
 
 # Expose globals
-createObject("pyGlobals", create_proxy(globals()))
+# createObject("pyGlobals", create_proxy(globals()))
 
 # Signal start
 Element("start").element.click()
