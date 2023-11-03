@@ -5,4 +5,5 @@ def handleDelete(data, index):
     del data[index]
 
 def handleAddOne(data, index):
-  data[index][1] = data[index][1] + 1
+  if len(data) >= index + 1:
+    data[index][1] = data[index][1] + 1
