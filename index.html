@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- LATEST SNAPSHOT -->
+  <!-- https://github.com/pyscript/pyscript/tree/main/pyscript.core/docs -->
+  <!-- <link rel="stylesheet" href="https://pyscript.net/snapshots/2023.09.1.RC2/core.css">
+  <script type="module" src="https://pyscript.net/snapshots/2023.09.1.RC2/core.js"></script>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.20.0/full/pyodide.js"></script> -->
+
+  <!-- LATEST VERSION (STABLE) -->
+  <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css">
+  <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+  <title>HydroServer QC</title>
+</head>
+
+<body>
+  <div hidden id="start"></div>
+  <div id="app"></div>
+  <script>
+    function createObject(variableName, object) {
+      eval(variableName + " = object")
+    }
+  </script>
+  <script type="py" src="/src/pyscript/main.py"></script>
+  <script type="module" src="/src/main.ts"></script>
+  <script type="py" src="/src/pyscript/worker.py" worker config="/src/pyconfig.json"></script>
+</body>
+
+</html>

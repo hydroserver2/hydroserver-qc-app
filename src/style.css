@@ -1,0 +1,21 @@
+/* py-config - not a component */
+py-config {
+  display: none
+}
+
+py-terminal {
+  display: none
+}
+
+/* py-{el} - components not defined */
+py-script:not(:defined) {
+  display: none
+}
+
+py-repl:not(:defined) {
+  display: none
+}
+
+/* .py-overlay, .py-pop-up, .label {
+  display: none;
+} */
