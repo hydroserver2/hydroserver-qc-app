@@ -9,17 +9,6 @@ export const usePyStore = defineStore('py', () => {
   const initialized = ref(false)
   const startEl = document.getElementById('start') // Used to detect when PyScript has finished initializing
 
-  const _init = () => {
-    setTimeout(() => {
-      interpreter.value = _window.pyscript.interpreter
-      initialized.value = true
-
-      // Cleanup
-      startEl?.removeEventListener('click', _init)
-      startEl?.remove()
-    }, 0)
-  }
-
   const deleteDataPoint = (
     timeseries: (string | number)[][],
     index: number
@@ -34,7 +23,17 @@ export const usePyStore = defineStore('py', () => {
   }
 
   if (startEl) {
-    startEl.onclick = _init
+    const init = () => {
+      setTimeout(() => {
+        interpreter.value = _window.pyscript.interpreter
+        initialized.value = true
+
+        // Cleanup
+        startEl?.removeEventListener('click', init)
+        startEl?.remove()
+      }, 0)
+    }
+    startEl.onclick = init
   } else {
     throw 'Failed to detect PyScript initialization'
   }

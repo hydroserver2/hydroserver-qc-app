@@ -22,16 +22,13 @@
 </template>
 
 <script setup lang="ts">
-console.log('Vue App setup...')
-
 import { Ref, ref } from 'vue'
-import { _Window } from '@/types'
 import { usePyStore } from '@/stores/py'
 import data from '@/mock/data.json'
 
 const py = usePyStore()
 const timeseries: Ref<(string | number)[][]> = ref(
-  data.value[0].dataArray.slice(0, 5)
+  data.value[0].dataArray.slice(0, 10)
 )
 const selectedIndex = ref(0)
 </script>
