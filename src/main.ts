@@ -5,6 +5,20 @@ import { _Window } from './types'
 import { createPinia } from 'pinia'
 import vuetify from '@/plugins/vuetify'
 
+import { registerSW } from 'virtual:pwa-register'
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    const answer = confirm('New content available. Reload the page and update?')
+    if (answer) {
+      updateSW()
+    }
+  },
+  onOfflineReady() {
+    alert('Ready to work offline.')
+  },
+})
+
 // @ts-ignore
 ;(window as _Window).someFunction = (message: string) => {
   alert(message)

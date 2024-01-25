@@ -22,7 +22,7 @@
 
     "allowSyntheticDefaultImports": true,
 
-    "types": ["vuetify"],
+    "types": ["vuetify", "vite-plugin-pwa/client"],
 
     "baseUrl": ".",
     "paths": {
