@@ -20,7 +20,11 @@
   <!-- LATEST VERSION (STABLE) -->
   <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css">
   <script defer src="https://pyscript.net/latest/pyscript.js"></script>
-  <!-- <script defer src="https://pyscript.net/alpha/pyscript.js"></script> -->
+
+  <!-- 2024 -->
+  <!-- <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+  <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css"> -->
+
   <title>HydroServer QC</title>
 </head>
 
@@ -32,9 +36,19 @@
       eval(variableName + " = object")
     }
   </script>
+  <script type="py" src="/src/pyscript/edit_service.py"></script>
+
+  <py-config>
+    packages = ['pandas']
+
+    [[fetch]]
+    from = "./src/pyscript"
+    files = ["edit_service.py"]
+  </py-config>
+
   <script type="py" src="/src/pyscript/main.py"></script>
   <script type="module" src="/src/main.ts"></script>
-  <script type="py" src="/src/pyscript/worker.py" worker config="/src/pyconfig.json"></script>
+  <script type="py" src="/src/pyscript/worker.py" worker></script>
 </body>
 
 </html>

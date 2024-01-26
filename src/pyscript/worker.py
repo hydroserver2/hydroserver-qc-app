@@ -1,6 +1,8 @@
-print("Worker thread...")
-from js import someFunction
+print("==== Worker thread ====")
+import json
+from js import someFunction, dataset
 from pyscript import when, Element
+from edit_service import EditService
 
 # Note: when binding events, the HTML component must be rendered in the document
 @when("click", "#my_button")
@@ -17,3 +19,5 @@ def handleAddOne(data, index):
 
 # Signal start
 Element("start").element.click()
+
+EditService("test", json.loads(dataset))

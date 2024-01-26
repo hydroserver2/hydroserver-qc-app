@@ -61,10 +61,11 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref } from 'vue'
+import { Ref, ref, onBeforeMount } from 'vue'
 import { usePyStore } from '@/stores/py'
 import { useTheme } from 'vuetify'
 import data from '@/mock/data.json'
+import { _Window } from './types'
 
 // Use stores
 const theme = useTheme()
@@ -79,6 +80,10 @@ const drawer = ref(false)
 function toggleTheme() {
   theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
 }
+
+onBeforeMount(() => {
+  ;(window as _Window).dataset = JSON.stringify(data)
+})
 </script>
 
 <style lang="scss" scoped></style>

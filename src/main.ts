@@ -19,7 +19,6 @@ const updateSW = registerSW({
   },
 })
 
-// @ts-ignore
 ;(window as _Window).someFunction = (message: string) => {
   alert(message)
 }

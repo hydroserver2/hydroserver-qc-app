@@ -1,2 +1,1 @@
-print("Main thread...")
-
+print("==== Main thread ====")
