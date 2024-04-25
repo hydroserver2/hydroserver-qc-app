@@ -1,18 +1,57 @@
-# Vue 3 + TypeScript + Vite
+# HydroServer Quality Control
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+This Vue 3 application makes use of [PyScript](https://docs.pyscript.net/2024.4.1/) in order to enable Python script execution in the browser.
 
-## Recommended IDE Setup
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+## Python to JavaScript communication
+```
+# main.py
+def printMessage(message):
+  print(message)
+```
 
-## Type Support For `.vue` Imports in TS
+```
+// some-file.js
+interpreter.value.globals.get('printMessage')?.('hello!') // alerts: "hello!"
+```
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+## Triggering JavaScript events and calling functions from Python
+```
+# main.py
+from js import someFunction, dataset
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+@when("click", "#my_button")
+def handle_click(event):
+  someFunction("Hello from Python!")
+```
 
-1. Disable the built-in TypeScript Extension
-   1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-   2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+```
+<!-- App.vue -->
+<template>
+   <v-btn id="my_button">Trigger Event in Python</v-btn>
+</template>
+
+<script setup lang="ts">
+// ...
+;(window as _Window).someFunction = (message: string) => {
+  alert(message)
+}
+// ...
+</script>
+```
+
+## Accessing JavaScript objects from Python
+```
+<!-- App.vue -->
+<script setup lang="ts">
+onBeforeMount(() => {
+  ;(window as _Window).dataset = JSON.stringify({ a: 1, b: 2})
+})
+</script>
+```
+
+```
+# main.py
+import json
+my_data = json.loads(dataset)
+```
