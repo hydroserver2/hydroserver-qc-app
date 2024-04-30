@@ -3,7 +3,7 @@
 This Vue 3 application makes use of [PyScript](https://docs.pyscript.net/2024.4.1/) in order to enable Python script execution in the browser.
 
 
-# Bootstraping Python interpreter
+# Bootstrapping Python interpreter
 
 ```
 <!-- index.html -->
