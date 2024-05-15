@@ -4,16 +4,6 @@
       <h5 class="text-h5">Datastreams</h5>
     </v-col>
 
-    <v-col cols="12" sm="auto">
-      <v-btn
-        color="blue-lighten-3"
-        prepend-icon="mdi-content-copy"
-        block
-        @click="copyStateToClipboard"
-        >Copy State as URL</v-btn
-      >
-    </v-col>
-
     <v-col cols="12" sm="3" class="ml-auto">
       <v-select
         label="Show/Hide Columns"
@@ -110,16 +100,10 @@ const {
   tableHeight,
 } = storeToRefs(useDataVisStore())
 
-const emit = defineEmits(['copyState'])
-
 const showOnlySelected = ref(false)
 const openInfoCard = ref(false)
 const downloading = ref(false)
 const selectedDatastream = ref<Datastream | null>(null)
-
-const copyStateToClipboard = async () => {
-  emit('copyState')
-}
 
 const downloadSelected = async (selectedDatastreams: Datastream[]) => {
   downloading.value = true

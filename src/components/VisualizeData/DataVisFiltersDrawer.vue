@@ -15,7 +15,7 @@
       >
     </div>
 
-    <v-expansion-panels multiple v-model="panels">
+    <v-expansion-panels multiple v-model="panels" color="grey-lighten-2">
       <v-expansion-panel title="Sites">
         <v-expansion-panel-text>
           <v-text-field
@@ -25,7 +25,7 @@
             v-model="searchThing"
             prepend-inner-icon="mdi-magnify"
             label="Search"
-            dense
+            density="compact"
             hide-details
           />
 
@@ -56,7 +56,7 @@
             v-model="searchObservedProperty"
             prepend-inner-icon="mdi-magnify"
             label="Search"
-            dense
+            density="compact"
             hide-details
           />
 
@@ -86,7 +86,7 @@
             v-model="searchProcessingLevel"
             prepend-inner-icon="mdi-magnify"
             label="Search"
-            dense
+            density="compact"
             hide-details
           />
 
