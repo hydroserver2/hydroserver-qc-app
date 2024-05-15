@@ -1,19 +1,24 @@
 <template>
   <v-row align="center" class="no-wrap">
     <v-col cols="auto">
-      <SquareBtn
-        class="mr-1"
-        v-for="option in dateOptions"
-        :color="
-          selectedDateBtnId === option.id ? 'blue' : 'blue-grey-lighten-4'
-        "
-        :icon="option.icon"
-        :label="option.label"
-        btn-width="4rem"
+      <v-btn-toggle
+        v-model="selectedDateBtnId"
         variant="outlined"
-        @click="onDateBtnClick(option.id)"
-      />
+        density="compact"
+        color="primary"
+        divided
+        rounded="xl"
+      >
+        <v-btn
+          v-for="option in dateOptions"
+          :label="option.label"
+          @click="onDateBtnClick(option.id)"
+        >
+          <v-icon>{{ option.icon }}</v-icon>
+        </v-btn>
+      </v-btn-toggle>
     </v-col>
+
     <v-col cols="auto" class="datepicker">
       <DatePickerField
         :model-value="beginDate"
@@ -33,7 +38,6 @@
 
 <script setup lang="ts">
 import DatePickerField from '@/components/VisualizeData/DatePickerField.vue'
-import SquareBtn from '@/components/SquareBtn.vue'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
 
