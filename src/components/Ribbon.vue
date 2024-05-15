@@ -1,0 +1,84 @@
+<template>
+  <v-toolbar color="blue-grey-lighten-1" density="compact">
+    <v-tabs v-model="ribbonTabs" color="white">
+      <v-tab v-for="ribbon in ribbons">
+        {{ ribbon.name }}
+      </v-tab>
+    </v-tabs>
+
+    <v-spacer />
+
+    <v-list-item prepend-icon="mdi-logout" @click.prevent="onLogout">
+      Logout
+    </v-list-item>
+  </v-toolbar>
+
+  <v-window v-model="ribbonTabs">
+    <!-- Tabs -->
+    <v-window-item v-for="(ribbon, index) in ribbons" :key="index">
+      <v-card color="blue-grey-darken-1" variant="outlined" rounded="false">
+        <v-card-text>
+          <v-row>
+            <!-- Ribbon Groups -->
+            <template v-for="group in ribbon.groups" cols="flex">
+              <component :is="group" />
+              <v-col cols="auto" class="px-3">
+                <v-divider vertical thickness="2" />
+              </v-col>
+            </template>
+          </v-row>
+        </v-card-text>
+      </v-card>
+    </v-window-item>
+  </v-window>
+</template>
+
+<script setup lang="ts">
+import SaveRibbonGroup from '@/components/RibbonGroups/SaveRibbonGroup.vue'
+import ViewRibbonGroup from '@/components/RibbonGroups/ViewRibbonGroup.vue'
+import TimeRibbonGroup from '@/components/RibbonGroups/TimeRibbonGroup.vue'
+import HistoryRibbonGroup from '@/components/RibbonGroups/HistoryRibbonGroup.vue'
+import EditDataRibbonGroup from '@/components/RibbonGroups/EditDataRibbonGroup.vue'
+import FilterPointsRibbonGroup from '@/components/RibbonGroups/FilterPointsRibbonGroup.vue'
+import { useAuthStore } from '@/store/authentication'
+import { Snackbar } from '@/utils/notifications'
+import { ref, markRaw, watch } from 'vue'
+import { useDataVisStore } from '@/store/dataVisualization'
+import { storeToRefs } from 'pinia'
+
+const { logout } = useAuthStore()
+const { filterDrawer, prevFilterDrawer } = storeToRefs(useDataVisStore())
+
+const ribbonTabs = ref(0)
+const ribbons = ref([
+  {
+    name: 'File',
+    groups: [markRaw(SaveRibbonGroup)],
+  },
+  {
+    name: 'Plot',
+    groups: [markRaw(ViewRibbonGroup), markRaw(TimeRibbonGroup)],
+  },
+  {
+    name: 'Edit',
+    groups: [
+      markRaw(HistoryRibbonGroup),
+      markRaw(FilterPointsRibbonGroup),
+      markRaw(EditDataRibbonGroup),
+    ],
+  },
+])
+
+watch(ribbonTabs, (newTabIndex) => {
+  if (ribbons.value[newTabIndex].name === 'Plot') {
+    filterDrawer.value = prevFilterDrawer.value
+  } else {
+    filterDrawer.value = false
+  }
+})
+
+function onLogout() {
+  logout()
+  Snackbar.info('You have logged out')
+}
+</script>
