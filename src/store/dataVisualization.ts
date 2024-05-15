@@ -108,6 +108,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const dateOptions = ref([
     {
       id: 0,
+      icon: 'mdi-calendar',
       label: 'Last Year',
       calculateBeginDate: () => {
         const now = endDate.value
@@ -116,6 +117,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     },
     {
       id: 1,
+      icon: 'mdi-calendar-month',
       label: 'Last Month',
       calculateBeginDate: () => {
         const now = endDate.value
@@ -124,6 +126,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     },
     {
       id: 2,
+      icon: 'mdi-calendar-week',
       label: 'Last Week',
       calculateBeginDate: () => {
         const now = endDate.value
