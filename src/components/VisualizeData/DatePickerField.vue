@@ -3,7 +3,7 @@
     :placeholder="placeholder"
     v-model="inputDate"
     @blur="handleBlur"
-    append-inner-icon="mdi-calendar"
+    append-inner-icon="mdi-calendar-blank"
     @click:append-inner="toggleDatePicker"
     hide-details
     density="compact"

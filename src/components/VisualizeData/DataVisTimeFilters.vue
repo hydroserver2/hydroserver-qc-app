@@ -9,13 +9,18 @@
         divided
         rounded="xl"
       >
-        <v-btn
-          v-for="option in dateOptions"
-          :label="option.label"
-          @click="onDateBtnClick(option.id)"
-        >
-          <v-icon>{{ option.icon }}</v-icon>
-        </v-btn>
+        <v-tooltip bottom :openDelay="1000" v-for="option in dateOptions">
+          <template v-slot:activator="{ props }">
+            <v-btn
+              :label="option.label"
+              @click="onDateBtnClick(option.id)"
+              v-bind:="props"
+            >
+              <v-icon>{{ option.icon }}</v-icon>
+            </v-btn>
+          </template>
+          {{ option.label }}
+        </v-tooltip>
       </v-btn-toggle>
     </v-col>
 
