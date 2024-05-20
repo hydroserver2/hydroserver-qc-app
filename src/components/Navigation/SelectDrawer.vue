@@ -1,13 +1,43 @@
 <template>
   <v-navigation-drawer permanent>
-    <v-list>
-      <v-list-item title="Home" value="home"></v-list-item>
-
-      <v-list-item title="Contacts" value="contacts"></v-list-item>
-
-      <v-list-item title="Settings" value="settings"></v-list-item>
+    <v-divider />
+    <v-list class="pb-2" :items="filterPoints" density="compact"> </v-list>
+    <v-list class="py-0">
+      <v-list-item>
+        <v-select density="compact" label="Qualifying comments"></v-select>
+      </v-list-item>
     </v-list>
+
+    <v-divider />
+    <v-list>
+      <v-list-subheader>Time filters</v-list-subheader>
+      <v-list-item>
+        <DataVisTimeFilters />
+      </v-list-item>
+    </v-list>
+
+    <v-divider />
   </v-navigation-drawer>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import DataVisTimeFilters from '@/components/VisualizeData/DataVisTimeFilters.vue'
+
+const filterPoints = [
+  { type: 'subheader', title: 'View' },
+  {
+    title: 'Show legend',
+    props: {
+      prependIcon: 'mdi-map',
+    },
+    value: 1,
+  },
+  {
+    title: 'Show tooltip',
+    props: {
+      prependIcon: 'mdi-comment',
+    },
+    value: 2,
+  },
+]
+</script>

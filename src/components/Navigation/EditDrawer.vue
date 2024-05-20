@@ -40,14 +40,14 @@ watch(selected, (newValue, oldValue) => {
 const filterPoints = [
   { type: 'subheader', title: 'Filter points' },
   {
-    title: 'Qualifying Comments',
+    title: 'Qualifying comments',
     props: {
       prependIcon: 'mdi-flag',
     },
     value: 1,
   },
   {
-    title: 'Linear Drift Correction',
+    title: 'Linear drift correction',
     props: {
       prependIcon: 'mdi-chart-sankey',
     },
@@ -61,7 +61,7 @@ const filterPoints = [
     value: 3,
   },
   {
-    title: 'Change Values',
+    title: 'Change values',
     icon: 'mdi-pencil',
     props: {
       prependIcon: 'mdi-pencil',

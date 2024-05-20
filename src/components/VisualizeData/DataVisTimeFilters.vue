@@ -1,5 +1,5 @@
 <template>
-  <v-row align="center" class="no-wrap">
+  <v-row align="center" justify="center" class="no-wrap">
     <v-col cols="auto">
       <v-btn-toggle
         v-model="selectedDateBtnId"
@@ -24,14 +24,14 @@
       </v-btn-toggle>
     </v-col>
 
-    <v-col cols="auto" class="datepicker">
+    <v-col cols="12" class="datepicker">
       <DatePickerField
         :model-value="beginDate"
         placeholder="Begin Date"
         @update:model-value="setDateRange({ begin: $event })"
       />
     </v-col>
-    <v-col cols="auto" class="datepicker">
+    <v-col cols="12" class="datepicker">
       <DatePickerField
         :model-value="endDate"
         placeholder="End Date"
