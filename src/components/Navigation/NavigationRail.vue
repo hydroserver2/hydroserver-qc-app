@@ -14,6 +14,16 @@
         @click="onRailItemClicked(item.title)"
       />
     </v-list>
+
+    <v-spacer />
+
+    <template v-slot:append>
+      <v-list>
+        <v-list-item prepend-icon="mdi-logout" @click.prevent="onLogout">
+          Logout
+        </v-list-item>
+      </v-list>
+    </template>
   </v-navigation-drawer>
 
   <div v-if="showDrawer">
@@ -29,6 +39,10 @@ import HydroServerIcon from '@/assets/favicon-32x32.png'
 import FileDrawer from '@/components/Navigation/FileDrawer.vue'
 import EditDrawer from '@/components/Navigation/EditDrawer.vue'
 import SelectDrawer from '@/components/Navigation/SelectDrawer.vue'
+import { useAuthStore } from '@/store/authentication'
+import { Snackbar } from '@/utils/notifications'
+
+const { logout } = useAuthStore()
 
 const selectedDrawer = ref('')
 const showDrawer = ref(false)
@@ -46,5 +60,10 @@ const onRailItemClicked = (title: string) => {
     selectedDrawer.value = title
     showDrawer.value = true
   }
+}
+
+function onLogout() {
+  logout()
+  Snackbar.info('You have logged out')
 }
 </script>
