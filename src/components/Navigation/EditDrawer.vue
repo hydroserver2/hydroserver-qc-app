@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer permanent>
+  <v-navigation-drawer permanent :width="350" rounded="e-xl" elevation="3">
     <v-expansion-panels color="primary-lighten-2" v-model="panelOpen">
       <v-expansion-panel title="History" elevation="0">
         <v-expansion-panel-text>

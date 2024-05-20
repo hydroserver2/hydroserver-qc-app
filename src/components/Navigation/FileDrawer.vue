@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer permanent>
+  <v-navigation-drawer permanent :width="350" rounded="e-xl" elevation="3">
     <v-list :items="editData" density="compact"> </v-list>
   </v-navigation-drawer>
 </template>

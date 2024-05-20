@@ -1,8 +1,6 @@
 <template>
   <FullScreenLoader v-if="loading" />
   <div v-else>
-    <DataVisFiltersDrawer />
-
     <div class="my-4 mx-4">
       <v-expansion-panels v-model="panels">
         <v-expansion-panel
@@ -36,7 +34,6 @@
 </template>
 
 <script setup lang="ts">
-import DataVisFiltersDrawer from '@/components/VisualizeData/DataVisFiltersDrawer.vue'
 import DataVisDatasetsTable from '@/components/VisualizeData/DataVisDatasetsTable.vue'
 import DataVisualizationCard from '@/components/VisualizeData/DataVisualizationCard.vue'
 import FullScreenLoader from '@/components/base/FullScreenLoader.vue'

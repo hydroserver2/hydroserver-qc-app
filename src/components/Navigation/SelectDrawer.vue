@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer permanent>
+  <v-navigation-drawer permanent :width="350" rounded="e-xl" elevation="1">
     <v-divider />
     <v-list class="pb-2" :items="filterPoints" density="compact"> </v-list>
     <v-list class="py-0">
@@ -17,11 +17,18 @@
     </v-list>
 
     <v-divider />
+    <v-list class="pb-0">
+      <v-list-subheader>Datastream filters</v-list-subheader>
+    </v-list>
+    <DatastreamFilters />
+
+    <v-divider />
   </v-navigation-drawer>
 </template>
 
 <script setup lang="ts">
 import DataVisTimeFilters from '@/components/VisualizeData/DataVisTimeFilters.vue'
+import DatastreamFilters from '@/components/VisualizeData/DatastreamFilters.vue'
 
 const filterPoints = [
   { type: 'subheader', title: 'View' },
