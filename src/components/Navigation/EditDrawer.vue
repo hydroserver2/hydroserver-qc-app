@@ -52,6 +52,38 @@ watch(selected, (newValue, oldValue) => {
 const filterPoints = [
   { type: 'subheader', title: 'Filter points' },
   {
+    title: 'Value thresholds',
+    props: {
+      prependIcon: 'mdi-align-vertical-center',
+    },
+    value: 1,
+  },
+  {
+    title: 'Rate of change',
+    props: {
+      prependIcon: 'mdi-delta',
+    },
+    value: 2,
+  },
+  {
+    title: 'Fill gaps',
+    props: {
+      prependIcon: 'mdi-keyboard-space',
+    },
+    value: 3,
+  },
+  {
+    title: 'Persistence',
+    props: {
+      prependIcon: 'mdi-dots-horizontal',
+    },
+    value: 4,
+  },
+]
+
+const editData = [
+  { type: 'subheader', title: 'Edit data' },
+  {
     title: 'Qualifying comments',
     props: {
       prependIcon: 'mdi-flag',
@@ -68,7 +100,7 @@ const filterPoints = [
   {
     title: 'Interpolate',
     props: {
-      prependIcon: 'mdi-chart-bell-curve-cumulative',
+      prependIcon: 'mdi-transit-connection-horizontal',
     },
     value: 3,
   },
@@ -79,38 +111,19 @@ const filterPoints = [
     },
     value: 4,
   },
-]
-
-const editData = [
-  { type: 'subheader', title: 'Edit data' },
   {
-    title: 'Qualifying Comments',
+    title: 'Delete points',
     props: {
-      prependIcon: 'mdi-flag',
+      prependIcon: 'mdi-trash-can',
     },
-    value: 1,
+    value: 5,
   },
   {
-    title: 'Linear Drift Correction',
+    title: 'Add points',
     props: {
-      prependIcon: 'mdi-chart-sankey',
+      prependIcon: 'mdi-plus',
     },
-    value: 2,
-  },
-  {
-    title: 'Interpolate',
-    props: {
-      prependIcon: 'mdi-chart-bell-curve-cumulative',
-    },
-    value: 3,
-  },
-  {
-    title: 'Change Values',
-    icon: 'mdi-pencil',
-    props: {
-      prependIcon: 'mdi-pencil',
-    },
-    value: 4,
+    value: 6,
   },
 ]
 </script>

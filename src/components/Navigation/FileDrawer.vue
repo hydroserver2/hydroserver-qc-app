@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 const editData = [
-  { type: 'subheader', title: 'Edit data' },
+  { type: 'subheader', title: 'Save to database' },
   {
     title: 'Save for review',
     props: {
