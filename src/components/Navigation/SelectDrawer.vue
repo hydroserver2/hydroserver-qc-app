@@ -1,6 +1,12 @@
 <template>
-  <v-navigation-drawer permanent :width="350" rounded="e-xl" elevation="1">
-    <v-divider />
+  <v-navigation-drawer
+    permanent
+    :width="350"
+    rounded="e-xl"
+    elevation="1"
+    class="bg-navbar"
+    theme="dark"
+  >
     <v-list class="pb-2" :items="filterPoints" density="compact"> </v-list>
     <v-list class="py-0">
       <v-list-item>
@@ -9,7 +15,7 @@
     </v-list>
 
     <v-divider />
-    <v-list>
+    <v-list class="pb-6">
       <v-list-subheader>Time filters</v-list-subheader>
       <v-list-item>
         <DataVisTimeFilters />

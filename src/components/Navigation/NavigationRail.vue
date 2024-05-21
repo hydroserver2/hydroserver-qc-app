@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer permanent rail>
+  <v-navigation-drawer permanent rail class="bg-navbar">
     <v-list-item>
       <v-img :src="HydroServerIcon"></v-img>
     </v-list-item>
@@ -19,9 +19,7 @@
 
     <template v-slot:append>
       <v-list>
-        <v-list-item prepend-icon="mdi-logout" @click.prevent="onLogout">
-          Logout
-        </v-list-item>
+        <v-list-item prepend-icon="mdi-logout" @click.prevent="onLogout" />
       </v-list>
     </template>
   </v-navigation-drawer>

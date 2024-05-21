@@ -2,12 +2,9 @@
   <FullScreenLoader v-if="loading" />
   <div v-else>
     <div class="my-4 mx-4">
-      <v-expansion-panels v-model="panels">
-        <v-expansion-panel
-          title="Data Visualization"
-          v-if="cardHeight"
-          color="grey-lighten-2"
-        >
+      <v-expansion-panels v-model="panels" rounded="xl">
+        <v-expansion-panel title="Data Visualization" v-if="cardHeight">
+          <v-divider v-if="panels === 0" />
           <v-expansion-panel-text>
             <DataVisualizationCard :cardHeight="cardHeight" />
           </v-expansion-panel-text>
@@ -18,13 +15,12 @@
         v-if="panels === 0"
         class="resize-handle mt-4"
         @mousedown="handleMouseDown"
-        color="blue-grey-lighten-2"
+        color="grey-lighten-1"
         :height="3"
-        :elevation="1"
+        :elevation="2"
         rounded="xl"
         outlined
       />
-      <v-divider v-else />
 
       <div class="mt-1">
         <DataVisDatasetsTable />

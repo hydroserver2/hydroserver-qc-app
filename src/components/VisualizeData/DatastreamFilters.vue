@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex justify-end mb-4 mx-2">
     <v-btn
-      color="primary-darken-2"
+      color="primary-lighten-2"
       @click="clearFilters"
       variant="outlined"
       rounded="xl"
@@ -10,7 +10,7 @@
     >
   </div>
 
-  <v-expansion-panels multiple v-model="panels" color="grey-lighten-2">
+  <v-expansion-panels multiple v-model="panels">
     <v-expansion-panel title="Sites">
       <v-expansion-panel-text>
         <v-text-field

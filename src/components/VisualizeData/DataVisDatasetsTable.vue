@@ -24,56 +24,63 @@
     </v-col>
   </v-row>
 
-  <v-toolbar flat color="secondary">
-    <v-text-field
-      class="mx-2"
-      clearable
-      v-model="search"
-      prepend-inner-icon="mdi-magnify"
-      label="Search"
-      hide-details
-      density="compact"
-    />
-
-    <v-spacer />
-
-    <v-btn @click="clearSelected"> Clear Selected </v-btn>
-
-    <v-btn variant="outlined" @click="showOnlySelected = !showOnlySelected">
-      {{ showOnlySelected ? 'Show All' : 'Show Selected' }}
-    </v-btn>
-
-    <v-btn
-      :loading="downloading"
-      prepend-icon="mdi-download"
-      @click="downloadSelected(selectedDatastreams)"
-      >Download Selected</v-btn
-    >
-  </v-toolbar>
-  <v-data-table-virtual
-    :headers="headers.filter((header) => header.visible)"
-    :items="tableItems"
-    :sort-by="sortBy"
-    multi-sort
-    :search="search"
-    :style="{ 'max-height': `${tableHeight}vh` }"
-    fixed-header
-    class="elevation-2"
-    color="green"
-    density="compact"
-    @click:row="onRowClick"
-    hover
-  >
-    <template v-slot:item.plot="{ item }">
-      <v-checkbox
-        :model-value="isChecked(item)"
-        :disabled="selectedDatastreams.length >= 5 && !isChecked(item)"
-        class="d-flex align-self-center"
+  <v-card>
+    <v-toolbar flat color="secondary-lighten-2">
+      <v-text-field
+        class="mx-2"
+        clearable
+        v-model="search"
+        prepend-inner-icon="mdi-magnify"
+        label="Search"
+        hide-details
         density="compact"
-        @change="() => updateSelectedDatastreams(item)"
+        rounded="xl"
       />
-    </template>
-  </v-data-table-virtual>
+
+      <v-spacer />
+
+      <v-btn @click="clearSelected"> Clear Selected </v-btn>
+
+      <v-btn
+        variant="outlined"
+        rounded="xl"
+        @click="showOnlySelected = !showOnlySelected"
+      >
+        {{ showOnlySelected ? 'Show All' : 'Show Selected' }}
+      </v-btn>
+
+      <v-btn
+        :loading="downloading"
+        prepend-icon="mdi-download"
+        @click="downloadSelected(selectedDatastreams)"
+        >Download Selected</v-btn
+      >
+    </v-toolbar>
+    <v-data-table-virtual
+      :headers="headers.filter((header) => header.visible)"
+      :items="tableItems"
+      :sort-by="sortBy"
+      multi-sort
+      :search="search"
+      :style="{ 'max-height': `${tableHeight}vh` }"
+      fixed-header
+      class="elevation-2"
+      color="green"
+      density="compact"
+      @click:row="onRowClick"
+      hover
+    >
+      <template v-slot:item.plot="{ item }">
+        <v-checkbox
+          :model-value="isChecked(item)"
+          :disabled="selectedDatastreams.length >= 5 && !isChecked(item)"
+          class="d-flex align-self-center"
+          density="compact"
+          @change="() => updateSelectedDatastreams(item)"
+        />
+      </template>
+    </v-data-table-virtual>
+  </v-card>
 
   <v-dialog v-model="openInfoCard" width="50rem" v-if="selectedDatastream">
     <DatastreamInformationCard

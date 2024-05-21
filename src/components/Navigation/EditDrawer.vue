@@ -1,23 +1,35 @@
 <template>
-  <v-navigation-drawer permanent :width="350" rounded="e-xl" elevation="3">
-    <v-expansion-panels color="primary-lighten-2" v-model="panelOpen">
-      <v-expansion-panel title="History" elevation="0">
-        <v-expansion-panel-text>
-          <v-virtual-scroll :items="['action 3', 'action 2', 'action 1']">
-            <template v-slot:default="{ item }">
-              <v-list-item
-                :key="item"
-                @click="selected = item"
-                :class="{ 'v-list-item--active': selected === item }"
-                density="compact"
-              >
-                <v-list-item-title>{{ item }}</v-list-item-title>
-              </v-list-item>
-            </template>
-          </v-virtual-scroll>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-    </v-expansion-panels>
+  <v-navigation-drawer
+    permanent
+    :width="350"
+    rounded="e-xl"
+    elevation="3"
+    class="bg-navbar"
+    theme="dark"
+  >
+    <v-container>
+      <v-expansion-panels color="primary-darken-2" v-model="panelOpen">
+        <v-expansion-panel title="History" elevation="3">
+          <v-expansion-panel-text>
+            <v-virtual-scroll :items="['Action 3', 'Action 2', 'Action 1']">
+              <template v-slot:default="{ item }">
+                <v-list-item
+                  :key="item"
+                  @click="selected = item"
+                  :class="{ 'v-list-item--active': selected === item }"
+                  density="compact"
+                  class="my-1"
+                  rounded="xl"
+                >
+                  <v-list-item-title>{{ item }}</v-list-item-title>
+                  <v-divider />
+                </v-list-item>
+              </template>
+            </v-virtual-scroll>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </v-container>
 
     <v-divider />
     <v-list :items="filterPoints" density="compact"> </v-list>
@@ -62,7 +74,6 @@ const filterPoints = [
   },
   {
     title: 'Change values',
-    icon: 'mdi-pencil',
     props: {
       prependIcon: 'mdi-pencil',
     },

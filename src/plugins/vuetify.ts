@@ -8,11 +8,27 @@ import * as directives from 'vuetify/directives'
 import { md3 } from 'vuetify/blueprints'
 
 // Material theme Colors: https://vuetifyjs.com/en/styles/colors/
-const theme: ThemeDefinition = {
+const light: ThemeDefinition = {
   dark: false,
   colors: {
-    background: '#FAFAFA', // grey-lighten-5
+    primary: '#2196F3', // blue
+    secondary: '#4CAF50', // green
+    // background: '#FAFAFA', // grey-lighten-5
+    background: '#f3f7fa',
     surface: '#FFFFFF', // white
+    default: '#757575', // grey-darken-1
+    delete: '#F44336', // red
+    error: '#F44336', // red
+    info: '#03A9F4', // light-blue
+    success: '#4CAF50', // green
+    warning: '#FF9800', // orange
+    navbar: '#272e3d',
+  },
+}
+
+const dark: ThemeDefinition = {
+  dark: true,
+  colors: {
     primary: '#2196F3', // blue
     secondary: '#4CAF50', // green
     default: '#757575', // grey-darken-1
@@ -21,6 +37,10 @@ const theme: ThemeDefinition = {
     info: '#03A9F4', // light-blue
     success: '#4CAF50', // green
     warning: '#FF9800', // orange
+
+    navbar: '#272e3d',
+    surface: '#18212a',
+    background: '#f3f7fa',
   },
 }
 
@@ -80,9 +100,10 @@ export default createVuetify({
     },
   },
   theme: {
-    defaultTheme: 'theme',
+    defaultTheme: 'light',
     themes: {
-      theme,
+      light,
+      dark,
     },
     variations: {
       colors: ['primary', 'secondary', 'surface'],
