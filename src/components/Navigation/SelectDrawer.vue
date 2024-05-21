@@ -7,7 +7,21 @@
     class="bg-navbar"
     theme="dark"
   >
-    <v-list class="pb-2" :items="filterPoints" density="compact"> </v-list>
+    <v-list class="pb-2" density="compact">
+      <template v-for="item in viewItems">
+        <v-list-subheader v-if="item.type === 'subheader'">
+          {{ item.title }}
+        </v-list-subheader>
+
+        <v-list-item
+          v-else
+          @click="item.active = !item.active"
+          :prepend-icon="item.active ? item.activeIcon : item.inactiveIcon"
+          :title="item.title"
+        />
+      </template>
+    </v-list>
+
     <v-list class="py-0">
       <v-list-item>
         <v-select density="compact" label="Qualifying comments"></v-select>
@@ -35,22 +49,21 @@
 <script setup lang="ts">
 import DataVisTimeFilters from '@/components/VisualizeData/DataVisTimeFilters.vue'
 import DatastreamFilters from '@/components/VisualizeData/DatastreamFilters.vue'
+import { ref } from 'vue'
 
-const filterPoints = [
+const viewItems = ref([
   { type: 'subheader', title: 'View' },
   {
     title: 'Show legend',
-    props: {
-      prependIcon: 'mdi-map',
-    },
-    value: 1,
+    activeIcon: 'mdi-map',
+    inactiveIcon: 'mdi-map-outline',
+    active: false,
   },
   {
     title: 'Show tooltip',
-    props: {
-      prependIcon: 'mdi-comment',
-    },
-    value: 2,
+    activeIcon: 'mdi-comment',
+    inactiveIcon: 'mdi-comment-outline',
+    active: false,
   },
-]
+])
 </script>
