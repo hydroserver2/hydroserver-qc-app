@@ -7,12 +7,17 @@
     <v-divider />
 
     <v-list density="compact" nav>
-      <v-list-item
-        v-for="item in items"
-        :prepend-icon="item.icon"
-        :value="item.title"
-        @click="onRailItemClicked(item.title)"
-      />
+      <v-tooltip bottom :openDelay="500" v-for="item in items">
+        <template v-slot:activator="{ props }">
+          <v-list-item
+            :prepend-icon="item.icon"
+            :value="item.title"
+            @click="onRailItemClicked(item.title)"
+            v-bind:="props"
+          />
+        </template>
+        {{ item.title }}
+      </v-tooltip>
     </v-list>
 
     <v-spacer />
