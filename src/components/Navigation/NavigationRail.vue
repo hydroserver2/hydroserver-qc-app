@@ -12,7 +12,7 @@
           <v-list-item
             :prepend-icon="item.icon"
             :value="item.title"
-            @click="onRailItemClicked(item.title)"
+            @click="onRailItemClicked(item.title as DrawerType)"
             v-bind:="props"
           />
         </template>
@@ -29,10 +29,10 @@
     </template>
   </v-navigation-drawer>
 
-  <div v-if="showDrawer">
-    <FileDrawer v-if="selectedDrawer === 'File'" />
-    <EditDrawer v-if="selectedDrawer === 'Edit'" />
-    <SelectDrawer v-if="selectedDrawer === 'Select'" />
+  <div v-if="isDrawerOpen">
+    <FileDrawer v-if="selectedDrawer === DrawerType.File" />
+    <EditDrawer v-if="selectedDrawer === DrawerType.Edit" />
+    <SelectDrawer v-if="selectedDrawer === DrawerType.Select" />
   </div>
 </template>
 
@@ -43,27 +43,19 @@ import FileDrawer from '@/components/Navigation/FileDrawer.vue'
 import EditDrawer from '@/components/Navigation/EditDrawer.vue'
 import SelectDrawer from '@/components/Navigation/SelectDrawer.vue'
 import { useAuthStore } from '@/store/authentication'
+import { useUIStore, DrawerType } from '@/store/visualizationUI'
 import { Snackbar } from '@/utils/notifications'
+import { storeToRefs } from 'pinia'
 
 const { logout } = useAuthStore()
-
-const selectedDrawer = ref('')
-const showDrawer = ref(false)
+const { onRailItemClicked } = useUIStore()
+const { selectedDrawer, isDrawerOpen } = storeToRefs(useUIStore())
 
 const items = ref([
   { title: 'File', icon: 'mdi-file' },
   { title: 'Select', icon: 'mdi-cursor-default-click-outline' },
   { title: 'Edit', icon: 'mdi-pencil' },
 ])
-
-const onRailItemClicked = (title: string) => {
-  if (selectedDrawer.value === title) {
-    showDrawer.value = !showDrawer.value
-  } else {
-    selectedDrawer.value = title
-    showDrawer.value = true
-  }
-}
 
 function onLogout() {
   logout()

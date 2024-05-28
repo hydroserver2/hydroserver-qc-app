@@ -40,7 +40,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const prevIds = ref<string[]>([])
 
   const cardHeight = ref(40)
-  const tableHeight = ref(30)
+  const tableHeight = ref(35)
 
   const endDate = ref<Date>(new Date())
   const oneWeek = 7 * 24 * 60 * 60 * 1000

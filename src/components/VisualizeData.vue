@@ -1,6 +1,6 @@
 <template>
   <FullScreenLoader v-if="loading" />
-  <div v-else>
+  <div v-else-if="currentView === DrawerType.Select">
     <div class="my-4 mx-4">
       <v-expansion-panels v-model="panels" rounded="xl">
         <v-expansion-panel title="Data Visualization" v-if="cardHeight">
@@ -27,6 +27,13 @@
       </div>
     </div>
   </div>
+  <div v-else-if="currentView === DrawerType.Edit">
+    <div class="my-4 mx-4">
+      <v-card class="pa-2">
+        <DataVisualizationCard :cardHeight="94" />
+      </v-card>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -37,6 +44,7 @@ import { api } from '@/services/api'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
+import { useUIStore, DrawerType } from '@/store/visualizationUI'
 
 const { resetState } = useDataVisStore()
 const {
@@ -47,6 +55,8 @@ const {
   cardHeight,
   tableHeight,
 } = storeToRefs(useDataVisStore())
+
+const { currentView } = storeToRefs(useUIStore())
 
 const panels = ref(0)
 

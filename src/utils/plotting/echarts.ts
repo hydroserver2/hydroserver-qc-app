@@ -201,6 +201,11 @@ export const createEChartsOption = (
     echartsOption.toolbox = generateToolboxOptions() as {}
   }
 
+  echartsOption.brush = {
+    toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+    xAxisIndex: 0,
+  }
+
   if (addLegend) {
     echartsOption.legend = {
       orient: 'vertical',
