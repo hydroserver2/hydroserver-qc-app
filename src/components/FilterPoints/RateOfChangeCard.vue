@@ -1,11 +1,11 @@
 <template>
   <v-card>
-    <v-card-title> Apply value threshold </v-card-title>
+    <v-card-title> Apply rate of change filter </v-card-title>
     <v-divider />
 
     <v-form ref="myForm" validate-on="blur">
       <v-card-text>
-        Select points where the value is
+        Select points where the rate of change is
         <v-select
           class="mt-2"
           :items="[
@@ -18,7 +18,7 @@
         />
         <v-text-field
           v-model.number="valueThreshold"
-          label="Value threshold"
+          label="Rate of change"
           type="number"
           clearable
         />

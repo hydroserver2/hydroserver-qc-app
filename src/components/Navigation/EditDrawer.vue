@@ -55,10 +55,15 @@
   <v-dialog v-model="openVT" max-width="500">
     <ValueThresholdsCard @close="openVT = false" />
   </v-dialog>
+
+  <v-dialog v-model="openROC" max-width="500">
+    <RateOfChangeCard @close="openROC = false" />
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
-import ValueThresholdsCard from '../FilterPoints/ValueThresholdsCard.vue'
+import ValueThresholdsCard from '@/components/FilterPoints/ValueThresholdsCard.vue'
+import RateOfChangeCard from '@/components/FilterPoints/RateOfChangeCard.vue'
 import { ref, watch } from 'vue'
 
 const selected = ref('action 1')
@@ -69,6 +74,7 @@ watch(selected, (newValue, oldValue) => {
 })
 
 const openVT = ref(false)
+const openROC = ref(false)
 
 const filterPoints = [
   {
@@ -87,6 +93,9 @@ const filterPoints = [
       prependIcon: 'mdi-delta',
     },
     value: 2,
+    clickAction: () => {
+      openROC.value = true
+    },
   },
   {
     title: 'Fill gaps',
