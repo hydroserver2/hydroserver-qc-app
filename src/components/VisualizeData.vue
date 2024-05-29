@@ -44,19 +44,13 @@ import { api } from '@/services/api'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
-import { useUIStore, DrawerType } from '@/store/visualizationUI'
+import { useUIStore, DrawerType } from '@/store/userInterface'
 
 const { resetState } = useDataVisStore()
-const {
-  things,
-  processingLevels,
-  observedProperties,
-  datastreams,
-  cardHeight,
-  tableHeight,
-} = storeToRefs(useDataVisStore())
+const { things, processingLevels, observedProperties, datastreams } =
+  storeToRefs(useDataVisStore())
 
-const { currentView } = storeToRefs(useUIStore())
+const { cardHeight, tableHeight, currentView } = storeToRefs(useUIStore())
 
 const panels = ref(0)
 

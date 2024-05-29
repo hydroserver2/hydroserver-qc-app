@@ -97,14 +97,15 @@ import { storeToRefs } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import DatastreamInformationCard from './DatastreamInformationCard.vue'
 import { downloadSelectedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
+import { useUIStore } from '@/store/userInterface'
 
+const { tableHeight } = storeToRefs(useUIStore())
 const {
   things,
   filteredDatastreams,
   selectedDatastreams,
   observedProperties,
   processingLevels,
-  tableHeight,
 } = storeToRefs(useDataVisStore())
 
 const showOnlySelected = ref(false)

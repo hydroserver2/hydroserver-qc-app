@@ -21,36 +21,37 @@ import { useObservationStore } from '@/store/observations'
 export const useDataVisStore = defineStore('dataVisualization', () => {
   const { fetchGraphSeries } = useObservationStore()
 
+  // To only fetch these once per page
   const things = ref<Thing[]>([])
   const datastreams = ref<Datastream[]>([])
   const observedProperties = ref<ObservedProperty[]>([])
   const processingLevels = ref<ProcessingLevel[]>([])
 
+  // Filters
   const selectedThings = ref<Thing[]>([])
-  const selectedDatastreams = ref<Datastream[]>([])
   const selectedObservedPropertyNames = ref<string[]>([])
   const selectedProcessingLevelNames = ref<string[]>([])
   const filterDrawer = ref(false)
   const prevFilterDrawer = ref(false)
 
-  // Echarts
+  // Echarts store?
   const showLegend = ref(true)
   const showTooltip = ref(false)
-
   const graphSeriesArray = ref<GraphSeries[]>([])
   const echartsOption = ref<EChartsOption | undefined>()
-  const loadingStates = ref(new Map<string, boolean>()) // State to track loading status of individual datasets
+  const dataZoomStart = ref(0)
+  const dataZoomEnd = ref(100)
+
+  // Datasets
+  const selectedDatastreams = ref<Datastream[]>([])
+  const loadingStates = ref(new Map<string, boolean>()) // State to track loading status of individual datastreams
   const prevIds = ref<string[]>([])
 
-  const cardHeight = ref(40)
-  const tableHeight = ref(35)
-
+  // Time range store?
   const endDate = ref<Date>(new Date())
   const oneWeek = 7 * 24 * 60 * 60 * 1000
   const beginDate = ref<Date>(new Date(endDate.value.getTime() - oneWeek))
   const selectedDateBtnId = ref(2)
-  const dataZoomStart = ref(0)
-  const dataZoomEnd = ref(100)
 
   function resetState() {
     selectedThings.value = []
@@ -343,8 +344,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     prevIds,
     loadingStates,
     selectedDateBtnId,
-    cardHeight,
-    tableHeight,
     filterDrawer,
     prevFilterDrawer,
     matchesSelectedObservedProperty,

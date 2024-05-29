@@ -8,7 +8,7 @@ export enum DrawerType {
   None = '',
 }
 
-export const useUIStore = defineStore('visualizationUI', () => {
+export const useUIStore = defineStore('userInterface', () => {
   // Navigation Drawer
   const selectedDrawer = ref<DrawerType>(DrawerType.None)
   const isDrawerOpen = ref(false)
@@ -16,6 +16,10 @@ export const useUIStore = defineStore('visualizationUI', () => {
   const currentView = ref<DrawerType.Edit | DrawerType.Select>(
     DrawerType.Select
   )
+
+  // Selection page
+  const cardHeight = ref(40)
+  const tableHeight = ref(35)
 
   const onRailItemClicked = (title: DrawerType) => {
     if (selectedDrawer.value === title) {
@@ -28,19 +32,12 @@ export const useUIStore = defineStore('visualizationUI', () => {
     }
   }
 
-  // Select View
-  const cardHeight = ref(40)
-  const tableHeight = ref(35)
-
-  const loadingStates = ref(new Map<string, boolean>()) // State to track loading status of individual datasets
-
   return {
     selectedDrawer,
     isDrawerOpen,
     currentView,
-    onRailItemClicked,
-    loadingStates,
     cardHeight,
     tableHeight,
+    onRailItemClicked,
   }
 })
