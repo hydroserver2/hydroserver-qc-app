@@ -32,14 +32,33 @@
     </v-container>
 
     <v-divider />
-    <v-list :items="filterPoints" density="compact"> </v-list>
+
+    <v-list :items="filterPoints" density="compact">
+      <v-list-subheader>Filter points</v-list-subheader>
+
+      <v-list-item
+        v-for="(item, i) in filterPoints"
+        :key="i"
+        @click="item.clickAction"
+      >
+        <template v-slot:prepend>
+          <v-icon :icon="item.props.prependIcon"></v-icon>
+        </template>
+        <v-list-item-title>{{ item.title }}</v-list-item-title>
+      </v-list-item>
+    </v-list>
 
     <v-divider />
     <v-list :items="editData" density="compact"> </v-list>
   </v-navigation-drawer>
+
+  <v-dialog v-model="openVT" max-width="500">
+    <ValueThresholdsCard @close="openVT = false" />
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
+import ValueThresholdsCard from '../FilterPoints/ValueThresholdsCard.vue'
 import { ref, watch } from 'vue'
 
 const selected = ref('action 1')
@@ -49,14 +68,18 @@ watch(selected, (newValue, oldValue) => {
   console.log(`Selected item changed from ${oldValue} to ${newValue}`)
 })
 
+const openVT = ref(false)
+
 const filterPoints = [
-  { type: 'subheader', title: 'Filter points' },
   {
     title: 'Value thresholds',
     props: {
       prependIcon: 'mdi-align-vertical-center',
     },
     value: 1,
+    clickAction: () => {
+      openVT.value = true
+    },
   },
   {
     title: 'Rate of change',

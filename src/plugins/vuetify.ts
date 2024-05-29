@@ -90,6 +90,7 @@ export default createVuetify({
     VBtnCancel: {
       color: 'grey',
       density: 'comfortable',
+      variant: 'text',
     },
     VBtnAdd: {
       color: 'secondary',
