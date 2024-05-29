@@ -9,7 +9,13 @@ import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { EChartsOption } from 'echarts'
 import { EChartsColors } from '@/utils/materialColors'
-import { createEChartsOption } from '@/utils/plotting/echarts'
+import {
+  createEChartsOption,
+  createLegendConfig,
+  createTooltipConfig,
+  generateDataZoomOptions,
+  addPaddingTop,
+} from '@/utils/plotting/echarts'
 import { useObservationStore } from '@/store/observations'
 
 export const useDataVisStore = defineStore('dataVisualization', () => {
@@ -26,6 +32,10 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const selectedProcessingLevelNames = ref<string[]>([])
   const filterDrawer = ref(false)
   const prevFilterDrawer = ref(false)
+
+  // Echarts
+  const showLegend = ref(true)
+  const showTooltip = ref(false)
 
   const graphSeriesArray = ref<GraphSeries[]>([])
   const echartsOption = ref<EChartsOption | undefined>()
@@ -275,6 +285,42 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     { deep: true, immediate: true }
   )
 
+  // TODO: Maybe create an echarts store & have this store inherit from that?
+
+  // This manually updates the legend since reactivity isn't preserved just setting
+  // the echarts option to a pinia store variable. There's probably a better way to do this
+  watch(showLegend, () => {
+    if (echartsOption.value) {
+      echartsOption.value.legend = createLegendConfig()
+      echartsOption.value.dataZoom = generateDataZoomOptions()
+      let seriesCount = 0
+
+      if (Array.isArray(echartsOption.value.series)) {
+        seriesCount = echartsOption.value.series.length
+      } else if (echartsOption.value.series) {
+        seriesCount = 1
+      }
+
+      if (Array.isArray(echartsOption.value.grid)) {
+        echartsOption.value.grid.forEach((grid) => {
+          grid.top = addPaddingTop(showLegend.value, seriesCount)
+        })
+      } else if (echartsOption.value.grid) {
+        echartsOption.value.grid.top = addPaddingTop(
+          showLegend.value,
+          seriesCount
+        )
+      }
+    }
+  })
+
+  watch(showTooltip, () => {
+    if (echartsOption.value) {
+      echartsOption.value.tooltip = createTooltipConfig()
+      echartsOption.value.dataZoom = generateDataZoomOptions()
+    }
+  })
+
   return {
     things,
     datastreams,
@@ -292,6 +338,8 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     dateOptions,
     graphSeriesArray,
     echartsOption,
+    showLegend,
+    showTooltip,
     prevIds,
     loadingStates,
     selectedDateBtnId,

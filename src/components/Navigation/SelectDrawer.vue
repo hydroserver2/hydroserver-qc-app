@@ -8,27 +8,26 @@
     theme="dark"
   >
     <v-list class="pb-2" density="compact">
-      <template v-for="item in viewItems">
-        <v-list-subheader v-if="item.type === 'subheader'">
-          {{ item.title }}
-        </v-list-subheader>
+      <v-list-subheader> View </v-list-subheader>
+      <v-list-item
+        @click="showLegend = !showLegend"
+        :prepend-icon="showLegend ? 'mdi-map' : 'mdi-map-outline'"
+        title="Show legend"
+      />
 
-        <v-list-item
-          v-else
-          @click="item.active = !item.active"
-          :prepend-icon="item.active ? item.activeIcon : item.inactiveIcon"
-          :title="item.title"
-        />
-      </template>
-    </v-list>
+      <v-list-item
+        @click="showTooltip = !showTooltip"
+        :prepend-icon="showTooltip ? 'mdi-comment' : 'mdi-comment-outline'"
+        title="Show tooltip"
+      />
 
-    <v-list class="py-0">
-      <v-list-item>
+      <v-list-item class="pb-0">
         <v-select density="compact" label="Qualifying comments"></v-select>
       </v-list-item>
     </v-list>
 
     <v-divider />
+
     <v-list class="pb-6">
       <v-list-subheader>Time filters</v-list-subheader>
       <v-list-item>
@@ -37,33 +36,19 @@
     </v-list>
 
     <v-divider />
+
     <v-list class="pb-0">
       <v-list-subheader>Datastream filters</v-list-subheader>
     </v-list>
     <DatastreamFilters />
-
-    <v-divider />
   </v-navigation-drawer>
 </template>
 
 <script setup lang="ts">
 import DataVisTimeFilters from '@/components/VisualizeData/DataVisTimeFilters.vue'
 import DatastreamFilters from '@/components/VisualizeData/DatastreamFilters.vue'
-import { ref } from 'vue'
+import { useDataVisStore } from '@/store/dataVisualization'
+import { storeToRefs } from 'pinia'
 
-const viewItems = ref([
-  { type: 'subheader', title: 'View' },
-  {
-    title: 'Show legend',
-    activeIcon: 'mdi-map',
-    inactiveIcon: 'mdi-map-outline',
-    active: false,
-  },
-  {
-    title: 'Show tooltip',
-    activeIcon: 'mdi-comment',
-    inactiveIcon: 'mdi-comment-outline',
-    active: false,
-  },
-])
+const { showLegend, showTooltip } = storeToRefs(useDataVisStore())
 </script>

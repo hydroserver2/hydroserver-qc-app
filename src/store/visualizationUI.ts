@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref, watch } from 'vue'
+import { ref } from 'vue'
 
 export enum DrawerType {
   File = 'File',
@@ -16,10 +16,6 @@ export const useUIStore = defineStore('visualizationUI', () => {
   const currentView = ref<DrawerType.Edit | DrawerType.Select>(
     DrawerType.Select
   )
-  const cardHeight = ref(40)
-  const tableHeight = ref(35)
-
-  const loadingStates = ref(new Map<string, boolean>()) // State to track loading status of individual datasets
 
   const onRailItemClicked = (title: DrawerType) => {
     if (selectedDrawer.value === title) {
@@ -32,13 +28,19 @@ export const useUIStore = defineStore('visualizationUI', () => {
     }
   }
 
+  // Select View
+  const cardHeight = ref(40)
+  const tableHeight = ref(35)
+
+  const loadingStates = ref(new Map<string, boolean>()) // State to track loading status of individual datasets
+
   return {
-    loadingStates,
-    cardHeight,
-    tableHeight,
     selectedDrawer,
     isDrawerOpen,
     currentView,
     onRailItemClicked,
+    loadingStates,
+    cardHeight,
+    tableHeight,
   }
 })

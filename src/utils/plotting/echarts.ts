@@ -1,4 +1,10 @@
-import { EChartsOption, YAXisComponentOption, SeriesOption } from 'echarts'
+import {
+  EChartsOption,
+  YAXisComponentOption,
+  SeriesOption,
+  LegendComponentOption,
+  TooltipComponentOption,
+} from 'echarts'
 import { GraphSeries } from '@/types'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
@@ -120,17 +126,45 @@ export function generateDataZoomOptions() {
   ]
 }
 
+export function createLegendConfig(): LegendComponentOption {
+  const { showLegend } = storeToRefs(useDataVisStore())
+  return {
+    show: showLegend.value,
+    orient: 'vertical',
+    left: 'auto',
+  }
+}
+
+export function createTooltipConfig(): TooltipComponentOption {
+  const { showTooltip } = storeToRefs(useDataVisStore())
+  return {
+    confine: true,
+    trigger: 'axis',
+    showContent: showTooltip.value ? true : false, // Displays the actual tooltip card
+    axisPointer: {
+      type: 'cross',
+      animation: false,
+      label: {
+        backgroundColor: '#505765',
+      },
+    },
+  }
+}
+
+export function addPaddingTop(showLegend: boolean, seriesCount: number) {
+  return showLegend ? 50 + 15 * seriesCount : 50
+}
+
 interface CustomOptions {
   addToolbox: boolean
   initializeZoomed: boolean
-  addLegend: boolean
 }
 
 export const createEChartsOption = (
   seriesArray: GraphSeries[],
   opts: Partial<CustomOptions> = {}
 ): EChartsOption => {
-  const { addToolbox = true, initializeZoomed = true, addLegend = true } = opts
+  const { addToolbox = true, initializeZoomed = true } = opts
 
   const yAxisConfigurations = createYAxisConfigurations(seriesArray)
   const yAxisOptions = generateYAxisOptions(yAxisConfigurations)
@@ -141,24 +175,16 @@ export const createEChartsOption = (
   let gridRightPadding = 20 + rightYAxesCount * 85
   let gridLeftPadding = leftYAxesCount * 85
 
+  const { showLegend } = storeToRefs(useDataVisStore())
+
   let echartsOption: EChartsOption = {
     grid: {
       bottom: 80,
       right: gridRightPadding,
-      top: 50 + 15 * seriesArray.length,
+      top: addPaddingTop(showLegend.value, seriesArray.length),
       left: gridLeftPadding,
     },
-    tooltip: {
-      confine: true,
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross',
-        animation: false,
-        label: {
-          backgroundColor: '#505765',
-        },
-      },
-    },
+    tooltip: createTooltipConfig(),
     xAxis: {
       type: 'time',
       axisLabel: {
@@ -186,23 +212,17 @@ export const createEChartsOption = (
             type: 'inside',
           },
         ],
+    brush: {
+      toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+      xAxisIndex: 0,
+    },
   }
 
   if (addToolbox) {
     echartsOption.toolbox = generateToolboxOptions() as {}
   }
 
-  echartsOption.brush = {
-    toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
-    xAxisIndex: 0,
-  }
-
-  if (addLegend) {
-    echartsOption.legend = {
-      orient: 'vertical',
-      left: 'auto',
-    }
-  }
+  echartsOption.legend = createLegendConfig()
 
   return echartsOption
 }
