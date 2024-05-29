@@ -42,7 +42,7 @@
       </v-expansion-panel-text>
     </v-expansion-panel>
 
-    <v-expansion-panel title="Observed Properties">
+    <v-expansion-panel title="Observed properties">
       <v-expansion-panel-text>
         <v-text-field
           class="pb-1"
@@ -72,7 +72,7 @@
       </v-expansion-panel-text>
     </v-expansion-panel>
 
-    <v-expansion-panel title="Processing Levels">
+    <v-expansion-panel title="Processing levels">
       <v-expansion-panel-text>
         <v-text-field
           class="pb-1"

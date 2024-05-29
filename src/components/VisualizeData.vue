@@ -3,7 +3,7 @@
   <div v-else-if="currentView === DrawerType.Select">
     <div class="my-4 mx-4">
       <v-expansion-panels v-model="panels" rounded="xl">
-        <v-expansion-panel title="Data Visualization" v-if="cardHeight">
+        <v-expansion-panel title="Data visualization" v-if="cardHeight">
           <v-divider v-if="panels === 0" />
           <v-expansion-panel-text>
             <DataVisualizationCard :cardHeight="cardHeight" />

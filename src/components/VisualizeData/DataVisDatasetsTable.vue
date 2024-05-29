@@ -6,7 +6,7 @@
 
     <v-col cols="12" sm="3" class="ml-auto">
       <v-select
-        label="Show/Hide Columns"
+        label="Show/Hide columns"
         v-model="selectedHeaders"
         :items="selectableHeaders"
         item-text="title"
@@ -180,27 +180,27 @@ const search = ref()
 const headers = reactive([
   { title: 'Plot', key: 'plot', visible: true },
   {
-    title: 'Site Code',
+    title: 'Site code',
     key: 'siteCodeName',
     visible: true,
   },
   {
-    title: 'Observed Property',
+    title: 'Observed property',
     key: 'observedPropertyName',
     visible: true,
   },
   {
-    title: 'Processing Level',
+    title: 'Processing level',
     key: 'qualityControlLevelDefinition',
     visible: true,
   },
   {
-    title: 'Number Observations',
+    title: 'Number observations',
     key: 'valueCount',
     visible: true,
   },
   {
-    title: 'Date Last Updated',
+    title: 'Date last updated',
     key: 'phenomenonEndTime',
     visible: true,
   },
