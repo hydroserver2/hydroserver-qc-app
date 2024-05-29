@@ -1,24 +1,16 @@
 <template>
   <v-card rounded="xl">
     <v-container>
-      <v-card-title> Apply rate of change filter </v-card-title>
+      <v-card-title> Filter by persistent values </v-card-title>
 
       <v-form ref="myForm" validate-on="blur">
         <v-card-text>
-          Select points where the rate of change is
-          <v-select
-            class="mt-2"
-            :items="[
-              'Greater than',
-              'Greater than or equal to',
-              'Less than',
-              'Less than or equal to',
-            ]"
-            label="Comparison operator"
-          />
+          Select points where the values are the same x times in a row
+
           <v-text-field
+            class="mt-2"
             v-model.number="valueThreshold"
-            label="Rate of change"
+            label="x"
             type="number"
             clearable
           />

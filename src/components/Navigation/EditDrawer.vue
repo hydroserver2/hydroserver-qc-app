@@ -56,14 +56,19 @@
     <ValueThresholdsCard @close="openVT = false" />
   </v-dialog>
 
-  <v-dialog v-model="openROC" max-width="500">
-    <RateOfChangeCard @close="openROC = false" />
+  <v-dialog v-model="openRateOfChange" max-width="500">
+    <RateOfChangeCard @close="openRateOfChange = false" />
+  </v-dialog>
+
+  <v-dialog v-model="openPersistence" max-width="500">
+    <PersistenceCard @close="openPersistence = false" />
   </v-dialog>
 </template>
 
 <script setup lang="ts">
 import ValueThresholdsCard from '@/components/FilterPoints/ValueThresholdsCard.vue'
 import RateOfChangeCard from '@/components/FilterPoints/RateOfChangeCard.vue'
+import PersistenceCard from '@/components/FilterPoints/PersistenceCard.vue'
 import { ref, watch } from 'vue'
 
 const selected = ref('action 1')
@@ -74,7 +79,9 @@ watch(selected, (newValue, oldValue) => {
 })
 
 const openVT = ref(false)
-const openROC = ref(false)
+const openRateOfChange = ref(false)
+const openGaps = ref(false)
+const openPersistence = ref(false)
 
 const filterPoints = [
   {
@@ -94,15 +101,18 @@ const filterPoints = [
     },
     value: 2,
     clickAction: () => {
-      openROC.value = true
+      openRateOfChange.value = true
     },
   },
   {
-    title: 'Fill gaps',
+    title: 'Select gaps',
     props: {
       prependIcon: 'mdi-keyboard-space',
     },
     value: 3,
+    clickAction: () => {
+      openGaps.value = true
+    },
   },
   {
     title: 'Persistence',
@@ -110,6 +120,9 @@ const filterPoints = [
       prependIcon: 'mdi-dots-horizontal',
     },
     value: 4,
+    clickAction: () => {
+      openPersistence.value = true
+    },
   },
 ]
 
