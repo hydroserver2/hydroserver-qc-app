@@ -95,17 +95,8 @@ export function generateSeriesOptions(
 }
 
 export function generateToolboxOptions() {
-  const { showSummaryStatistics } = storeToRefs(useDataVisStore())
   return {
     feature: {
-      mySummaryStatistics: {
-        show: true,
-        title: 'Summary Statistics',
-        icon: 'path://M3,2 L17,2 L21,6 L21,22 L3,22 L3,2 M17,2 L17,6 L21,6',
-        onclick: function () {
-          showSummaryStatistics.value = true
-        },
-      },
       dataZoom: {
         yAxisIndex: 'none',
       },

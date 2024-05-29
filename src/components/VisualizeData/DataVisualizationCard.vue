@@ -4,12 +4,8 @@
       <v-progress-linear color="primary" :active="isActive" indeterminate />
     </template>
 
-    <div v-if="showSummaryStatistics">
-      <SummaryStatisticsTable />
-    </div>
-
     <keep-alive>
-      <v-card-text v-if="option && !showSummaryStatistics && isDataAvailable">
+      <v-card-text v-if="option && isDataAvailable">
         <v-chart
           ref="echartsRef"
           :option="option"
@@ -20,10 +16,7 @@
       </v-card-text>
     </keep-alive>
 
-    <div
-      v-if="!isDataAvailable && !showSummaryStatistics"
-      :style="{ 'min-height': `${cardHeight}vh` }"
-    >
+    <div v-if="!isDataAvailable" :style="{ 'min-height': `${cardHeight}vh` }">
       <v-card-text>
         <v-timeline align="start" density="compact">
           <v-timeline-item size="x-small" dot-color="primary">
@@ -71,7 +64,6 @@
 </template>
 
 <script setup lang="ts">
-import SummaryStatisticsTable from '@/components/VisualizeData/SummaryStatisticsTable.vue'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { ref, watch, computed, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -83,7 +75,6 @@ const props = defineProps({
 })
 
 const {
-  showSummaryStatistics,
   dataZoomStart,
   dataZoomEnd,
   graphSeriesArray,

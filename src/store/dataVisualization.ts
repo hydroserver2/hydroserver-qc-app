@@ -5,10 +5,6 @@ import {
   Thing,
   GraphSeries,
 } from '@/types'
-import {
-  SummaryStatistics,
-  calculateSummaryStatistics,
-} from '@/utils/plotting/summaryStatisticUtils'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { EChartsOption } from 'echarts'
@@ -31,9 +27,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const filterDrawer = ref(false)
   const prevFilterDrawer = ref(false)
 
-  const showSummaryStatistics = ref(false)
-  const summaryStatisticsArray = ref<SummaryStatistics[]>([])
-
   const graphSeriesArray = ref<GraphSeries[]>([])
   const echartsOption = ref<EChartsOption | undefined>()
   const loadingStates = ref(new Map<string, boolean>()) // State to track loading status of individual datasets
@@ -54,8 +47,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     selectedDatastreams.value = []
     selectedObservedPropertyNames.value = []
     selectedProcessingLevelNames.value = []
-    showSummaryStatistics.value = false
-    summaryStatisticsArray.value = []
     endDate.value = new Date()
     beginDate.value = new Date(new Date().getTime() - oneWeek)
     selectedDateBtnId.value = 2
@@ -189,9 +180,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     graphSeriesArray.value.forEach((series, index) => {
       series.lineColor = EChartsColors[index % EChartsColors.length]
     })
-    summaryStatisticsArray.value = calculateSummaryStatistics(
-      graphSeriesArray.value
-    )
     echartsOption.value = createEChartsOption(graphSeriesArray.value)
     prevIds.value = graphSeriesArray.value.map((series) => series.id)
   }
@@ -253,7 +241,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const clearState = () => {
     graphSeriesArray.value = []
     prevIds.value = []
-    showSummaryStatistics.value = false
     echartsOption.value = undefined
   }
 
@@ -308,8 +295,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     prevIds,
     loadingStates,
     selectedDateBtnId,
-    showSummaryStatistics,
-    summaryStatisticsArray,
     cardHeight,
     tableHeight,
     filterDrawer,
