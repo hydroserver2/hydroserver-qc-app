@@ -69,19 +69,20 @@ import { ref, watch, computed, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import VChart from 'vue-echarts'
 import 'echarts'
+import { useEChartsStore } from '@/store/echarts'
 
 const props = defineProps({
   cardHeight: { type: Number, required: true },
 })
+
+const { loadingStates, selectedDatastreams } = storeToRefs(useDataVisStore())
 
 const {
   dataZoomStart,
   dataZoomEnd,
   graphSeriesArray,
   echartsOption: option,
-  loadingStates,
-  selectedDatastreams,
-} = storeToRefs(useDataVisStore())
+} = storeToRefs(useEChartsStore())
 
 const echartsRef = ref<typeof VChart | null>(null)
 

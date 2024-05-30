@@ -8,16 +8,17 @@ export enum DrawerType {
   None = '',
 }
 
+type View = DrawerType.Edit | DrawerType.Select
+
 export const useUIStore = defineStore('userInterface', () => {
   // Navigation Drawer
   const selectedDrawer = ref<DrawerType>(DrawerType.None)
   const isDrawerOpen = ref(false)
 
-  const currentView = ref<DrawerType.Edit | DrawerType.Select>(
-    DrawerType.Select
-  )
+  // View
+  const currentView = ref<View>(DrawerType.Select)
 
-  // Selection page
+  // Selection View
   const cardHeight = ref(40)
   const tableHeight = ref(35)
 

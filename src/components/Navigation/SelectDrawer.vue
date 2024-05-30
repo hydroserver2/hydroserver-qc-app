@@ -47,8 +47,8 @@
 <script setup lang="ts">
 import DataVisTimeFilters from '@/components/VisualizeData/DataVisTimeFilters.vue'
 import DatastreamFilters from '@/components/VisualizeData/DatastreamFilters.vue'
-import { useDataVisStore } from '@/store/dataVisualization'
+import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
 
-const { showLegend, showTooltip } = storeToRefs(useDataVisStore())
+const { showLegend, showTooltip } = storeToRefs(useEChartsStore())
 </script>

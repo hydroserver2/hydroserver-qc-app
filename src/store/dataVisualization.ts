@@ -1,25 +1,17 @@
-import {
-  Datastream,
-  ObservedProperty,
-  ProcessingLevel,
-  Thing,
-  GraphSeries,
-} from '@/types'
-import { defineStore } from 'pinia'
+import { Datastream, ObservedProperty, ProcessingLevel, Thing } from '@/types'
+import { defineStore, storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
-import { EChartsOption } from 'echarts'
-import { EChartsColors } from '@/utils/materialColors'
-import {
-  createEChartsOption,
-  createLegendConfig,
-  createTooltipConfig,
-  generateDataZoomOptions,
-  addPaddingTop,
-} from '@/utils/plotting/echarts'
-import { useObservationStore } from '@/store/observations'
+import { useEChartsStore } from './echarts'
 
 export const useDataVisStore = defineStore('dataVisualization', () => {
-  const { fetchGraphSeries } = useObservationStore()
+  const {
+    resetChartZoom,
+    updateVisualization,
+    clearChartState,
+    fetchGraphSeries,
+  } = useEChartsStore()
+
+  const { graphSeriesArray, prevIds } = storeToRefs(useEChartsStore())
 
   // To only fetch these once per page
   const things = ref<Thing[]>([])
@@ -31,23 +23,12 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const selectedThings = ref<Thing[]>([])
   const selectedObservedPropertyNames = ref<string[]>([])
   const selectedProcessingLevelNames = ref<string[]>([])
-  const filterDrawer = ref(false)
-  const prevFilterDrawer = ref(false)
-
-  // Echarts store?
-  const showLegend = ref(true)
-  const showTooltip = ref(false)
-  const graphSeriesArray = ref<GraphSeries[]>([])
-  const echartsOption = ref<EChartsOption | undefined>()
-  const dataZoomStart = ref(0)
-  const dataZoomEnd = ref(100)
 
   // Datasets
   const selectedDatastreams = ref<Datastream[]>([])
   const loadingStates = ref(new Map<string, boolean>()) // State to track loading status of individual datastreams
-  const prevIds = ref<string[]>([])
 
-  // Time range store?
+  // Time range
   const endDate = ref<Date>(new Date())
   const oneWeek = 7 * 24 * 60 * 60 * 1000
   const beginDate = ref<Date>(new Date(endDate.value.getTime() - oneWeek))
@@ -61,8 +42,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     endDate.value = new Date()
     beginDate.value = new Date(new Date().getTime() - oneWeek)
     selectedDateBtnId.value = 2
-    dataZoomStart.value = 0
-    dataZoomEnd.value = 100
+    resetChartZoom()
   }
 
   function matchesSelectedObservedProperty(datastream: Datastream) {
@@ -156,15 +136,14 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     update = true,
     custom = true,
   }: SetDateRangeParams) => {
-    dataZoomStart.value = 0
-    dataZoomEnd.value = 100
+    resetChartZoom()
     if (begin) beginDate.value = begin
     if (end) endDate.value = end
 
     if (custom) selectedDateBtnId.value = -1
 
     if (update) {
-      clearState()
+      clearChartState()
       if (!beginDate || !endDate || !selectedDatastreams.value.length) return
       updateDatasets(selectedDatastreams.value)
     }
@@ -185,14 +164,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
         custom: false,
       })
     }
-  }
-
-  function updateVisualization() {
-    graphSeriesArray.value.forEach((series, index) => {
-      series.lineColor = EChartsColors[index % EChartsColors.length]
-    })
-    echartsOption.value = createEChartsOption(graphSeriesArray.value)
-    prevIds.value = graphSeriesArray.value.map((series) => series.id)
   }
 
   const fetchDatasets = (datastreams: Datastream[]) => {
@@ -249,12 +220,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     { deep: true }
   )
 
-  const clearState = () => {
-    graphSeriesArray.value = []
-    prevIds.value = []
-    echartsOption.value = undefined
-  }
-
   // Update the time range to the most recent phenomenon end time
   let prevDatastreamIds = ''
   watch(
@@ -263,7 +228,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       const newDatastreamIds = JSON.stringify(newDs.map((ds) => ds.id).sort())
 
       if (!newDs.length || !beginDate.value || !endDate.value) {
-        clearState()
+        clearChartState()
       } else if (newDatastreamIds !== prevDatastreamIds) {
         const oldEnd = endDate.value
         const oldBegin = beginDate.value
@@ -278,49 +243,13 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
           oldEnd.getTime() !== endDate.value.getTime() ||
           oldBegin.getTime() !== beginDate.value.getTime()
         )
-          clearState()
+          clearChartState()
         updateDatasets(newDs)
       }
       prevDatastreamIds = newDatastreamIds
     },
     { deep: true, immediate: true }
   )
-
-  // TODO: Maybe create an echarts store & have this store inherit from that?
-
-  // This manually updates the legend since reactivity isn't preserved just setting
-  // the echarts option to a pinia store variable. There's probably a better way to do this
-  watch(showLegend, () => {
-    if (echartsOption.value) {
-      echartsOption.value.legend = createLegendConfig()
-      echartsOption.value.dataZoom = generateDataZoomOptions()
-      let seriesCount = 0
-
-      if (Array.isArray(echartsOption.value.series)) {
-        seriesCount = echartsOption.value.series.length
-      } else if (echartsOption.value.series) {
-        seriesCount = 1
-      }
-
-      if (Array.isArray(echartsOption.value.grid)) {
-        echartsOption.value.grid.forEach((grid) => {
-          grid.top = addPaddingTop(showLegend.value, seriesCount)
-        })
-      } else if (echartsOption.value.grid) {
-        echartsOption.value.grid.top = addPaddingTop(
-          showLegend.value,
-          seriesCount
-        )
-      }
-    }
-  })
-
-  watch(showTooltip, () => {
-    if (echartsOption.value) {
-      echartsOption.value.tooltip = createTooltipConfig()
-      echartsOption.value.dataZoom = generateDataZoomOptions()
-    }
-  })
 
   return {
     things,
@@ -334,18 +263,9 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     selectedDatastreams,
     beginDate,
     endDate,
-    dataZoomStart,
-    dataZoomEnd,
     dateOptions,
-    graphSeriesArray,
-    echartsOption,
-    showLegend,
-    showTooltip,
-    prevIds,
     loadingStates,
     selectedDateBtnId,
-    filterDrawer,
-    prevFilterDrawer,
     matchesSelectedObservedProperty,
     matchesSelectedProcessingLevel,
     matchesSelectedThing,

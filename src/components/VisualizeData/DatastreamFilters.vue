@@ -122,7 +122,6 @@ const {
   selectedThings,
   selectedObservedPropertyNames,
   selectedProcessingLevelNames,
-  filterDrawer,
 } = storeToRefs(useDataVisStore())
 
 const searchThing = ref('')

@@ -7,7 +7,7 @@ import {
 } from 'echarts'
 import { GraphSeries } from '@/types'
 import { storeToRefs } from 'pinia'
-import { useDataVisStore } from '@/store/dataVisualization'
+import { useEChartsStore } from '@/store/echarts'
 
 type yAxisConfigurationMap = Map<
   string,
@@ -113,7 +113,7 @@ export function generateToolboxOptions() {
 }
 
 export function generateDataZoomOptions() {
-  const { dataZoomStart, dataZoomEnd } = storeToRefs(useDataVisStore())
+  const { dataZoomStart, dataZoomEnd } = storeToRefs(useEChartsStore())
   return [
     {
       type: 'slider', // Creates a 'brush/context' zoom window
@@ -127,7 +127,7 @@ export function generateDataZoomOptions() {
 }
 
 export function createLegendConfig(): LegendComponentOption {
-  const { showLegend } = storeToRefs(useDataVisStore())
+  const { showLegend } = storeToRefs(useEChartsStore())
   return {
     show: showLegend.value,
     orient: 'vertical',
@@ -136,7 +136,7 @@ export function createLegendConfig(): LegendComponentOption {
 }
 
 export function createTooltipConfig(): TooltipComponentOption {
-  const { showTooltip } = storeToRefs(useDataVisStore())
+  const { showTooltip } = storeToRefs(useEChartsStore())
   return {
     confine: true,
     trigger: 'axis',
@@ -175,7 +175,7 @@ export const createEChartsOption = (
   let gridRightPadding = 20 + rightYAxesCount * 85
   let gridLeftPadding = leftYAxesCount * 85
 
-  const { showLegend } = storeToRefs(useDataVisStore())
+  const { showLegend } = storeToRefs(useEChartsStore())
 
   let echartsOption: EChartsOption = {
     grid: {
