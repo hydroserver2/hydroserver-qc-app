@@ -14,6 +14,10 @@
             :value="item.title"
             @click="onRailItemClicked(item.title as DrawerType)"
             v-bind:="props"
+            :class="{
+              'v-list-item--active':
+                selectedDrawer === item.title && isDrawerOpen,
+            }"
           />
         </template>
         {{ item.title }}

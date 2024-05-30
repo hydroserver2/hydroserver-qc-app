@@ -12,13 +12,13 @@ type View = DrawerType.Edit | DrawerType.Select
 
 export const useUIStore = defineStore('userInterface', () => {
   // Navigation Drawer
-  const selectedDrawer = ref<DrawerType>(DrawerType.None)
-  const isDrawerOpen = ref(false)
+  const selectedDrawer = ref<DrawerType>(DrawerType.Select)
+  const isDrawerOpen = ref(true)
 
   // View
   const currentView = ref<View>(DrawerType.Select)
 
-  // Selection View
+  // Selection view content
   const cardHeight = ref(40)
   const tableHeight = ref(35)
 
