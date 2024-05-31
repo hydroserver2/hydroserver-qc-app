@@ -221,7 +221,9 @@ const headers = reactive([
 ])
 
 const selectableHeaders = computed(() => {
-  return headers.filter((header) => header.key !== 'plot')
+  return headers.filter(
+    (header) => header.key !== 'plot' && header.key !== 'select'
+  )
 })
 
 const sortBy = [
