@@ -9,18 +9,26 @@
     <v-list density="compact" nav>
       <v-tooltip bottom :openDelay="500" v-for="item in items">
         <template v-slot:activator="{ props }">
-          <v-list-item
-            :prepend-icon="item.icon"
-            :value="item.title"
-            @click="onRailItemClicked(item.title as DrawerType)"
-            v-bind:="props"
-            :class="{
-              'v-list-item--active':
-                selectedDrawer === item.title && isDrawerOpen,
-            }"
-          />
+          <div v-bind:="props">
+            <v-list-item
+              :prepend-icon="item.icon"
+              :value="item.title"
+              @click="onRailItemClicked(item.title as DrawerType)"
+              :class="{
+                'v-list-item--active':
+                  selectedDrawer === item.title && isDrawerOpen,
+              }"
+              :disabled="item.title === 'Edit' && !qcDatastream"
+            />
+          </div>
         </template>
-        {{ item.title }}
+        <template #default>
+          <span v-if="item.title === 'Edit' && !qcDatastream">
+            Edit - Select a datastream for quality control before navigating to
+            this view.
+          </span>
+          <span v-else>{{ item.title }}</span>
+        </template>
       </v-tooltip>
     </v-list>
 
@@ -50,10 +58,12 @@ import { useAuthStore } from '@/store/authentication'
 import { useUIStore, DrawerType } from '@/store/userInterface'
 import { Snackbar } from '@/utils/notifications'
 import { storeToRefs } from 'pinia'
+import { useDataVisStore } from '@/store/dataVisualization'
 
 const { logout } = useAuthStore()
 const { onRailItemClicked } = useUIStore()
 const { selectedDrawer, isDrawerOpen } = storeToRefs(useUIStore())
+const { qcDatastream } = storeToRefs(useDataVisStore())
 
 const items = ref([
   { title: 'File', icon: 'mdi-file' },

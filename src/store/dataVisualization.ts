@@ -25,8 +25,13 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const selectedProcessingLevelNames = ref<string[]>([])
 
   // Datasets
+  /** The datastream selected to go through the quality control process */
+  const qcDatastream = ref<Datastream | null>(null)
   const selectedDatastreams = ref<Datastream[]>([])
-  const loadingStates = ref(new Map<string, boolean>()) // State to track loading status of individual datastreams
+
+  /** Track the loading status of each datastream to be plotted.
+   * Set to true when we get a response from the API. Keyed by datastream id. */
+  const loadingStates = ref(new Map<string, boolean>())
 
   // Time range
   const endDate = ref<Date>(new Date())
@@ -266,6 +271,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     dateOptions,
     loadingStates,
     selectedDateBtnId,
+    qcDatastream,
     matchesSelectedObservedProperty,
     matchesSelectedProcessingLevel,
     matchesSelectedThing,
