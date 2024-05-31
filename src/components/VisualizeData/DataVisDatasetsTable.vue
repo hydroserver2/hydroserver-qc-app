@@ -73,10 +73,22 @@
       <template v-slot:item.plot="{ item }">
         <v-checkbox
           :model-value="isChecked(item)"
+          :disabled="
+            (selectedDatastreams.length >= 5 && !isChecked(item)) ||
+            isSelected(item)
+          "
+          class="d-flex align-self-center"
+          density="compact"
+          @change="() => updatePlottedDatastreams(item)"
+        />
+      </template>
+      <template v-slot:item.select="{ item }">
+        <v-checkbox
+          :model-value="isSelected(item)"
           :disabled="selectedDatastreams.length >= 5 && !isChecked(item)"
           class="d-flex align-self-center"
           density="compact"
-          @change="() => updateSelectedDatastreams(item)"
+          @change="() => updateSelectedDatastream(item)"
         />
       </template>
     </v-data-table-virtual>
@@ -106,6 +118,7 @@ const {
   selectedDatastreams,
   observedProperties,
   processingLevels,
+  qcDatastream,
 } = storeToRefs(useDataVisStore())
 
 const showOnlySelected = ref(false)
@@ -171,15 +184,15 @@ function clearSelected() {
   selectedDatastreams.value = []
 }
 
-const isChecked = (item: Datastream) => {
-  return computed(() =>
-    selectedDatastreams.value.some((sds) => sds.id === item.id)
-  ).value
-}
+const isChecked = (item: Datastream) =>
+  selectedDatastreams.value.some((sds) => sds.id === item.id)
+
+const isSelected = (ds: Datastream) => ds.id === qcDatastream.value?.id
 
 const search = ref()
 const headers = reactive([
   { title: 'Plot', key: 'plot', visible: true },
+  { title: 'Select', key: 'select', visible: true },
   {
     title: 'Site code',
     key: 'siteCodeName',
@@ -226,11 +239,47 @@ const selectedHeaders = computed({
   },
 })
 
-function updateSelectedDatastreams(datastream: Datastream) {
-  const index = selectedDatastreams.value.findIndex(
-    (ds) => ds.id === datastream.id
-  )
+const findIndexInPlotted = (ds: Datastream) =>
+  selectedDatastreams.value.findIndex((item) => item.id === ds.id)
+
+const addDatastreamToPlotted = (ds: Datastream) => {
+  const index = findIndexInPlotted(ds)
+  if (index === -1) selectedDatastreams.value.push(ds)
+}
+
+function updatePlottedDatastreams(datastream: Datastream) {
+  const index = findIndexInPlotted(datastream)
   if (index === -1) selectedDatastreams.value.push(datastream)
   else selectedDatastreams.value.splice(index, 1)
+}
+
+function updateSelectedDatastream(datastream: Datastream) {
+  // Case 1: No currently selected & selecting
+  if (qcDatastream.value === null) {
+    addDatastreamToPlotted(datastream)
+    qcDatastream.value = datastream
+    return
+  }
+
+  // Case 2: There is a currently selected
+  // Case 2.1: There's an unsaved history - open a modal that says this action will delete their unsaved work.
+  // TODO - Or do we want a watcher in the dataVis store that does this check reactively?
+  // Probably two watchers so we're looking at selectedDatastreams.
+  // If the qc datastream gets deselected, then check or when someone changed
+  // the qcDatastream's value check and revert if there's a history
+
+  // if (!historyResolved()) {
+  //   return
+  // }
+
+  // Case 2.2: There's no history and we're unselecting it
+  if (datastream.id === qcDatastream.value.id) {
+    qcDatastream.value = null
+    return
+  }
+
+  // Case 2.3: Switching datastreams
+  addDatastreamToPlotted(datastream)
+  qcDatastream.value = datastream
 }
 </script>
