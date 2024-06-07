@@ -20,13 +20,14 @@ export const fetchObservationsParallel = async (
   let skipCount = 0
   while (skipCount < valueCount) {
     endpoints.push(
-      getObservationsEndpoint(
+      getObservationsEndpoint({
         id,
         pageSize,
-        startTime ? startTime : phenomenonBeginTime,
-        endTime ? endTime : phenomenonEndTime,
-        skipCount
-      )
+        startTime: startTime ?? phenomenonBeginTime,
+        endTime: endTime ?? phenomenonEndTime,
+        skipCount,
+        addResultQualifiers: true,
+      })
     )
     skipCount += pageSize
   }
@@ -115,5 +116,6 @@ export function preProcessData(dataArray: DataArray, datastream: Datastream) {
 
     data = addNaNForGaps(data, maxGap)
   }
+  console.log('data', data)
   return data
 }

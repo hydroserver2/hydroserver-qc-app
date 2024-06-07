@@ -33,18 +33,29 @@ export const SENSORTHINGS_BASE = `${BASE_URL}/sensorthings/v1.1`
 
 export const JWT_REFRESH = `${ACCOUNT_BASE}/jwt/refresh`
 
-export const getObservationsEndpoint = (
-  id: string,
-  pageSize: number,
-  startTime: string,
-  endTime?: string,
+interface GetObservationsEndpointParams {
+  id: string
+  pageSize: number
+  startTime: string
+  endTime?: string
   skipCount?: number
-) => {
+  addResultQualifiers?: boolean
+}
+
+export const getObservationsEndpoint = ({
+  id,
+  pageSize,
+  startTime,
+  endTime,
+  skipCount,
+  addResultQualifiers,
+}: GetObservationsEndpointParams): string => {
   let url = `${SENSORTHINGS_BASE}/Datastreams('${id}')/Observations?$resultFormat=dataArray`
   url += `&$top=${pageSize}`
   url += `&$filter=phenomenonTime%20ge%20${startTime}`
   if (endTime) url += `%20and%20phenomenonTime%20lt%20${endTime}`
   if (skipCount) url += `&$skip=${skipCount}`
+  if (addResultQualifiers) url += `&$select=phenomenonTime,result,resultQuality`
   return url
 }
 

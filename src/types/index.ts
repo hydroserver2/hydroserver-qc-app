@@ -3,7 +3,18 @@ export type DataPoint = {
   value: number
 }
 
-export type DataArray = [string, number][]
+export interface ResultQualifier {
+  code: string
+  description: string
+}
+
+export type Observation = [
+  string,
+  number,
+  { quality_code: string | null; result_qualifiers: ResultQualifier[] }
+]
+
+export type DataArray = Observation[]
 
 export class ObservationRecord {
   dataArray: DataArray
