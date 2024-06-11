@@ -88,6 +88,7 @@ export function generateSeriesOptions(
     name: series.name,
     type: 'line',
     data: series.data.map((dp) => [dp.date.getTime(), dp.value]),
+    xAxisIndex: 0,
     yAxisIndex: yAxisConfigurations.get(series.yAxisLabel)?.index,
     itemStyle: {
       color: series.lineColor,
@@ -104,34 +105,47 @@ export function generateToolboxOptions() {
   return {
     feature: {
       dataZoom: {
-        yAxisIndex: 'none',
+        yAxisIndex: false,
       },
       restore: {},
       saveAsImage: { name: 'plot_export' },
+      brush: {
+        type: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+      },
     },
   }
 }
 
-export function generateDataZoomOptions() {
+export function generateDataZoomOptions(initializeZoomed: boolean) {
   const { dataZoomStart, dataZoomEnd } = storeToRefs(useEChartsStore())
-  return [
-    {
-      type: 'slider', // Creates a 'brush/context' zoom window
+
+  // For mouse scrolling in the chart
+  const insideSettings = {
+    type: 'inside',
+    xAxisIndex: [0, 1],
+  }
+
+  const sliderSettings = {
+    type: 'slider',
+    xAxisIndex: [0, 1],
+    bottom: '60',
+    ...(initializeZoomed && {
       start: dataZoomStart.value,
       end: dataZoomEnd.value,
-    },
-    {
-      type: 'inside', // For mouse scrolling in the chart
-    },
-  ]
+    }),
+  }
+
+  return [sliderSettings, insideSettings]
 }
 
 export function createLegendConfig(): LegendComponentOption {
   const { showLegend } = storeToRefs(useEChartsStore())
   return {
+    bottom: 0,
     show: showLegend.value,
-    orient: 'vertical',
-    left: 'auto',
+    // orient: 'vertical',
+    // left: 'auto',
+    left: 'center',
   }
 }
 
@@ -151,10 +165,6 @@ export function createTooltipConfig(): TooltipComponentOption {
   }
 }
 
-export function addPaddingTop(showLegend: boolean, seriesCount: number) {
-  return showLegend ? 50 + 15 * seriesCount : 50
-}
-
 interface CustomOptions {
   addToolbox: boolean
   initializeZoomed: boolean
@@ -168,53 +178,85 @@ export const createEChartsOption = (
 
   const yAxisConfigurations = createYAxisConfigurations(seriesArray)
   const yAxisOptions = generateYAxisOptions(yAxisConfigurations)
+
+  // Push qualifying comments axis
+  yAxisOptions.push({
+    show: false,
+    gridIndex: 1,
+    // splitNumber:.001,
+    max: '1000000000000000',
+    min: '-1000000000000000',
+  })
+
   const seriesOptions = generateSeriesOptions(seriesArray, yAxisConfigurations)
+
+  // TODO: Only add this for the selected dataset if there is one
+  // TODO: Only add points where there's a qualifying comment
+  seriesOptions.push({
+    type: 'scatter',
+    data: seriesArray[0].data.map((dp) => [dp.date.getTime(), dp.value]), // XAxis data must be the same or the on mouse vertical lines won't sync up
+    xAxisIndex: 1,
+    yAxisIndex: yAxisConfigurations.size,
+    symbolSize: 5,
+    itemStyle: {
+      color: '#F44336',
+    },
+  })
 
   const leftYAxesCount = Math.ceil(yAxisConfigurations.size / 2)
   const rightYAxesCount = yAxisConfigurations.size - leftYAxesCount
   let gridRightPadding = 20 + rightYAxesCount * 85
   let gridLeftPadding = leftYAxesCount * 85
 
-  const { showLegend } = storeToRefs(useEChartsStore())
-
   let echartsOption: EChartsOption = {
-    grid: {
-      bottom: 80,
-      right: gridRightPadding,
-      top: addPaddingTop(showLegend.value, seriesArray.length),
-      left: gridLeftPadding,
-    },
+    grid: [
+      {
+        bottom: '160',
+        right: gridRightPadding,
+        left: gridLeftPadding,
+      },
+      {
+        bottom: '90',
+        right: gridRightPadding,
+        left: gridLeftPadding,
+        height: '5%',
+      },
+    ],
     tooltip: createTooltipConfig(),
-    xAxis: {
-      type: 'time',
-      axisLabel: {
-        hideOverlap: true,
-        formatter: {
-          year: '{yyyy}',
-          month: '{MMM} {yyyy}',
-          day: '{MMM} {d}, {yy}',
-          hour: '{HH}:{mm}\n{MMM} {d}, {yy}',
-          minute: '{HH}:{mm}\n{MMM} {d}, {yy}',
-          second: '{H}:{mm}:{s}\n{MMM} {d}, {yy}',
-          millisecond: '{HH}:{mm}:{s}:{S}\n{MMM} {d}, {yy}',
+    xAxis: [
+      {
+        type: 'time',
+        axisLabel: {
+          hideOverlap: true,
+          formatter: {
+            year: '{yyyy}',
+            month: '{MMM} {yyyy}',
+            day: '{MMM} {d}, {yy}',
+            hour: '{HH}:{mm}\n{MMM} {d}, {yy}',
+            minute: '{HH}:{mm}\n{MMM} {d}, {yy}',
+            second: '{H}:{mm}:{s}\n{MMM} {d}, {yy}',
+            millisecond: '{HH}:{mm}:{s}:{S}\n{MMM} {d}, {yy}',
+          },
         },
       },
-    },
+      {
+        type: 'time',
+        show: false,
+        gridIndex: 1,
+      },
+    ],
     yAxis: yAxisOptions,
     series: seriesOptions,
-    dataZoom: initializeZoomed
-      ? generateDataZoomOptions()
-      : [
-          {
-            type: 'slider',
-          },
-          {
-            type: 'inside',
-          },
-        ],
-    brush: {
-      toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
-      xAxisIndex: 0,
+    dataZoom: generateDataZoomOptions(initializeZoomed),
+    axisPointer: {
+      link: [
+        {
+          xAxisIndex: 'all',
+        },
+      ],
+      label: {
+        backgroundColor: '#777',
+      },
     },
   }
 
