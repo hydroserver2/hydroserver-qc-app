@@ -8,6 +8,8 @@ import {
 import { GraphSeries } from '@/types'
 import { storeToRefs } from 'pinia'
 import { useEChartsStore } from '@/store/echarts'
+import { useDataVisStore } from '@/store/dataVisualization'
+import { GridOption, XAXisOption, YAXisOption } from 'echarts/types/dist/shared'
 
 type yAxisConfigurationMap = Map<
   string,
@@ -165,8 +167,9 @@ export function createTooltipConfig(): TooltipComponentOption {
   }
 }
 
+export function addResultQualifiers() {}
+
 interface CustomOptions {
-  addToolbox: boolean
   initializeZoomed: boolean
 }
 
@@ -174,34 +177,12 @@ export const createEChartsOption = (
   seriesArray: GraphSeries[],
   opts: Partial<CustomOptions> = {}
 ): EChartsOption => {
-  const { addToolbox = true, initializeZoomed = true } = opts
+  const { initializeZoomed = true } = opts
+  const { qcDatastream } = storeToRefs(useDataVisStore())
 
   const yAxisConfigurations = createYAxisConfigurations(seriesArray)
   const yAxisOptions = generateYAxisOptions(yAxisConfigurations)
-
-  // Push qualifying comments axis
-  yAxisOptions.push({
-    show: false,
-    gridIndex: 1,
-    // splitNumber:.001,
-    max: '1000000000000000',
-    min: '-1000000000000000',
-  })
-
   const seriesOptions = generateSeriesOptions(seriesArray, yAxisConfigurations)
-
-  // TODO: Only add this for the selected dataset if there is one
-  // TODO: Only add points where there's a qualifying comment
-  seriesOptions.push({
-    type: 'scatter',
-    data: seriesArray[0].data.map((dp) => [dp.date.getTime(), dp.value]), // XAxis data must be the same or the on mouse vertical lines won't sync up
-    xAxisIndex: 1,
-    yAxisIndex: yAxisConfigurations.size,
-    symbolSize: 5,
-    itemStyle: {
-      color: '#F44336',
-    },
-  })
 
   const leftYAxesCount = Math.ceil(yAxisConfigurations.size / 2)
   const rightYAxesCount = yAxisConfigurations.size - leftYAxesCount
@@ -214,12 +195,6 @@ export const createEChartsOption = (
         bottom: '160',
         right: gridRightPadding,
         left: gridLeftPadding,
-      },
-      {
-        bottom: '90',
-        right: gridRightPadding,
-        left: gridLeftPadding,
-        height: '5%',
       },
     ],
     tooltip: createTooltipConfig(),
@@ -239,32 +214,71 @@ export const createEChartsOption = (
           },
         },
       },
-      {
-        type: 'time',
-        show: false,
-        gridIndex: 1,
-      },
     ],
     yAxis: yAxisOptions,
     series: seriesOptions,
     dataZoom: generateDataZoomOptions(initializeZoomed),
-    axisPointer: {
-      link: [
-        {
-          xAxisIndex: 'all',
-        },
-      ],
-      label: {
-        backgroundColor: '#777',
+    legend: createLegendConfig(),
+    toolbox: generateToolboxOptions() as {},
+  }
+
+  // Check if one of the datastreams is selected for quality control
+  if (!qcDatastream.value?.id) return echartsOption
+  let qcIndex = -1
+  qcIndex = seriesArray.findIndex((s) => s.id === qcDatastream.value!.id)
+  if (qcIndex === -1) {
+    return echartsOption
+  }
+
+  // Add second grid
+  ;(echartsOption.grid as GridOption[]).push({
+    bottom: '90',
+    right: gridRightPadding,
+    left: gridLeftPadding,
+    height: '5%',
+  })
+
+  // Add YAxis
+  ;(echartsOption.yAxis! as YAXisOption[]).push({
+    show: false,
+    gridIndex: 1,
+    // splitNumber:.001,
+    max: '1000000000000000',
+    min: '-1000000000000000',
+  })
+
+  // Add XAxis
+  ;(echartsOption.xAxis! as XAXisOption[]).push({
+    type: 'time',
+    show: false,
+    gridIndex: 1,
+  })
+
+  console.log('seriesArray', seriesArray[qcIndex].data)
+  // TODO: Only add this for the selected dataset if there is one
+  // TODO: Only add points where there's a qualifying comment
+  ;(echartsOption.series! as SeriesOption[]).push({
+    type: 'scatter',
+    // XAxis data must be the same or the on mouse vertical lines won't sync up
+    data: seriesArray[qcIndex].data.map((dp) => [dp.date.getTime(), dp.value]),
+    xAxisIndex: 1,
+    yAxisIndex: yAxisConfigurations.size,
+    symbolSize: 5,
+    itemStyle: {
+      color: '#F44336',
+    },
+  })
+
+  echartsOption.axisPointer = {
+    link: [
+      {
+        xAxisIndex: 'all',
       },
+    ],
+    label: {
+      backgroundColor: '#777',
     },
   }
-
-  if (addToolbox) {
-    echartsOption.toolbox = generateToolboxOptions() as {}
-  }
-
-  echartsOption.legend = createLegendConfig()
 
   return echartsOption
 }
