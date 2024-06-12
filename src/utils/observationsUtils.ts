@@ -48,10 +48,13 @@ export const fetchObservationsParallel = async (
   }
 }
 
-export function toDataPointArray(dataArray: DataArray) {
-  return dataArray.map(([dateString, value]) => ({
+export function toDataPointArray(dataArray: DataArray): DataPoint[] {
+  return dataArray.map(([dateString, value, qualifiers]) => ({
     date: new Date(dateString),
     value,
+    qualifierValue: qualifiers.result_qualifiers.length
+      ? qualifiers.result_qualifiers.map((q) => q.code).join(', ')
+      : NaN,
   }))
 }
 
@@ -60,6 +63,7 @@ export function replaceNoDataValues(data: DataPoint[], noDataValue: number) {
   return data.map((d) => ({
     ...d,
     value: d.value === noDataValue ? NaN : d.value,
+    qualifierValue: d.qualifierValue,
   }))
 }
 
@@ -94,6 +98,7 @@ export function addNaNForGaps(data: DataPoint[], maxGap: number): DataPoint[] {
         modifiedData.push({
           date: new Date(point.date.getTime() + 1),
           value: NaN,
+          qualifierValue: NaN,
         })
       }
     }
@@ -116,6 +121,5 @@ export function preProcessData(dataArray: DataArray, datastream: Datastream) {
 
     data = addNaNForGaps(data, maxGap)
   }
-  console.log('data', data)
   return data
 }

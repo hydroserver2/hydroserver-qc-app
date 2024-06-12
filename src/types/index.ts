@@ -1,18 +1,20 @@
 export type DataPoint = {
   date: Date
   value: number
+  qualifierValue: string | number
 }
 
-export interface ResultQualifier {
+export interface PartialQualifier {
   code: string
   description: string
 }
 
-export type Observation = [
-  string,
-  number,
-  { quality_code: string | null; result_qualifiers: ResultQualifier[] }
-]
+export type Qualifier = {
+  quality_code: string | null
+  result_qualifiers: PartialQualifier[]
+}
+
+export type Observation = [string, number, Qualifier]
 
 export type DataArray = Observation[]
 

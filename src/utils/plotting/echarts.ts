@@ -5,11 +5,16 @@ import {
   LegendComponentOption,
   TooltipComponentOption,
 } from 'echarts'
-import { GraphSeries } from '@/types'
+import { DataPoint, Datastream, GraphSeries } from '@/types'
 import { storeToRefs } from 'pinia'
 import { useEChartsStore } from '@/store/echarts'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { GridOption, XAXisOption, YAXisOption } from 'echarts/types/dist/shared'
+import {
+  GridOption,
+  TooltipOption,
+  XAXisOption,
+  YAXisOption,
+} from 'echarts/types/dist/shared'
 
 type yAxisConfigurationMap = Map<
   string,
@@ -167,7 +172,110 @@ export function createTooltipConfig(): TooltipComponentOption {
   }
 }
 
-export function addResultQualifiers() {}
+export function addQualifierOptions(
+  series: GraphSeries,
+  echartsOption: EChartsOption,
+  yAxisIndex: number,
+  gridRightPadding: number,
+  gridLeftPadding: number
+): EChartsOption {
+  // Add second grid
+  ;(echartsOption.grid as GridOption[]).push({
+    bottom: '90',
+    right: gridRightPadding,
+    left: gridLeftPadding,
+    height: '5%',
+  })
+
+  // Add YAxis
+  ;(echartsOption.yAxis! as YAXisOption[]).push({
+    show: false,
+    gridIndex: 1,
+    // splitNumber:.001,
+    max: '1000000000000000',
+    min: '-1000000000000000',
+  })
+
+  // Add XAxis
+  ;(echartsOption.xAxis! as XAXisOption[]).push({
+    type: 'time',
+    show: false,
+    gridIndex: 1,
+    axisPointer: {
+      label: {
+        formatter: function (params) {
+          if (params.seriesData && params.seriesData.length > 0) {
+            const firstSeriesItem = params.seriesData[0]
+            if (!Array.isArray(firstSeriesItem.data)) return ''
+            if (firstSeriesItem.data.length > 2) {
+              const qualifierData = firstSeriesItem.data[2]
+              return typeof qualifierData === 'string' ? qualifierData : ''
+            }
+          }
+          return ''
+        },
+      },
+    },
+  })
+
+  // Add series
+  ;(echartsOption.series! as SeriesOption[]).push({
+    type: 'scatter',
+    name: 'Qualifiers',
+    // XAxis data must be the same or the on mouse vertical lines won't sync up
+    data: series.data.map((dp) => {
+      return [
+        dp.date.getTime(),
+        typeof dp.qualifierValue === 'string' ? 1 : NaN,
+        dp.qualifierValue,
+      ]
+    }),
+
+    xAxisIndex: 1,
+    yAxisIndex: yAxisIndex,
+    symbolSize: 7,
+    itemStyle: {
+      color: '#F44336',
+    },
+  })
+
+  // tooltip will be fixed on the right if mouse hovering on the left,
+  // and on the left if hovering on the right.
+  ;(echartsOption.tooltip as TooltipOption).position = (
+    pos,
+    params,
+    dom,
+    rect,
+    size
+  ) => {
+    const position: { top: number; left?: number; right?: number } = { top: 60 }
+    const side = pos[0] < size.viewSize[0] / 2 ? 'right' : 'left'
+    position[side] = 30
+    return position
+  }
+
+  echartsOption.axisPointer = {
+    link: [
+      {
+        xAxisIndex: [0, 1],
+      },
+    ],
+    label: {
+      backgroundColor: '#777',
+    },
+  }
+
+  return echartsOption
+}
+
+// Function to find the index of the selected datastream in the series array
+const findSelectedDatastreamIndex = (
+  seriesArray: GraphSeries[],
+  datastream: Datastream
+) => seriesArray.findIndex((s) => s.id === datastream.id)
+
+const hasStringQualifier = (data: DataPoint[]) =>
+  data.some((dp) => typeof dp.qualifierValue === 'string')
 
 interface CustomOptions {
   initializeZoomed: boolean
@@ -222,62 +330,18 @@ export const createEChartsOption = (
     toolbox: generateToolboxOptions() as {},
   }
 
-  // Check if one of the datastreams is selected for quality control
-  if (!qcDatastream.value?.id) return echartsOption
-  let qcIndex = -1
-  qcIndex = seriesArray.findIndex((s) => s.id === qcDatastream.value!.id)
-  if (qcIndex === -1) {
-    return echartsOption
-  }
-
-  // Add second grid
-  ;(echartsOption.grid as GridOption[]).push({
-    bottom: '90',
-    right: gridRightPadding,
-    left: gridLeftPadding,
-    height: '5%',
-  })
-
-  // Add YAxis
-  ;(echartsOption.yAxis! as YAXisOption[]).push({
-    show: false,
-    gridIndex: 1,
-    // splitNumber:.001,
-    max: '1000000000000000',
-    min: '-1000000000000000',
-  })
-
-  // Add XAxis
-  ;(echartsOption.xAxis! as XAXisOption[]).push({
-    type: 'time',
-    show: false,
-    gridIndex: 1,
-  })
-
-  console.log('seriesArray', seriesArray[qcIndex].data)
-  // TODO: Only add this for the selected dataset if there is one
-  // TODO: Only add points where there's a qualifying comment
-  ;(echartsOption.series! as SeriesOption[]).push({
-    type: 'scatter',
-    // XAxis data must be the same or the on mouse vertical lines won't sync up
-    data: seriesArray[qcIndex].data.map((dp) => [dp.date.getTime(), dp.value]),
-    xAxisIndex: 1,
-    yAxisIndex: yAxisConfigurations.size,
-    symbolSize: 5,
-    itemStyle: {
-      color: '#F44336',
-    },
-  })
-
-  echartsOption.axisPointer = {
-    link: [
-      {
-        xAxisIndex: 'all',
-      },
-    ],
-    label: {
-      backgroundColor: '#777',
-    },
+  // Add result qualifier options if there's a datastream selected for quality control with qualifiers
+  if (qcDatastream.value?.id) {
+    const qcIndex = findSelectedDatastreamIndex(seriesArray, qcDatastream.value)
+    if (qcIndex !== -1 && hasStringQualifier(seriesArray[qcIndex].data)) {
+      echartsOption = addQualifierOptions(
+        seriesArray[qcIndex],
+        echartsOption,
+        yAxisConfigurations.size,
+        gridRightPadding,
+        gridLeftPadding
+      )
+    }
   }
 
   return echartsOption
