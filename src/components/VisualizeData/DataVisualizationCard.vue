@@ -51,7 +51,7 @@
       </v-card-text>
 
       <v-card-text
-        v-if="selectedDatastreams.length && !updating"
+        v-if="plottedDatastreams.length && !updating"
         class="text-center"
       >
         <v-alert type="warning" dense>
@@ -75,7 +75,7 @@ const props = defineProps({
   cardHeight: { type: Number, required: true },
 })
 
-const { loadingStates, selectedDatastreams } = storeToRefs(useDataVisStore())
+const { loadingStates, plottedDatastreams } = storeToRefs(useDataVisStore())
 
 const {
   dataZoomStart,

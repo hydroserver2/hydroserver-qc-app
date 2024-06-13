@@ -52,7 +52,7 @@
       <v-btn
         :loading="downloading"
         prepend-icon="mdi-download"
-        @click="downloadSelected(selectedDatastreams)"
+        @click="downloadPlotted(plottedDatastreams)"
         >Download Selected</v-btn
       >
     </v-toolbar>
@@ -74,7 +74,7 @@
         <v-checkbox
           :model-value="isChecked(item)"
           :disabled="
-            (selectedDatastreams.length >= 5 && !isChecked(item)) ||
+            (plottedDatastreams.length >= 5 && !isChecked(item)) ||
             isSelected(item)
           "
           class="d-flex align-self-center"
@@ -85,7 +85,7 @@
       <template v-slot:item.select="{ item }">
         <v-checkbox
           :model-value="isSelected(item)"
-          :disabled="selectedDatastreams.length >= 5 && !isChecked(item)"
+          :disabled="plottedDatastreams.length >= 5 && !isChecked(item)"
           class="d-flex align-self-center"
           density="compact"
           @change="() => updateSelectedDatastream(item)"
@@ -108,14 +108,14 @@ import { Datastream } from '@/types'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import DatastreamInformationCard from './DatastreamInformationCard.vue'
-import { downloadSelectedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
+import { downloadPlottedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
 import { useUIStore } from '@/store/userInterface'
 
 const { tableHeight } = storeToRefs(useUIStore())
 const {
   things,
   filteredDatastreams,
-  selectedDatastreams,
+  plottedDatastreams,
   observedProperties,
   processingLevels,
   qcDatastream,
@@ -126,10 +126,10 @@ const openInfoCard = ref(false)
 const downloading = ref(false)
 const selectedDatastream = ref<Datastream | null>(null)
 
-const downloadSelected = async (selectedDatastreams: Datastream[]) => {
+const downloadPlotted = async (plottedDatastreams: Datastream[]) => {
   downloading.value = true
   try {
-    await downloadSelectedDatastreamsCSVs(selectedDatastreams)
+    await downloadPlottedDatastreamsCSVs(plottedDatastreams)
   } catch (error) {
     console.error('Error downloading selected datastreams', error)
   }
@@ -154,7 +154,7 @@ const onRowClick = (event: Event, item: any) => {
 const displayDatastreams = computed(() => {
   if (showOnlySelected.value) {
     return filteredDatastreams.value.filter((ds) =>
-      selectedDatastreams.value.some((sds) => sds.id === ds.id)
+      plottedDatastreams.value.some((sds) => sds.id === ds.id)
     )
   } else {
     return filteredDatastreams.value
@@ -181,11 +181,11 @@ const tableItems = computed(() => {
 
 function clearSelected() {
   showOnlySelected.value = false
-  selectedDatastreams.value = []
+  plottedDatastreams.value = []
 }
 
 const isChecked = (item: Datastream) =>
-  selectedDatastreams.value.some((sds) => sds.id === item.id)
+  plottedDatastreams.value.some((sds) => sds.id === item.id)
 
 const isSelected = (ds: Datastream) => ds.id === qcDatastream.value?.id
 
@@ -242,17 +242,17 @@ const selectedHeaders = computed({
 })
 
 const findIndexInPlotted = (ds: Datastream) =>
-  selectedDatastreams.value.findIndex((item) => item.id === ds.id)
+  plottedDatastreams.value.findIndex((item) => item.id === ds.id)
 
 const addDatastreamToPlotted = (ds: Datastream) => {
   const index = findIndexInPlotted(ds)
-  if (index === -1) selectedDatastreams.value.push(ds)
+  if (index === -1) plottedDatastreams.value.push(ds)
 }
 
 function updatePlottedDatastreams(datastream: Datastream) {
   const index = findIndexInPlotted(datastream)
-  if (index === -1) selectedDatastreams.value.push(datastream)
-  else selectedDatastreams.value.splice(index, 1)
+  if (index === -1) plottedDatastreams.value.push(datastream)
+  else plottedDatastreams.value.splice(index, 1)
 }
 
 function updateSelectedDatastream(datastream: Datastream) {
@@ -266,7 +266,7 @@ function updateSelectedDatastream(datastream: Datastream) {
   // Case 2: There is a currently selected
   // Case 2.1: There's an unsaved history - open a modal that says this action will delete their unsaved work.
   // TODO - Or do we want a watcher in the dataVis store that does this check reactively?
-  // Probably two watchers so we're looking at selectedDatastreams.
+  // Probably two watchers so we're looking at plottedDatastreams.
   // If the qc datastream gets deselected, then check or when someone changed
   // the qcDatastream's value check and revert if there's a history
 

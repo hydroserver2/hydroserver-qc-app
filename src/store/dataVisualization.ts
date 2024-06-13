@@ -27,7 +27,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   // Datasets
   /** The datastream selected to go through the quality control process */
   const qcDatastream = ref<Datastream | null>(null)
-  const selectedDatastreams = ref<Datastream[]>([])
+  const plottedDatastreams = ref<Datastream[]>([])
 
   /** Track the loading status of each datastream to be plotted.
    * Set to true when we get a response from the API. Keyed by datastream id. */
@@ -41,7 +41,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
   function resetState() {
     selectedThings.value = []
-    selectedDatastreams.value = []
+    plottedDatastreams.value = []
     selectedObservedPropertyNames.value = []
     selectedProcessingLevelNames.value = []
     endDate.value = new Date()
@@ -123,7 +123,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   ])
 
   const getMostRecentEndTime = () =>
-    selectedDatastreams.value.reduce((latest, ds) => {
+    plottedDatastreams.value.reduce((latest, ds) => {
       const dsEndDate = new Date(ds.phenomenonEndTime!)
       return dsEndDate > latest ? dsEndDate : latest
     }, new Date(0))
@@ -149,8 +149,8 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
     if (update) {
       clearChartState()
-      if (!beginDate || !endDate || !selectedDatastreams.value.length) return
-      updateDatasets(selectedDatastreams.value)
+      if (!beginDate || !endDate || !plottedDatastreams.value.length) return
+      updateDatasets(plottedDatastreams.value)
     }
   }
 
@@ -178,7 +178,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       const end = endDate.value.toISOString()
       fetchGraphSeries(ds, begin, end)
         .then((newSeries) => {
-          if (!selectedDatastreams.value.some((sd) => sd.id === ds.id)) return
+          if (!plottedDatastreams.value.some((sd) => sd.id === ds.id)) return
 
           graphSeriesArray.value = graphSeriesArray.value.filter(
             (series) => series.id !== ds.id
@@ -218,7 +218,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   watch(
     () => filteredDatastreams.value,
     (newDatastreams) => {
-      selectedDatastreams.value = selectedDatastreams.value.filter((ds) =>
+      plottedDatastreams.value = plottedDatastreams.value.filter((ds) =>
         newDatastreams.some((datastream) => datastream.id === ds.id)
       )
     },
@@ -228,7 +228,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   // Update the time range to the most recent phenomenon end time
   let prevDatastreamIds = ''
   watch(
-    () => selectedDatastreams.value,
+    () => plottedDatastreams.value,
     (newDs) => {
       const newDatastreamIds = JSON.stringify(newDs.map((ds) => ds.id).sort())
 
@@ -265,7 +265,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     selectedObservedPropertyNames,
     selectedProcessingLevelNames,
     filteredDatastreams,
-    selectedDatastreams,
+    plottedDatastreams,
     beginDate,
     endDate,
     dateOptions,
