@@ -29,6 +29,10 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const qcDatastream = ref<Datastream | null>(null)
   const plottedDatastreams = ref<Datastream[]>([])
 
+  // Qualifiers
+  const qualifierSet = ref<Set<string>>(new Set())
+  const selectedQualifier = ref('')
+
   /** Track the loading status of each datastream to be plotted.
    * Set to true when we get a response from the API. Keyed by datastream id. */
   const loadingStates = ref(new Map<string, boolean>())
@@ -256,6 +260,41 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     { deep: true, immediate: true }
   )
 
+  // TODO: Revisit this. Does it make sense to convert qualifierValue to a string in preprocessing
+  // just to split it into an array of strings here? Maybe just save it as an array of strings instead
+  function updateQualifiers() {
+    const series = graphSeriesArray.value.find(
+      (s) => s.id === qcDatastream.value?.id
+    )
+
+    qualifierSet.value = new Set([])
+    if (series) {
+      for (const dataPoint of series.data) {
+        if (typeof dataPoint.qualifierValue === 'string') {
+          // Split the qualifierValue string into individual qualifiers and add them to the set
+          dataPoint.qualifierValue
+            .split(',')
+            .forEach((qualifier) => qualifierSet.value.add(qualifier.trim()))
+        }
+      }
+    }
+    selectedQualifier.value = ''
+  }
+
+  // Update qualifiers whenever the qcDatastream's graphSeries has finished loading
+  let previousLoadingState = false
+  watch(
+    [loadingStates],
+    () => {
+      const currentId = qcDatastream.value?.id
+      if (!currentId) return
+      const currentLoadingState = !!loadingStates.value.get(currentId)
+      if (!currentLoadingState && previousLoadingState) updateQualifiers()
+      previousLoadingState = currentLoadingState
+    },
+    { deep: true }
+  )
+
   return {
     things,
     datastreams,
@@ -272,6 +311,8 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     loadingStates,
     selectedDateBtnId,
     qcDatastream,
+    qualifierSet,
+    selectedQualifier,
     matchesSelectedObservedProperty,
     matchesSelectedProcessingLevel,
     matchesSelectedThing,
