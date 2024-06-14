@@ -22,7 +22,13 @@
       />
 
       <v-list-item class="pb-0">
-        <v-select density="compact" label="Qualifying comments"></v-select>
+        <v-select
+          :disabled="!qualifierOptions.length"
+          :items="qualifierOptions"
+          density="compact"
+          label="Qualifying comments"
+          v-model="selectedQualifier"
+        />
       </v-list-item>
     </v-list>
 
@@ -47,8 +53,21 @@
 <script setup lang="ts">
 import DataVisTimeFilters from '@/components/VisualizeData/DataVisTimeFilters.vue'
 import DatastreamFilters from '@/components/VisualizeData/DatastreamFilters.vue'
+import { useDataVisStore } from '@/store/dataVisualization'
 import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
+import { computed, watch } from 'vue'
 
 const { showLegend, showTooltip } = storeToRefs(useEChartsStore())
+const { qualifierSet, selectedQualifier } = storeToRefs(useDataVisStore())
+
+const qualifierOptions = computed(() => {
+  return qualifierSet.value.size
+    ? ['All', ...Array.from(qualifierSet.value)]
+    : []
+})
+
+watch(qualifierOptions, (newVal) => {
+  selectedQualifier.value = newVal.length ? 'All' : ''
+})
 </script>

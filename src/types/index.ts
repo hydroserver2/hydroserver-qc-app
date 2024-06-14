@@ -1,9 +1,22 @@
 export type DataPoint = {
   date: Date
   value: number
+  qualifierValue: string | number
 }
 
-export type DataArray = [string, number][]
+export interface PartialQualifier {
+  code: string
+  description: string
+}
+
+export type Qualifier = {
+  quality_code: string | null
+  result_qualifiers: PartialQualifier[]
+}
+
+export type Observation = [string, number, Qualifier]
+
+export type DataArray = Observation[]
 
 export class ObservationRecord {
   dataArray: DataArray

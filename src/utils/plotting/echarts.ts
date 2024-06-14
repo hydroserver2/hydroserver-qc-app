@@ -5,9 +5,16 @@ import {
   LegendComponentOption,
   TooltipComponentOption,
 } from 'echarts'
-import { GraphSeries } from '@/types'
+import { DataPoint, Datastream, GraphSeries } from '@/types'
 import { storeToRefs } from 'pinia'
 import { useEChartsStore } from '@/store/echarts'
+import { useDataVisStore } from '@/store/dataVisualization'
+import {
+  GridOption,
+  TooltipOption,
+  XAXisOption,
+  YAXisOption,
+} from 'echarts/types/dist/shared'
 
 type yAxisConfigurationMap = Map<
   string,
@@ -88,6 +95,7 @@ export function generateSeriesOptions(
     name: series.name,
     type: 'line',
     data: series.data.map((dp) => [dp.date.getTime(), dp.value]),
+    xAxisIndex: 0,
     yAxisIndex: yAxisConfigurations.get(series.yAxisLabel)?.index,
     itemStyle: {
       color: series.lineColor,
@@ -104,34 +112,47 @@ export function generateToolboxOptions() {
   return {
     feature: {
       dataZoom: {
-        yAxisIndex: 'none',
+        yAxisIndex: false,
       },
       restore: {},
       saveAsImage: { name: 'plot_export' },
+      brush: {
+        type: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+      },
     },
   }
 }
 
-export function generateDataZoomOptions() {
+export function generateDataZoomOptions(initializeZoomed: boolean) {
   const { dataZoomStart, dataZoomEnd } = storeToRefs(useEChartsStore())
-  return [
-    {
-      type: 'slider', // Creates a 'brush/context' zoom window
+
+  // For mouse scrolling in the chart
+  const insideSettings = {
+    type: 'inside',
+    xAxisIndex: [0, 1],
+  }
+
+  const sliderSettings = {
+    type: 'slider',
+    xAxisIndex: [0, 1],
+    bottom: '60',
+    ...(initializeZoomed && {
       start: dataZoomStart.value,
       end: dataZoomEnd.value,
-    },
-    {
-      type: 'inside', // For mouse scrolling in the chart
-    },
-  ]
+    }),
+  }
+
+  return [sliderSettings, insideSettings]
 }
 
 export function createLegendConfig(): LegendComponentOption {
   const { showLegend } = storeToRefs(useEChartsStore())
   return {
+    bottom: 0,
     show: showLegend.value,
-    orient: 'vertical',
-    left: 'auto',
+    // orient: 'vertical',
+    // left: 'auto',
+    left: 'center',
   }
 }
 
@@ -151,12 +172,124 @@ export function createTooltipConfig(): TooltipComponentOption {
   }
 }
 
-export function addPaddingTop(showLegend: boolean, seriesCount: number) {
-  return showLegend ? 50 + 15 * seriesCount : 50
+export function addQualifierOptions(
+  series: GraphSeries,
+  echartsOption: EChartsOption,
+  yAxisIndex: number,
+  gridRightPadding: number,
+  gridLeftPadding: number
+): EChartsOption {
+  // Add second grid
+  ;(echartsOption.grid as GridOption[]).push({
+    bottom: '90',
+    right: gridRightPadding,
+    left: gridLeftPadding,
+    height: '5%',
+  })
+
+  // Add YAxis
+  ;(echartsOption.yAxis! as YAXisOption[]).push({
+    show: false,
+    gridIndex: 1,
+    // splitNumber:.001,
+    max: '1000000000000000',
+    min: '-1000000000000000',
+  })
+
+  // Add XAxis
+  const { selectedQualifier } = storeToRefs(useDataVisStore())
+  ;(echartsOption.xAxis! as XAXisOption[]).push({
+    type: 'time',
+    show: false,
+    gridIndex: 1,
+    axisPointer: {
+      label: {
+        formatter: function (params) {
+          if (params.seriesData && params.seriesData.length > 0) {
+            const firstSeriesItem = params.seriesData[0]
+            if (
+              !Array.isArray(firstSeriesItem.data) ||
+              firstSeriesItem.data.length <= 2
+            )
+              return ''
+
+            const qualifierValue = firstSeriesItem.data[2]
+            if (typeof qualifierValue === 'string') {
+              if (selectedQualifier.value === 'All') return qualifierValue
+              if (qualifierValue.includes(selectedQualifier.value))
+                return qualifierValue
+            }
+          }
+          return ''
+        },
+      },
+    },
+  })
+
+  // Add series
+  ;(echartsOption.series! as SeriesOption[]).push({
+    type: 'scatter',
+    name: 'Qualifiers',
+    // XAxis data must be the same or the on mouse vertical lines won't sync up
+    data: series.data.map((dp) => {
+      return [
+        dp.date.getTime(),
+        typeof dp.qualifierValue === 'string' &&
+        (selectedQualifier.value === 'All' ||
+          dp.qualifierValue.includes(selectedQualifier.value))
+          ? 1
+          : NaN,
+        dp.qualifierValue,
+      ]
+    }),
+
+    xAxisIndex: 1,
+    yAxisIndex: yAxisIndex,
+    symbolSize: 7,
+    itemStyle: {
+      color: '#F44336',
+    },
+  })
+
+  // tooltip will be fixed on the right if mouse hovering on the left,
+  // and on the left if hovering on the right.
+  ;(echartsOption.tooltip as TooltipOption).position = (
+    pos,
+    params,
+    dom,
+    rect,
+    size
+  ) => {
+    const position: { top: number; left?: number; right?: number } = { top: 60 }
+    const side = pos[0] < size.viewSize[0] / 2 ? 'right' : 'left'
+    position[side] = 30
+    return position
+  }
+
+  echartsOption.axisPointer = {
+    link: [
+      {
+        xAxisIndex: [0, 1],
+      },
+    ],
+    label: {
+      backgroundColor: '#777',
+    },
+  }
+
+  return echartsOption
 }
 
+// Function to find the index of the selected datastream in the series array
+const findSelectedDatastreamIndex = (
+  seriesArray: GraphSeries[],
+  datastream: Datastream
+) => seriesArray.findIndex((s) => s.id === datastream.id)
+
+const hasStringQualifier = (data: DataPoint[]) =>
+  data.some((dp) => typeof dp.qualifierValue === 'string')
+
 interface CustomOptions {
-  addToolbox: boolean
   initializeZoomed: boolean
 }
 
@@ -164,7 +297,8 @@ export const createEChartsOption = (
   seriesArray: GraphSeries[],
   opts: Partial<CustomOptions> = {}
 ): EChartsOption => {
-  const { addToolbox = true, initializeZoomed = true } = opts
+  const { initializeZoomed = true } = opts
+  const { qcDatastream } = storeToRefs(useDataVisStore())
 
   const yAxisConfigurations = createYAxisConfigurations(seriesArray)
   const yAxisOptions = generateYAxisOptions(yAxisConfigurations)
@@ -175,54 +309,52 @@ export const createEChartsOption = (
   let gridRightPadding = 20 + rightYAxesCount * 85
   let gridLeftPadding = leftYAxesCount * 85
 
-  const { showLegend } = storeToRefs(useEChartsStore())
-
   let echartsOption: EChartsOption = {
-    grid: {
-      bottom: 80,
-      right: gridRightPadding,
-      top: addPaddingTop(showLegend.value, seriesArray.length),
-      left: gridLeftPadding,
-    },
+    grid: [
+      {
+        bottom: '160',
+        right: gridRightPadding,
+        left: gridLeftPadding,
+      },
+    ],
     tooltip: createTooltipConfig(),
-    xAxis: {
-      type: 'time',
-      axisLabel: {
-        hideOverlap: true,
-        formatter: {
-          year: '{yyyy}',
-          month: '{MMM} {yyyy}',
-          day: '{MMM} {d}, {yy}',
-          hour: '{HH}:{mm}\n{MMM} {d}, {yy}',
-          minute: '{HH}:{mm}\n{MMM} {d}, {yy}',
-          second: '{H}:{mm}:{s}\n{MMM} {d}, {yy}',
-          millisecond: '{HH}:{mm}:{s}:{S}\n{MMM} {d}, {yy}',
+    xAxis: [
+      {
+        type: 'time',
+        axisLabel: {
+          hideOverlap: true,
+          formatter: {
+            year: '{yyyy}',
+            month: '{MMM} {yyyy}',
+            day: '{MMM} {d}, {yy}',
+            hour: '{HH}:{mm}\n{MMM} {d}, {yy}',
+            minute: '{HH}:{mm}\n{MMM} {d}, {yy}',
+            second: '{H}:{mm}:{s}\n{MMM} {d}, {yy}',
+            millisecond: '{HH}:{mm}:{s}:{S}\n{MMM} {d}, {yy}',
+          },
         },
       },
-    },
+    ],
     yAxis: yAxisOptions,
     series: seriesOptions,
-    dataZoom: initializeZoomed
-      ? generateDataZoomOptions()
-      : [
-          {
-            type: 'slider',
-          },
-          {
-            type: 'inside',
-          },
-        ],
-    brush: {
-      toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
-      xAxisIndex: 0,
-    },
+    dataZoom: generateDataZoomOptions(initializeZoomed),
+    legend: createLegendConfig(),
+    toolbox: generateToolboxOptions() as {},
   }
 
-  if (addToolbox) {
-    echartsOption.toolbox = generateToolboxOptions() as {}
+  // Add result qualifier options if there's a datastream selected for quality control with qualifiers
+  if (qcDatastream.value?.id) {
+    const qcIndex = findSelectedDatastreamIndex(seriesArray, qcDatastream.value)
+    if (qcIndex !== -1 && hasStringQualifier(seriesArray[qcIndex].data)) {
+      echartsOption = addQualifierOptions(
+        seriesArray[qcIndex],
+        echartsOption,
+        yAxisConfigurations.size,
+        gridRightPadding,
+        gridLeftPadding
+      )
+    }
   }
-
-  echartsOption.legend = createLegendConfig()
 
   return echartsOption
 }

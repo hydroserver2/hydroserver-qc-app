@@ -51,7 +51,7 @@
       </v-card-text>
 
       <v-card-text
-        v-if="selectedDatastreams.length && !updating"
+        v-if="plottedDatastreams.length && !updating"
         class="text-center"
       >
         <v-alert type="warning" dense>
@@ -70,12 +70,14 @@ import { storeToRefs } from 'pinia'
 import VChart from 'vue-echarts'
 import 'echarts'
 import { useEChartsStore } from '@/store/echarts'
+import { createEChartsOption } from '@/utils/plotting/echarts'
 
 const props = defineProps({
   cardHeight: { type: Number, required: true },
 })
 
-const { loadingStates, selectedDatastreams } = storeToRefs(useDataVisStore())
+const { loadingStates, plottedDatastreams } = storeToRefs(useDataVisStore())
+const { selectedQualifier } = storeToRefs(useDataVisStore())
 
 const {
   dataZoomStart,
@@ -118,6 +120,12 @@ watch([() => props.cardHeight], ([newHeight], [oldHeight]) => {
   nextTick(() => {
     if (echartsRef.value) echartsRef.value.resize()
   })
+})
+
+// TODO: Is there a better place to put this watcher?
+watch(selectedQualifier, () => {
+  console.log('selectedQualifier is updated')
+  option.value = createEChartsOption(graphSeriesArray.value)
 })
 </script>
 

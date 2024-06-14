@@ -8,7 +8,6 @@ import {
   createLegendConfig,
   createTooltipConfig,
   generateDataZoomOptions,
-  addPaddingTop,
 } from '@/utils/plotting/echarts'
 import { Snackbar } from '@/utils/notifications'
 import { api } from '@/services/api'
@@ -99,7 +98,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
   watch(showLegend, () => {
     if (echartsOption.value) {
       echartsOption.value.legend = createLegendConfig()
-      echartsOption.value.dataZoom = generateDataZoomOptions()
+      echartsOption.value.dataZoom = generateDataZoomOptions(false)
       let seriesCount = 0
 
       if (Array.isArray(echartsOption.value.series)) {
@@ -107,24 +106,13 @@ export const useEChartsStore = defineStore('ECharts', () => {
       } else if (echartsOption.value.series) {
         seriesCount = 1
       }
-
-      if (Array.isArray(echartsOption.value.grid)) {
-        echartsOption.value.grid.forEach((grid) => {
-          grid.top = addPaddingTop(showLegend.value, seriesCount)
-        })
-      } else if (echartsOption.value.grid) {
-        echartsOption.value.grid.top = addPaddingTop(
-          showLegend.value,
-          seriesCount
-        )
-      }
     }
   })
 
   watch(showTooltip, () => {
     if (echartsOption.value) {
       echartsOption.value.tooltip = createTooltipConfig()
-      echartsOption.value.dataZoom = generateDataZoomOptions()
+      echartsOption.value.dataZoom = generateDataZoomOptions(false)
     }
   })
 
