@@ -197,6 +197,7 @@ export function addQualifierOptions(
   })
 
   // Add XAxis
+  const { selectedQualifier } = storeToRefs(useDataVisStore())
   ;(echartsOption.xAxis! as XAXisOption[]).push({
     type: 'time',
     show: false,
@@ -206,10 +207,17 @@ export function addQualifierOptions(
         formatter: function (params) {
           if (params.seriesData && params.seriesData.length > 0) {
             const firstSeriesItem = params.seriesData[0]
-            if (!Array.isArray(firstSeriesItem.data)) return ''
-            if (firstSeriesItem.data.length > 2) {
-              const qualifierData = firstSeriesItem.data[2]
-              return typeof qualifierData === 'string' ? qualifierData : ''
+            if (
+              !Array.isArray(firstSeriesItem.data) ||
+              firstSeriesItem.data.length <= 2
+            )
+              return ''
+
+            const qualifierValue = firstSeriesItem.data[2]
+            if (typeof qualifierValue === 'string') {
+              if (selectedQualifier.value === 'All') return qualifierValue
+              if (qualifierValue.includes(selectedQualifier.value))
+                return qualifierValue
             }
           }
           return ''
@@ -226,7 +234,11 @@ export function addQualifierOptions(
     data: series.data.map((dp) => {
       return [
         dp.date.getTime(),
-        typeof dp.qualifierValue === 'string' ? 1 : NaN,
+        typeof dp.qualifierValue === 'string' &&
+        (selectedQualifier.value === 'All' ||
+          dp.qualifierValue.includes(selectedQualifier.value))
+          ? 1
+          : NaN,
         dp.qualifierValue,
       ]
     }),
