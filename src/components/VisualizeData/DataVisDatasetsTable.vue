@@ -110,8 +110,10 @@ import { computed, reactive, ref } from 'vue'
 import DatastreamInformationCard from './DatastreamInformationCard.vue'
 import { downloadPlottedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
 import { useUIStore } from '@/store/userInterface'
+import { useEChartsStore } from '@/store/echarts'
 
 const { tableHeight } = storeToRefs(useUIStore())
+const { updateVisualization } = useEChartsStore()
 const {
   things,
   filteredDatastreams,
@@ -263,12 +265,14 @@ function updatePlottedDatastreams(datastream: Datastream) {
 // For now, remove then add the related plottedDatastream so that the plottedDatastream watcher
 // gets triggered. This makes sure the the time range and plot get updated whenever the selected
 // datastream changes.
+// TODO: Some redundant code to simplify here
 function updateSelectedDatastream(datastream: Datastream) {
   // Case 1: No currently selected & selecting
   if (qcDatastream.value === null) {
     qcDatastream.value = datastream
     removeDatastreamFromPlotted(datastream)
     addDatastreamToPlotted(datastream)
+    updateVisualization(datastream.id)
     return
   }
 
@@ -288,6 +292,7 @@ function updateSelectedDatastream(datastream: Datastream) {
     qcDatastream.value = null
     removeDatastreamFromPlotted(datastream)
     addDatastreamToPlotted(datastream)
+    updateVisualization()
     return
   }
 
@@ -295,5 +300,6 @@ function updateSelectedDatastream(datastream: Datastream) {
   qcDatastream.value = datastream
   removeDatastreamFromPlotted(datastream)
   addDatastreamToPlotted(datastream)
+  updateVisualization(datastream.id)
 }
 </script>

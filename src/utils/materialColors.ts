@@ -43,11 +43,12 @@ export const materialColorsHex = [
 ]
 
 export const EChartsColors = [
-  '#5571c7', // blue
+  // '#5571c7', // blue  !only the qc selected datastream should be blue
   '#91cc75', // green
-  '#ee6464', // red
   '#795548', // brown
+  '#ee6464', // red
   '#80d4f4', // light blue
+  '#FF5722', // deep-orange
 ]
 
 export const googlePinColors = [

@@ -38,9 +38,12 @@ export const useEChartsStore = defineStore('ECharts', () => {
     echartsOption.value = undefined
   }
 
-  function updateVisualization() {
+  function updateVisualization(selectedDatastreamId?: string) {
     graphSeriesArray.value.forEach((series, index) => {
-      series.lineColor = EChartsColors[index % EChartsColors.length]
+      series.isSelected = series.id === selectedDatastreamId
+
+      if (series.isSelected) series.lineColor = '#5571c7'
+      else series.lineColor = EChartsColors[index % EChartsColors.length]
     })
     echartsOption.value = createEChartsOption(graphSeriesArray.value)
     prevIds.value = graphSeriesArray.value.map((series) => series.id)

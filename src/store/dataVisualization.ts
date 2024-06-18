@@ -189,7 +189,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
           )
 
           graphSeriesArray.value.push(newSeries)
-          updateVisualization()
+          updateVisualization(qcDatastream.value?.id)
         })
         .catch((error) => {
           console.error(`Failed to fetch dataset ${ds.id}:`, error)

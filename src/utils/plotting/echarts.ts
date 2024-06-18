@@ -103,6 +103,12 @@ export function generateSeriesOptions(
     lineStyle: {
       width: 1,
     },
+    emphasis: {
+      focus: 'series',
+      lineStyle: {
+        width: 2,
+      },
+    },
     sampling: 'lttb',
     showSymbol: false,
   }))
