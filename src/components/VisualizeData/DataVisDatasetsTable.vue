@@ -249,17 +249,26 @@ const addDatastreamToPlotted = (ds: Datastream) => {
   if (index === -1) plottedDatastreams.value.push(ds)
 }
 
+function removeDatastreamFromPlotted(datastream: Datastream) {
+  const index = findIndexInPlotted(datastream)
+  if (index !== -1) plottedDatastreams.value.splice(index, 1)
+}
+
 function updatePlottedDatastreams(datastream: Datastream) {
   const index = findIndexInPlotted(datastream)
   if (index === -1) plottedDatastreams.value.push(datastream)
   else plottedDatastreams.value.splice(index, 1)
 }
 
+// For now, remove then add the related plottedDatastream so that the plottedDatastream watcher
+// gets triggered. This makes sure the the time range and plot get updated whenever the selected
+// datastream changes.
 function updateSelectedDatastream(datastream: Datastream) {
   // Case 1: No currently selected & selecting
   if (qcDatastream.value === null) {
-    addDatastreamToPlotted(datastream)
     qcDatastream.value = datastream
+    removeDatastreamFromPlotted(datastream)
+    addDatastreamToPlotted(datastream)
     return
   }
 
@@ -277,11 +286,14 @@ function updateSelectedDatastream(datastream: Datastream) {
   // Case 2.2: There's no history and we're unselecting it
   if (datastream.id === qcDatastream.value.id) {
     qcDatastream.value = null
+    removeDatastreamFromPlotted(datastream)
+    addDatastreamToPlotted(datastream)
     return
   }
 
   // Case 2.3: Switching datastreams
-  addDatastreamToPlotted(datastream)
   qcDatastream.value = datastream
+  removeDatastreamFromPlotted(datastream)
+  addDatastreamToPlotted(datastream)
 }
 </script>

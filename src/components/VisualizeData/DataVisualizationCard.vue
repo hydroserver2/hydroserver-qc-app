@@ -124,7 +124,6 @@ watch([() => props.cardHeight], ([newHeight], [oldHeight]) => {
 
 // TODO: Is there a better place to put this watcher?
 watch(selectedQualifier, () => {
-  console.log('selectedQualifier is updated')
   option.value = createEChartsOption(graphSeriesArray.value)
 })
 </script>
