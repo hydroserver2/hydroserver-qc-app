@@ -229,7 +229,8 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     { deep: true }
   )
 
-  // Update the time range to the most recent phenomenon end time
+  // Set the time range for the qcDatastream if there is one, otherwise
+  // update the time range to the most recent phenomenon end time
   let prevDatastreamIds = ''
   watch(
     () => plottedDatastreams.value,
@@ -241,13 +242,23 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       } else if (newDatastreamIds !== prevDatastreamIds) {
         const oldEnd = endDate.value
         const oldBegin = beginDate.value
-        endDate.value = getMostRecentEndTime()
+
+        endDate.value = qcDatastream.value
+          ? new Date(qcDatastream.value.phenomenonEndTime!)
+          : getMostRecentEndTime()
+
         const selectedOption = dateOptions.value.find(
           (option) => option.id === selectedDateBtnId.value
         )
+
+        // Set beginDate based on previous time range
         if (selectedOption) {
           beginDate.value = selectedOption.calculateBeginDate()
+        } else {
+          const timeDifference = oldEnd.getTime() - oldBegin.getTime()
+          beginDate.value = new Date(endDate.value.getTime() - timeDifference)
         }
+
         if (
           oldEnd.getTime() !== endDate.value.getTime() ||
           oldBegin.getTime() !== beginDate.value.getTime()
