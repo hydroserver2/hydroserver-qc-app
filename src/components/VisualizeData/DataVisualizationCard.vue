@@ -24,27 +24,38 @@
               <strong> Filter: </strong>
             </div>
             <div>
-              Filter the datastream table items with the filter drawer on the
-              left and the search bar on the top of the datastreams table.
-            </div>
-          </v-timeline-item>
-          <v-timeline-item size="x-small" dot-color="secondary">
-            <div>
-              <strong> Adjust the time range: </strong>
-            </div>
-            <div>
-              Adjust the time range to cover the desired period you wish to
-              observe.
+              Filter the datastream table items with the drawer on the left and
+              the search bar on the top of the datastreams table.
             </div>
           </v-timeline-item>
           <v-timeline-item size="x-small" dot-color="blue-grey">
             <div>
-              <strong> Select up to 5 datastreams: </strong>
+              <strong> Select a datastream: </strong>
             </div>
             <div>
-              The plot allows up to 5 datastreams to be shown at once. If two
-              datastreams share the same observed property and unit, they'll
-              share a y-axis.
+              Select the datastream you'd like to plot for quality control.
+              Additionally, check the 'plot' checkbox to plot up to 4 other
+              datastreams on top of the selected datastream. If two datastreams
+              share the same observed property and unit, they'll share a y-axis.
+            </div>
+          </v-timeline-item>
+          <v-timeline-item size="x-small" dot-color="secondary">
+            <div>
+              <strong> Adjust plot settings: </strong>
+            </div>
+            <div>
+              Use the navigation drawer on the left to adjust the time range to
+              cover the desired period you wish to observe and set viewing
+              preferences for the plot.
+            </div>
+          </v-timeline-item>
+          <v-timeline-item size="x-small" dot-color="orange-lighten-1">
+            <div>
+              <strong> Edit your datastream: </strong>
+            </div>
+            <div>
+              Use the navigation rail on the far left to switch to the edit view
+              (pencil icon) where you'll be able to apply edits to the dataset.
             </div>
           </v-timeline-item>
         </v-timeline>
@@ -124,7 +135,6 @@ watch([() => props.cardHeight], ([newHeight], [oldHeight]) => {
 
 // TODO: Is there a better place to put this watcher?
 watch(selectedQualifier, () => {
-  console.log('selectedQualifier is updated')
   option.value = createEChartsOption(graphSeriesArray.value)
 })
 </script>

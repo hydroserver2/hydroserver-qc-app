@@ -189,7 +189,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
           )
 
           graphSeriesArray.value.push(newSeries)
-          updateVisualization()
+          updateVisualization(qcDatastream.value?.id)
         })
         .catch((error) => {
           console.error(`Failed to fetch dataset ${ds.id}:`, error)
@@ -229,8 +229,10 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     { deep: true }
   )
 
-  // Update the time range to the most recent phenomenon end time
+  // Set the time range to the qcDatastream's endTime if there is one, otherwise
+  // update the time range to the most recent phenomenon endTime
   let prevDatastreamIds = ''
+  let prevSelectedDatastreamId = ''
   watch(
     () => plottedDatastreams.value,
     (newDs) => {
@@ -238,16 +240,29 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
       if (!newDs.length || !beginDate.value || !endDate.value) {
         clearChartState()
-      } else if (newDatastreamIds !== prevDatastreamIds) {
+      } else if (
+        newDatastreamIds !== prevDatastreamIds ||
+        prevSelectedDatastreamId !== qcDatastream.value?.id
+      ) {
         const oldEnd = endDate.value
         const oldBegin = beginDate.value
-        endDate.value = getMostRecentEndTime()
+
+        endDate.value = qcDatastream.value
+          ? new Date(qcDatastream.value.phenomenonEndTime!)
+          : getMostRecentEndTime()
+
         const selectedOption = dateOptions.value.find(
           (option) => option.id === selectedDateBtnId.value
         )
+
+        // Set beginDate based on previous time range
         if (selectedOption) {
           beginDate.value = selectedOption.calculateBeginDate()
+        } else {
+          const timeDifference = oldEnd.getTime() - oldBegin.getTime()
+          beginDate.value = new Date(endDate.value.getTime() - timeDifference)
         }
+
         if (
           oldEnd.getTime() !== endDate.value.getTime() ||
           oldBegin.getTime() !== beginDate.value.getTime()
@@ -256,6 +271,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
         updateDatasets(newDs)
       }
       prevDatastreamIds = newDatastreamIds
+      prevSelectedDatastreamId = qcDatastream.value?.id || ''
     },
     { deep: true, immediate: true }
   )
