@@ -65,7 +65,7 @@
       :style="{ 'max-height': `${tableHeight}vh` }"
       fixed-header
       class="elevation-2"
-      color="green"
+      color="secondary"
       density="compact"
       @click:row="onRowClick"
       hover
