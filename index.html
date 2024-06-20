@@ -10,20 +10,9 @@
   <link rel="mask-icon" href="/vite.svg" color="#FFFFFF">
   <meta name="theme-color" content="#ffffff">
 
-
-  <!-- LATEST SNAPSHOT -->
-  <!-- https://github.com/pyscript/pyscript/tree/main/pyscript.core/docs -->
-  <!-- <link rel="stylesheet" href="https://pyscript.net/snapshots/2023.09.1.RC2/core.css">
-  <script type="module" src="https://pyscript.net/snapshots/2023.09.1.RC2/core.js"></script>
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.20.0/full/pyodide.js"></script> -->
-
   <!-- LATEST VERSION (STABLE) -->
   <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css">
   <script defer src="https://pyscript.net/latest/pyscript.js"></script>
-
-  <!-- 2024 -->
-  <!-- <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
-  <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css"> -->
 
   <title>HydroServer QC</title>
 </head>
@@ -31,11 +20,6 @@
 <body>
   <div hidden id="start"></div>
   <div id="app"></div>
-  <script>
-    function createObject(variableName, object) {
-      eval(variableName + " = object")
-    }
-  </script>
   <script type="py" src="/src/pyscript/edit_service.py"></script>
 
   <py-config>

@@ -1,4 +1,4 @@
-from edit_service import EditService, TimeUnit, FilterOperation
+from edit_service import EditService, TimeUnit, FilterOperation, Operator
 from pyscript import when, Element
 from js import someFunction, dataset
 import json
@@ -31,10 +31,19 @@ edit_service = EditService("test", json.loads(dataset))
 # Test operations
 
 # Set filter
-print("SETTING FILTER...")
-edit_service.set_filter({f'{FilterOperation.GTE.value}': 10.45})
-print(edit_service.filtered_df)
+print("FILTERING...")
+print(edit_service.filter({f'{FilterOperation.GTE.value}': 10.45}))
 
 print("FINDING GAPS...")
 # Find gaps
-print(edit_service.find_gaps(16, TimeUnit.MINUTE))
+gap = [15, TimeUnit.MINUTE]
+
+gaps = edit_service.find_gaps(gap[0], gap[1])
+print(gaps)
+
+print("FILLING GAPS...")
+fill = [15, TimeUnit.MINUTE]
+print(edit_service.fill_gap(gap, fill))
+
+print("CHANGE VALUE")
+print(edit_service.change_value([0, 1], Operator.DIV, 2))
