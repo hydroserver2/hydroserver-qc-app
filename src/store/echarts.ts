@@ -1,4 +1,9 @@
-import { Datastream, GraphSeries } from '@/types'
+import {
+  Datastream,
+  GraphSeries,
+  EChartsLineStyleType,
+  EChartsSeriesSymbol,
+} from '@/types'
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { EChartsOption } from 'echarts'
@@ -19,13 +24,30 @@ export const useEChartsStore = defineStore('ECharts', () => {
 
   const showLegend = ref(true)
   const showTooltip = ref(false)
+  const dataZoomEnd = ref(100)
 
   const graphSeriesArray = ref<GraphSeries[]>([])
   const prevIds = ref<string[]>([]) // DatastreamIds that were previously plotted
 
   const echartsOption = ref<EChartsOption | undefined>()
   const dataZoomStart = ref(0)
-  const dataZoomEnd = ref(100)
+
+  interface SeriesStyle {
+    lineStyleType: EChartsLineStyleType
+    symbol: EChartsSeriesSymbol
+  }
+
+  const seriesStyleMap = ref<{ [id: string]: SeriesStyle }>({})
+
+  function getLineStyleType(id: string): EChartsLineStyleType {
+    const style = seriesStyleMap.value[id]
+    return style ? style.lineStyleType : undefined
+  }
+
+  function getSymbol(id: string): EChartsSeriesSymbol {
+    const style = seriesStyleMap.value[id]
+    return style ? style.symbol : undefined
+  }
 
   function resetChartZoom() {
     dataZoomStart.value = 0
@@ -93,6 +115,8 @@ export const useEChartsStore = defineStore('ECharts', () => {
       data: processedData,
       yAxisLabel,
       lineColor: '#5571c7', // default to blue,
+      lineStyleType: getLineStyleType(datastream.id),
+      symbol: getSymbol(datastream.id),
     } as GraphSeries
   }
 
@@ -127,6 +151,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
     showLegend,
     showTooltip,
     prevIds,
+    seriesStyleMap,
     updateVisualization,
     clearChartState,
     resetChartZoom,

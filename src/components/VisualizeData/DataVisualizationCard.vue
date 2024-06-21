@@ -72,16 +72,25 @@
       </v-card-text>
     </div>
   </v-card>
+
+  <v-dialog v-model="openStyleModal" width="40rem">
+    <SeriesStyleCard
+      datastream-name="datastreamName"
+      @submit="updateSeriesStyle"
+      @close="openStyleModal = false"
+    />
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
 import { useDataVisStore } from '@/store/dataVisualization'
-import { ref, watch, computed, nextTick } from 'vue'
+import { ref, watch, computed, nextTick, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import VChart from 'vue-echarts'
 import 'echarts'
 import { useEChartsStore } from '@/store/echarts'
 import { createEChartsOption } from '@/utils/plotting/echarts'
+import SeriesStyleCard from '@/components/VisualizeData/SeriesStyleCard.vue'
 
 const props = defineProps({
   cardHeight: { type: Number, required: true },
@@ -89,6 +98,8 @@ const props = defineProps({
 
 const { loadingStates, plottedDatastreams } = storeToRefs(useDataVisStore())
 const { selectedQualifier } = storeToRefs(useDataVisStore())
+const openStyleModal = ref(false)
+const datastreamName = ref('')
 
 const {
   dataZoomStart,
@@ -136,6 +147,71 @@ watch([() => props.cardHeight], ([newHeight], [oldHeight]) => {
 // TODO: Is there a better place to put this watcher?
 watch(selectedQualifier, () => {
   option.value = createEChartsOption(graphSeriesArray.value)
+})
+
+let isLegendListenerCreated = false
+watch(echartsRef, (newValue) => {
+  if (newValue && !isLegendListenerCreated) {
+    isLegendListenerCreated = true
+    const echartsInstance = newValue.chart
+    echartsInstance.on('legendselectchanged', (params: any) => {
+      console.log('params', params)
+      if (params.name && params.selected?.hasOwnProperty(params.name)) {
+        datastreamName.value = params.name
+        openStyleModal.value = true
+        params.selected[params.name] = true
+        echartsInstance.setOption(
+          {
+            legend: [
+              {
+                selected: params.selected,
+              },
+            ],
+          },
+          false
+        )
+      }
+    })
+  }
+})
+
+const updateSeriesStyle = ({
+  lineStyle,
+  symbol,
+}: {
+  lineStyle: string | undefined
+  symbol: string | undefined
+}) => {
+  const echartsInstance = echartsRef.value!.chart
+  if (!echartsInstance || !datastreamName.value) return
+
+  const options = echartsInstance.getOption()
+
+  options.series.forEach((series: any) => {
+    if (series.name !== datastreamName.value) return
+    if (lineStyle === 'none') lineStyle = undefined
+    if (symbol === 'none') symbol = undefined
+
+    series.lineStyle = {
+      ...series.lineStyle,
+      type: lineStyle,
+      width: !!lineStyle ? 1 : 0,
+    }
+
+    series.symbol = symbol
+    series.showSymbol = !!symbol
+  })
+
+  echartsInstance.setOption({ series: options.series }, false)
+}
+
+onUnmounted(() => {
+  if (echartsRef.value && echartsRef.value.echarts) {
+    echartsRef.value.echarts.off(
+      'legendselectchanged',
+      echartsRef.value.echarts._customLegendClickHandler
+    )
+  }
 })
 </script>
 

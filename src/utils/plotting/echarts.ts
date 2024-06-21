@@ -102,15 +102,17 @@ export function generateSeriesOptions(
     },
     lineStyle: {
       width: 1,
+      type: series.lineStyleType,
     },
     emphasis: {
       focus: 'series',
-      lineStyle: {
-        width: 2,
-      },
+      // lineStyle: {
+      //   width: 2,
+      // },
     },
     sampling: 'lttb',
-    showSymbol: false,
+    symbol: series.symbol,
+    showSymbol: !!series.symbol,
   }))
 }
 

@@ -32,6 +32,18 @@ export class ObservationRecord {
   }
 }
 
+export type EChartsLineStyleType = 'solid' | 'dashed' | 'dotted' | undefined
+export type EChartsSeriesSymbol =
+  | 'circle'
+  | 'rect'
+  | 'roundRect'
+  | 'triangle'
+  | 'diamond'
+  | 'pin'
+  | 'arrow'
+  | 'none'
+  | undefined
+
 export interface GraphSeries {
   id: string
   isSelected: boolean
@@ -39,6 +51,8 @@ export interface GraphSeries {
   data: DataPoint[]
   yAxisLabel: string
   lineColor: string
+  lineStyleType: EChartsLineStyleType
+  symbol: EChartsLineStyleType
 }
 
 export type TimeSpacingUnit = 'seconds' | 'minutes' | 'hours' | 'days'
