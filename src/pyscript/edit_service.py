@@ -50,7 +50,7 @@ class EditService():
     self.series_id = series_id
     self.data = data
 
-    print("Initializing Edit Service...")
+    print("[EditService]: Initializing...")
     self._populate_series()
 
   def _populate_series(self) -> None:
@@ -107,6 +107,9 @@ class EditService():
     else:
       return self._df
 
+  ###################
+  # Gap Analysis
+  ###################
   def find_gaps(self, time_value, time_unit: str):
     """
     :return Pandas DataFrame:
@@ -143,6 +146,10 @@ class EditService():
     # Return the list of points that filled the gaps
     return pd.DataFrame(
       points, columns=[self.get_date_col(), self.get_value_col()])
+
+  ###################
+  # Data point operations
+  ###################
 
   def add_points(self, points, index=None):
     """

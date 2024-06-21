@@ -34,7 +34,6 @@ def delete_data_points(index):
 
 
 def set_filter(filter: dict[FilterOperation, float]):
-  print(filter)
   return edit_service.filter(json.loads(filter)).to_json()
 
 
