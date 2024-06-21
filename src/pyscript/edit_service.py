@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 
 # Tools
-# [x] Interpolate
+# [ ] Interpolate
 # [x] Set a value to a constant
 # [x] Change value by applying arithmetic (+, -, *, /)
 # [ ] Shift
@@ -42,6 +42,7 @@ class Operator(Enum):
   DIV = 'DIV'
   ADD = 'ADD'
   SUB = 'SUB'
+  ASSIGN = 'ASSIGN'
 
 
 class EditService():
@@ -54,10 +55,6 @@ class EditService():
 
   def _populate_series(self) -> None:
     rows = self.data["value"][0]["dataArray"][0:10]
-    # simulate data gaps
-    rows.pop(4)
-    rows.pop(3)
-    rows.pop(1)
     cols = self.data["value"][0]["components"]
 
     # Parse date fields
@@ -110,19 +107,20 @@ class EditService():
     else:
       return self._df
 
-  def find_gaps(self, time_value, time_unit: TimeUnit):
+  def find_gaps(self, time_value, time_unit: str):
     """
     :return Pandas DataFrame:
     """
-    return self._df[self._df[self.get_date_col()].diff() > np.timedelta64(time_value, time_unit.value)]
+    return self._df[self._df[self.get_date_col()].diff() > np.timedelta64(time_value, time_unit)]
 
   def fill_gap(self, gap, fill):
     """
     :return Pandas DataFrame:
     """
     gaps_df = self.find_gaps(gap[0], gap[1])
-    timegap = np.timedelta64(fill[0], fill[1].value)
+    timegap = np.timedelta64(fill[0], fill[1])
     points = []
+    index = []
 
     for gap in gaps_df.iterrows():
       gap_end_index = gap[0]
@@ -137,123 +135,55 @@ class EditService():
       # Annotate the points that will fill this gap
       while start < end:
         points.append([start, -9999])
+        index.append(gap_start_index)
         start = start + timegap
 
-    return self.add_points(points)
+    self.add_points(points, index)
 
-  def add_points(self, points):
+    # Return the list of points that filled the gaps
+    return pd.DataFrame(
+      points, columns=[self.get_date_col(), self.get_value_col()])
+
+  def add_points(self, points, index=None):
     """
     :return Pandas DataFrame:
     """
 
     # Create a new dataframe with the points
     points_df = pd.DataFrame(
-      points, columns=[self.get_date_col(), self.get_value_col()])
+      points, columns=[self.get_date_col(), self.get_value_col()], index=index)
 
     # Concatenate both dataframes. New rows will be at the end.
     df = pd.concat([self._df, points_df])
+
+    # Sort and reset index
+    # TODO: this might be too expensive. Find a way to insert a row at a specific index instead
+    df.sort_index(inplace=True)
     df.reset_index(drop=True, inplace=True)
+    self._df = df
 
-    return df
+  def change_values(self, index_list, operator: str, value):
 
-  def change_value(self, index_list, operator: Operator, value):
     def operation(x):
-      if operator == Operator.MULT:
+      if operator == Operator.MULT.value:
         return x * value
-      elif operator == Operator.DIV:
+      elif operator == Operator.DIV.value:
         return x / value
-      elif operator == Operator.ADD:
+      elif operator == Operator.ADD.value:
         return x + value
-      elif operator == Operator.SUB:
+      elif operator == Operator.SUB.value:
         return x - value
+      elif operator == Operator.ASSIGN.value:
+        return value
       else:
         return x
 
-    # TODO: return original
-    self._df = self._df[self._df.index.isin(
-      index_list)][self.get_value_col()].apply(operation)
-    print(self._df)
+    self._df.loc[self._df.index.isin(
+        index_list), self.get_value_col()] = self._df.loc[self._df.index.isin(
+            index_list), self.get_value_col()].apply(operation)
 
-  def delete_points(self):
-    filtered_points = self.get_filtered_points()
-    if not filtered_points.empty:
-      values = filtered_points.index.tolist()
+    return self._df
 
-      self.memDB.delete(values)
-      self._populate_series()
-      self.filtered_dataframe = None
-
-  def interpolate(self):
-    '''
-    In [75]: ser = Series(np.sort(np.random.uniform(size=100)))
-    # interpolate at new_index
-    In [76]: new_index = ser.index | Index([49.25, 49.5, 49.75, 50.25, 50.5, 50.75])
-    In [77]: interp_s = ser.reindex(new_index).interpolate(method='pchip')
-    '''
-
-    tmp_filter_list = self.get_filtered_points()
-    df = self._series_points_df
-    issel = df.index.isin(tmp_filter_list.index)
-
-    mdf = df["DataValue"].mask(issel)
-    mdf.interpolate(method="time", inplace=True)
-    tmp_filter_list["DataValue"] = mdf[issel]
-    ids = tmp_filter_list.index.tolist()
-
-    # update_list = [(row["DataValue"], row["ValueID"]) for index, row in tmp_filter_list.iterrows()]
-    update_list = [{"value": row["DataValue"], "id": index}
-                   for index, row in tmp_filter_list.iterrows()]
-
-    self.memDB.update(update_list)
-
-    self._populate_series()
-
-    self.filtered_dataframe = self._series_points_df[self._series_points_df.index.isin(
-      ids)]
-
-  def drift_correction(self, gap_width):
-
-    if self.isOneGroup():
-      tmp_filter_list = self.get_filtered_points()
-      startdate = tmp_filter_list.index[0]
-      x_l = (tmp_filter_list.index[-1] - startdate).total_seconds()
-      # nodv= self.memDB.series_service.get_variable_by_id(self.memDB.df["VariableID"][0])
-      nodv = self.memDB.series.variable.no_data_value
-      # y_n = y_0 + G(x_i / x_l)
-
-      def f(row): return row["DataValue"] + (gap_width * ((row.name -
-                                                           startdate).total_seconds() / x_l)) if row["DataValue"] != nodv else row["DataValue"]
-      tmp_filter_list["DataValue"] = tmp_filter_list.apply(f, axis=1)
-
-      update_list = [{"value": row["DataValue"], "id": index}
-                     for index, row in tmp_filter_list.iterrows()]
-
-      ids = tmp_filter_list.index.tolist()
-      self.memDB.update(update_list)
-
-      self._populate_series()
-
-      self.filtered_dataframe = self._series_points_df[self._series_points_df.index.isin(
-        ids)]
-      return True
-    return False
-
-  def isOneGroup(self):
-
-    issel = self._series_points_df.index.isin(self.get_filtered_points().index)
-
-    found_group = False
-    count = 0
-
-    for x in issel:
-      if x:
-        if not found_group:
-          found_group = True
-          count = count + 1
-      else:
-        found_group = False
-
-      if count > 1:
-        return False
-    if count == 1:
-      return True
+  def delete_points(self, index_list):
+    self._df.drop(index=index_list, inplace=True)
+    self._df.reset_index(drop=True, inplace=True)
