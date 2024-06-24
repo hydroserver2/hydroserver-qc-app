@@ -175,6 +175,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     }
   }
 
+  // TODO: If graphSeries already exists, then just update the data
   const fetchDatasets = (datastreams: Datastream[]) => {
     datastreams.forEach((ds) => {
       loadingStates.value.set(ds.id, true)
@@ -182,14 +183,13 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       const end = endDate.value.toISOString()
       fetchGraphSeries(ds, begin, end)
         .then((newSeries) => {
-          if (!plottedDatastreams.value.some((sd) => sd.id === ds.id)) return
-
+          // Remove all graphSeries with this datastream id
           graphSeriesArray.value = graphSeriesArray.value.filter(
             (series) => series.id !== ds.id
           )
 
           graphSeriesArray.value.push(newSeries)
-          updateVisualization(qcDatastream.value?.id)
+          updateVisualization()
         })
         .catch((error) => {
           console.error(`Failed to fetch dataset ${ds.id}:`, error)
@@ -205,7 +205,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     const newIds = currentIds.filter((id) => !prevIds.value.includes(id))
     const removedIds = prevIds.value.filter((id) => !currentIds.includes(id))
 
-    // Remove old
+    // Remove graphSeries that no longer are selected
     if (removedIds.length) {
       graphSeriesArray.value = graphSeriesArray.value.filter(
         (series) => !removedIds.includes(series.id)

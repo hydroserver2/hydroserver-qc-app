@@ -36,7 +36,6 @@ export class ObservationRecord {
 
 export interface GraphSeries {
   id: string
-  isSelected: boolean
   name: string
   data: DataPoint[]
   yAxisLabel: string

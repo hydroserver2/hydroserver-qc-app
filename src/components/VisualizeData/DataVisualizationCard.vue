@@ -107,10 +107,8 @@ const {
   dataZoomStart,
   dataZoomEnd,
   graphSeriesArray,
-  seriesOptionMap,
   echartsOption: option,
 } = storeToRefs(useEChartsStore())
-const { setSeriesStyles } = useEChartsStore()
 
 const echartsRef = ref<typeof VChart | null>(null)
 
@@ -179,8 +177,8 @@ const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
   const echartsInstance = echartsRef.value!.chart
   if (!echartsInstance || !seriesDatastream.value) return
 
+  // 1. Update ECharts series state
   const options = echartsInstance.getOption()
-
   options.series = options.series.map((series: any) => {
     if (series.name === seriesDatastream.value?.name) {
       // Merging the updatedOptions with the current series
@@ -200,6 +198,9 @@ const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
     return series // Return unmodified series if not the target
   })
 
+  // 2. Save state to store
+
+  // 3. Refresh plot
   echartsInstance.setOption({ series: options.series }, false)
 }
 

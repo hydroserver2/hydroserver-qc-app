@@ -272,7 +272,7 @@ function updateSelectedDatastream(datastream: Datastream) {
     qcDatastream.value = datastream
     removeDatastreamFromPlotted(datastream)
     addDatastreamToPlotted(datastream)
-    updateVisualization(datastream.id)
+    updateVisualization()
     return
   }
 
@@ -300,6 +300,6 @@ function updateSelectedDatastream(datastream: Datastream) {
   qcDatastream.value = datastream
   removeDatastreamFromPlotted(datastream)
   addDatastreamToPlotted(datastream)
-  updateVisualization(datastream.id)
+  updateVisualization()
 }
 </script>

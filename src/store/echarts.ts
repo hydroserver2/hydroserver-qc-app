@@ -27,49 +27,40 @@ export const useEChartsStore = defineStore('ECharts', () => {
   const echartsOption = ref<EChartsOption | undefined>()
   const dataZoomStart = ref(0)
 
-  /**Stores styles for the graphSeriesArray to persist preferences across reloads */
-  const seriesOptionMap = ref<{ [id: string]: LineSeriesOption }>({})
+  /**
+   * This function searches through the Pinia store's GraphSeries[] to determine which colors,
+   * defined in the EChartsColors array, are currently in use. It then selects and returns
+   * the first color from EChartsColors that is not already being used in any of the graph series.
+   *
+   * @returns {string} - Hex code of the first available color that is not in use. Returns black as a default if all are in use.
+   */
+  function assignColor(): string {
+    const usedColors = new Set(
+      graphSeriesArray.value.map((s) => s.seriesOption.itemStyle?.color)
+    )
 
-  function getSeriesOption(id: string): LineSeriesOption {
-    const option = seriesOptionMap.value[id]
+    for (const color of EChartsColors) {
+      if (!usedColors.has(color)) {
+        return color
+      }
+    }
+
+    return '#000000'
+  }
+
+  function getOrCreateSeriesOption(id: string): LineSeriesOption {
+    const option = graphSeriesArray.value.find((s) => s.id === id)
     if (option) return option
 
     return {
       itemStyle: {
-        color: '#5571c7', // blue,
+        color: assignColor(),
       },
       lineStyle: {
         type: 'solid',
       },
       symbol: undefined,
     }
-  }
-
-  // TODO: Update this and use it in the code
-  /**Update all variables that hold ECharts series options */
-  function setSeriesStyles(
-    id: string,
-    options: Partial<LineSeriesOption>
-  ): void {
-    const existingOptions = seriesOptionMap.value[id] || {}
-    seriesOptionMap.value[id] = { ...existingOptions, ...options }
-
-    graphSeriesArray.value = graphSeriesArray.value.map((series) => {
-      if (series.id === id) {
-        return {
-          ...series,
-          seriesOption: {
-            ...series.seriesOption,
-            ...options,
-          },
-        }
-      }
-      return series
-    })
-
-    // TODO: Optionally, force an update to the ECharts instance. Should this be a param?
-    // Or should the caller of this function just call updateVisualization?
-    echartsOption.value = createEChartsOption(graphSeriesArray.value)
   }
 
   function resetChartZoom() {
@@ -86,19 +77,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
   // TODO: This should only trigger an ECharts refresh. Move the line coloring somewhere else
   // Also, I'm thinking the line colors shouldn't change once set to a series. I think it would
   // be better instead to have them loop through the colors and somehow keep track of which ones are used
-  function updateVisualization(selectedDatastreamId?: string) {
-    graphSeriesArray.value.forEach((series, index) => {
-      series.isSelected = series.id === selectedDatastreamId
-
-      if (!series.seriesOption.itemStyle)
-        series.seriesOption.itemStyle = { color: '' }
-
-      if (series.isSelected) series.seriesOption.itemStyle.color = '#5571c7'
-      else
-        series.seriesOption.itemStyle.color =
-          EChartsColors[index % EChartsColors.length]
-    })
-
+  function updateVisualization() {
     echartsOption.value = createEChartsOption(graphSeriesArray.value)
     prevIds.value = graphSeriesArray.value.map((series) => series.id)
   }
@@ -141,14 +120,12 @@ export const useEChartsStore = defineStore('ECharts', () => {
         ? `${observedProperty.name} (${unit.symbol})`
         : 'Unknown'
 
-    console.log('fetching graph series', datastream.name)
-
     return {
       id: datastream.id,
       name: datastream.name,
       data: processedData,
       yAxisLabel,
-      seriesOption: getSeriesOption(datastream.id),
+      seriesOption: getOrCreateSeriesOption(datastream.id),
     } as GraphSeries
   }
 
@@ -183,11 +160,9 @@ export const useEChartsStore = defineStore('ECharts', () => {
     showLegend,
     showTooltip,
     prevIds,
-    seriesOptionMap,
     updateVisualization,
     clearChartState,
     resetChartZoom,
     fetchGraphSeries,
-    setSeriesStyles,
   }
 })
