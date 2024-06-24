@@ -163,8 +163,6 @@ class EditService():
     if index is not None:
       # This is the most efficient way to insert into a DataFrame for a large dataset.
 
-      points = [x for _, x in sorted(zip(index, points))]
-
       # create a dictionary of points to insert at each index
       slices = {}
       for idx, value in enumerate(index):
