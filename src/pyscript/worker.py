@@ -17,6 +17,7 @@ def click_handler(event):
 def get_data_frame():
   # TODO: `edit_service._df` will return a JsProxy of a PyProxy, which we cannot use in JS.
   # https://www.jhanley.com/blog/pyscript-javascript-and-python-interoperability/
+  # https://pyodide.org/en/stable/usage/api/python-api/ffi.html#
   # As a workaround we use `to_json` to serialize the data and send it to JS, but this cannot be made reactive.
   return edit_service._df.to_json()
 

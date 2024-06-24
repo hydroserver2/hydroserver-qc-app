@@ -110,6 +110,7 @@ class EditService():
   ###################
   # Gap Analysis
   ###################
+
   def find_gaps(self, time_value, time_unit: str):
     """
     :return Pandas DataFrame:
@@ -156,18 +157,46 @@ class EditService():
     :return Pandas DataFrame:
     """
 
-    # Create a new dataframe with the points
-    points_df = pd.DataFrame(
-      points, columns=[self.get_date_col(), self.get_value_col()], index=index)
+    # If an index list was provided, insert the points to the DataFrame at the corresponding index.
+    # We do this by creating a dictionary of slices where the key is the index to insert at, and the value is an array of points to insert at that index
+    # We iterate through the dictionary keys in reverse order, so that we can insert without altering the position of elements before
+    if index is not None:
+      # This is the most efficient way to insert into a DataFrame for a large dataset.
 
-    # Concatenate both dataframes. New rows will be at the end.
-    df = pd.concat([self._df, points_df])
+      points = [x for _, x in sorted(zip(index, points))]
 
-    # Sort and reset index
-    # TODO: this might be too expensive. Find a way to insert a row at a specific index instead
-    df.sort_index(inplace=True)
-    df.reset_index(drop=True, inplace=True)
-    self._df = df
+      # create a dictionary of points to insert at each index
+      slices = {}
+      for idx, value in enumerate(index):
+        if not value in slices:
+          slices[value] = []
+
+        slices[value].append(points[idx])
+
+      for s in sorted(slices.items(), reverse=True):
+        # Split DataFrame and insert new row.
+        idx = s[0] + 1
+        val = s[1]
+        df1 = self._df.iloc[:idx, :]
+        df2 = self._df.iloc[idx:, :]
+
+        points_df = pd.DataFrame(
+          val, columns=[self.get_date_col(), self.get_value_col()])
+        self._df = pd.concat([df1, points_df, df2]).reset_index(drop=True)
+
+    else:
+      # This way of inserting is not as efficient, but performance should be good enough given that the existing data in the DataFrame is pre-sorted.
+
+      # Create a new dataframe with the points
+      points_df = pd.DataFrame(
+        points, columns=[self.get_date_col(), self.get_value_col()])
+
+      # Concatenate both dataframes. New rows will be at the end.
+      self._df = pd.concat([self._df, points_df])
+
+      # Sort and reset index
+      self._df = self._df.sort_values(self.get_date_col())
+      self._df.reset_index(drop=True, inplace=True)
 
   def change_values(self, index_list, operator: str, value):
 
