@@ -1,3 +1,5 @@
+import { LineSeriesOption } from 'echarts'
+
 export type DataPoint = {
   date: Date
   value: number
@@ -32,27 +34,13 @@ export class ObservationRecord {
   }
 }
 
-export type EChartsLineStyleType = 'solid' | 'dashed' | 'dotted' | undefined
-export type EChartsSeriesSymbol =
-  | 'circle'
-  | 'rect'
-  | 'roundRect'
-  | 'triangle'
-  | 'diamond'
-  | 'pin'
-  | 'arrow'
-  | 'none'
-  | undefined
-
 export interface GraphSeries {
   id: string
   isSelected: boolean
   name: string
   data: DataPoint[]
   yAxisLabel: string
-  lineColor: string
-  lineStyleType: EChartsLineStyleType
-  symbol: EChartsLineStyleType
+  seriesOption: LineSeriesOption
 }
 
 export type TimeSpacingUnit = 'seconds' | 'minutes' | 'hours' | 'days'

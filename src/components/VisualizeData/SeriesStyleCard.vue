@@ -1,14 +1,14 @@
 <template>
   <v-card rounded="xl">
     <v-container>
-      <v-card-title>Select series style</v-card-title>
+      <v-card-title>Update series style</v-card-title>
 
       <v-form @submit.prevent="onSubmit" ref="myForm" validate-on="blur">
         <v-card-text>
           <v-select
-            :items="lineStyles"
+            :items="lineTypes"
             label="Select Line Style"
-            v-model="selectedLineStyle"
+            v-model="selectedLineType"
           />
 
           <v-select
@@ -21,7 +21,7 @@
         <v-card-actions>
           <v-spacer />
           <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-          <v-btn rounded="xl" variant="outlined" type="submit">Filter</v-btn>
+          <v-btn rounded="xl" variant="outlined" type="submit">Update</v-btn>
         </v-card-actions>
       </v-form>
     </v-container>
@@ -29,15 +29,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useEChartsStore } from '@/store/echarts'
+import { storeToRefs } from 'pinia'
+import { onMounted, ref } from 'vue'
 
-defineProps({ datastreamName: { type: String, required: true } })
+const { graphSeriesArray } = storeToRefs(useEChartsStore())
+
+const props = defineProps({ datastreamId: { type: String, required: true } })
 const emit = defineEmits(['submit', 'close'])
 
-const selectedLineStyle = ref(undefined)
-const selectedSymbol = ref(undefined)
+const selectedLineType = ref()
+const selectedSymbol = ref()
 
-const lineStyles = ['solid', 'dashed', 'dotted', 'none']
+const lineTypes = ['solid', 'dashed', 'dotted', 'none']
 const symbols = [
   'circle',
   'rect',
@@ -49,10 +53,24 @@ const symbols = [
   'none',
 ]
 
+onMounted(() => {
+  const series = graphSeriesArray.value.find((s) => s.id === props.datastreamId)
+  if (series?.seriesOption) {
+    selectedLineType.value = series.seriesOption.lineStyle?.type || 'none'
+    selectedSymbol.value = series.seriesOption.symbol || 'none'
+  }
+})
+
 function onSubmit() {
+  const type =
+    selectedLineType.value === 'none' ? undefined : selectedLineType.value
+  const symbol =
+    selectedSymbol.value === 'none' ? undefined : selectedSymbol.value
+
   emit('submit', {
-    lineStyle: selectedLineStyle.value,
-    symbol: selectedSymbol.value,
+    lineStyle: { type, width: !!type ? 1 : 0 },
+    symbol,
+    showSymbol: !!symbol,
   })
   emit('close')
 }

@@ -73,10 +73,10 @@
     </div>
   </v-card>
 
-  <v-dialog v-model="openStyleModal" width="40rem">
+  <v-dialog v-if="seriesDatastream" v-model="openStyleModal" width="40rem">
     <SeriesStyleCard
-      datastream-name="datastreamName"
-      @submit="updateSeriesStyle"
+      :datastream-id="seriesDatastream.id"
+      @submit="updateSeriesOption"
       @close="openStyleModal = false"
     />
   </v-dialog>
@@ -91,6 +91,8 @@ import 'echarts'
 import { useEChartsStore } from '@/store/echarts'
 import { createEChartsOption } from '@/utils/plotting/echarts'
 import SeriesStyleCard from '@/components/VisualizeData/SeriesStyleCard.vue'
+import { Datastream } from '@/types'
+import { LineSeriesOption } from 'echarts'
 
 const props = defineProps({
   cardHeight: { type: Number, required: true },
@@ -99,14 +101,16 @@ const props = defineProps({
 const { loadingStates, plottedDatastreams } = storeToRefs(useDataVisStore())
 const { selectedQualifier } = storeToRefs(useDataVisStore())
 const openStyleModal = ref(false)
-const datastreamName = ref('')
+const seriesDatastream = ref<Datastream | null>(null)
 
 const {
   dataZoomStart,
   dataZoomEnd,
   graphSeriesArray,
+  seriesOptionMap,
   echartsOption: option,
 } = storeToRefs(useEChartsStore())
+const { setSeriesStyles } = useEChartsStore()
 
 const echartsRef = ref<typeof VChart | null>(null)
 
@@ -155,51 +159,45 @@ watch(echartsRef, (newValue) => {
     isLegendListenerCreated = true
     const echartsInstance = newValue.chart
     echartsInstance.on('legendselectchanged', (params: any) => {
-      console.log('params', params)
       if (params.name && params.selected?.hasOwnProperty(params.name)) {
-        datastreamName.value = params.name
+        const matchingDatastream = plottedDatastreams.value.find(
+          (d) => d.name === params.name
+        )
+
+        if (!matchingDatastream) return
+        seriesDatastream.value = matchingDatastream
         openStyleModal.value = true
         params.selected[params.name] = true
-        echartsInstance.setOption(
-          {
-            legend: [
-              {
-                selected: params.selected,
-              },
-            ],
-          },
-          false
-        )
+        const legendOption = [{ selected: params.selected }]
+        echartsInstance.setOption({ legend: legendOption }, false)
       }
     })
   }
 })
 
-const updateSeriesStyle = ({
-  lineStyle,
-  symbol,
-}: {
-  lineStyle: string | undefined
-  symbol: string | undefined
-}) => {
+const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
   const echartsInstance = echartsRef.value!.chart
-  if (!echartsInstance || !datastreamName.value) return
+  if (!echartsInstance || !seriesDatastream.value) return
 
   const options = echartsInstance.getOption()
 
-  options.series.forEach((series: any) => {
-    if (series.name !== datastreamName.value) return
-    if (lineStyle === 'none') lineStyle = undefined
-    if (symbol === 'none') symbol = undefined
-
-    series.lineStyle = {
-      ...series.lineStyle,
-      type: lineStyle,
-      width: !!lineStyle ? 1 : 0,
+  options.series = options.series.map((series: any) => {
+    if (series.name === seriesDatastream.value?.name) {
+      // Merging the updatedOptions with the current series
+      return {
+        ...series,
+        ...updatedOptions,
+        lineStyle: {
+          ...series.lineStyle,
+          ...updatedOptions.lineStyle,
+        },
+        itemStyle: {
+          ...series.itemStyle,
+          ...updatedOptions.itemStyle,
+        },
+      }
     }
-
-    series.symbol = symbol
-    series.showSymbol = !!symbol
+    return series // Return unmodified series if not the target
   })
 
   echartsInstance.setOption({ series: options.series }, false)
