@@ -1,7 +1,7 @@
 import { Datastream, GraphSeries } from '@/types'
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
-import { EChartsOption } from 'echarts'
+import { EChartsOption, LineSeriesOption } from 'echarts'
 import { EChartsColors } from '@/utils/materialColors'
 import {
   createEChartsOption,
@@ -19,13 +19,44 @@ export const useEChartsStore = defineStore('ECharts', () => {
 
   const showLegend = ref(true)
   const showTooltip = ref(false)
+  const dataZoomEnd = ref(100)
 
   const graphSeriesArray = ref<GraphSeries[]>([])
   const prevIds = ref<string[]>([]) // DatastreamIds that were previously plotted
 
   const echartsOption = ref<EChartsOption | undefined>()
   const dataZoomStart = ref(0)
-  const dataZoomEnd = ref(100)
+
+  /**
+   * This function searches through the Pinia store's GraphSeries[] to determine which colors,
+   * defined in the EChartsColors array, are currently in use. It then selects and returns
+   * the first color from EChartsColors that is not already being used in any of the graph series.
+   *
+   * @returns {string} - Hex code of the first available color that is not in use. Returns black as a default if all are in use.
+   */
+  function assignColor(): string {
+    const usedColors = new Set(
+      graphSeriesArray.value.map((s) => s.seriesOption.itemStyle?.color)
+    )
+
+    for (const color of EChartsColors) {
+      if (!usedColors.has(color)) {
+        return color
+      }
+    }
+
+    return '#000000'
+  }
+
+  const getDefaultSeriesOption = (): LineSeriesOption => ({
+    itemStyle: {
+      color: assignColor(),
+    },
+    lineStyle: {
+      type: 'solid',
+    },
+    symbol: undefined,
+  })
 
   function resetChartZoom() {
     dataZoomStart.value = 0
@@ -38,15 +69,30 @@ export const useEChartsStore = defineStore('ECharts', () => {
     echartsOption.value = undefined
   }
 
-  function updateVisualization(selectedDatastreamId?: string) {
-    graphSeriesArray.value.forEach((series, index) => {
-      series.isSelected = series.id === selectedDatastreamId
-
-      if (series.isSelected) series.lineColor = '#5571c7'
-      else series.lineColor = EChartsColors[index % EChartsColors.length]
-    })
+  // TODO: This should only trigger an ECharts refresh. Move the line coloring somewhere else
+  // Also, I'm thinking the line colors shouldn't change once set to a series. I think it would
+  // be better instead to have them loop through the colors and somehow keep track of which ones are used
+  function updateVisualization() {
     echartsOption.value = createEChartsOption(graphSeriesArray.value)
     prevIds.value = graphSeriesArray.value.map((series) => series.id)
+  }
+
+  const fetchGraphSeriesData = async (
+    datastream: Datastream,
+    start: string,
+    end: string
+  ) => {
+    const observations = await fetchObservationsInRange(
+      datastream,
+      start,
+      end
+    ).catch((error) => {
+      Snackbar.error('Failed to fetch observations')
+      console.error('Failed to fetch observations:', error)
+      return []
+    })
+
+    return preProcessData(observations, datastream)
   }
 
   const fetchGraphSeries = async (
@@ -54,15 +100,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
     start: string,
     end: string
   ) => {
-    const observationsPromise = fetchObservationsInRange(
-      datastream,
-      start,
-      end
-    ).catch((error) => {
-      Snackbar.error('Failed to fetch observations')
-      console.error('Failed to fetch observations:', error)
-      return null
-    })
+    const observationsPromise = fetchGraphSeriesData(datastream, start, end)
     const fetchUnitPromise = api.getUnit(datastream.unitId).catch((error) => {
       console.error('Failed to fetch Unit:', error)
       return null
@@ -74,13 +112,11 @@ export const useEChartsStore = defineStore('ECharts', () => {
         return null
       })
 
-    const [observations, unit, observedProperty] = await Promise.all([
+    const [data, unit, observedProperty] = await Promise.all([
       observationsPromise,
       fetchUnitPromise,
       fetchObservedPropertyPromise,
     ])
-
-    const processedData = preProcessData(observations, datastream)
 
     const yAxisLabel =
       observedProperty && unit
@@ -90,9 +126,9 @@ export const useEChartsStore = defineStore('ECharts', () => {
     return {
       id: datastream.id,
       name: datastream.name,
-      data: processedData,
+      data,
       yAxisLabel,
-      lineColor: '#5571c7', // default to blue,
+      seriesOption: getDefaultSeriesOption(),
     } as GraphSeries
   }
 
@@ -131,5 +167,6 @@ export const useEChartsStore = defineStore('ECharts', () => {
     clearChartState,
     resetChartZoom,
     fetchGraphSeries,
+    fetchGraphSeriesData,
   }
 })

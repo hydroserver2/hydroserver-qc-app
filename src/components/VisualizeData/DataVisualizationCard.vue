@@ -4,17 +4,15 @@
       <v-progress-linear color="primary" :active="isActive" indeterminate />
     </template>
 
-    <keep-alive>
-      <v-card-text v-if="option && isDataAvailable">
-        <v-chart
-          ref="echartsRef"
-          :option="option"
-          @datazoom="handleDataZoom"
-          autoresize
-          :style="{ height: `${cardHeight}vh` }"
-        />
-      </v-card-text>
-    </keep-alive>
+    <v-card-text v-if="option && isDataAvailable">
+      <v-chart
+        ref="echartsRef"
+        :option="option"
+        @datazoom="handleDataZoom"
+        autoresize
+        :style="{ height: `${cardHeight}vh` }"
+      />
+    </v-card-text>
 
     <div v-if="!isDataAvailable" :style="{ 'min-height': `${cardHeight}vh` }">
       <v-card-text>
@@ -72,16 +70,27 @@
       </v-card-text>
     </div>
   </v-card>
+
+  <v-dialog v-if="seriesDatastream" v-model="openStyleModal" width="40rem">
+    <SeriesStyleCard
+      :datastream-id="seriesDatastream.id"
+      @submit="updateSeriesOption"
+      @close="openStyleModal = false"
+    />
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
 import { useDataVisStore } from '@/store/dataVisualization'
-import { ref, watch, computed, nextTick } from 'vue'
+import { ref, watch, computed, nextTick, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import VChart from 'vue-echarts'
 import 'echarts'
 import { useEChartsStore } from '@/store/echarts'
 import { createEChartsOption } from '@/utils/plotting/echarts'
+import SeriesStyleCard from '@/components/VisualizeData/SeriesStyleCard.vue'
+import { Datastream } from '@/types'
+import { LineSeriesOption } from 'echarts'
 
 const props = defineProps({
   cardHeight: { type: Number, required: true },
@@ -89,6 +98,8 @@ const props = defineProps({
 
 const { loadingStates, plottedDatastreams } = storeToRefs(useDataVisStore())
 const { selectedQualifier } = storeToRefs(useDataVisStore())
+const openStyleModal = ref(false)
+const seriesDatastream = ref<Datastream | null>(null)
 
 const {
   dataZoomStart,
@@ -136,6 +147,74 @@ watch([() => props.cardHeight], ([newHeight], [oldHeight]) => {
 // TODO: Is there a better place to put this watcher?
 watch(selectedQualifier, () => {
   option.value = createEChartsOption(graphSeriesArray.value)
+})
+
+let isLegendListenerCreated = false
+watch(echartsRef, (newValue) => {
+  if (newValue && !isLegendListenerCreated) {
+    isLegendListenerCreated = true
+    const echartsInstance = newValue.chart
+    echartsInstance.on('legendselectchanged', (params: any) => {
+      if (params.name && params.selected?.hasOwnProperty(params.name)) {
+        const matchingDatastream = plottedDatastreams.value.find(
+          (d) => d.name === params.name
+        )
+
+        if (!matchingDatastream) return
+        seriesDatastream.value = matchingDatastream
+        openStyleModal.value = true
+        params.selected[params.name] = true
+        const legendOption = [{ selected: params.selected }]
+        echartsInstance.setOption({ legend: legendOption }, false)
+      }
+    })
+  }
+})
+
+const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
+  if (
+    !option.value?.series ||
+    !seriesDatastream.value ||
+    !Array.isArray(option.value.series)
+  )
+    return
+
+  // 1. Update ECharts series state
+  option.value.series = option.value.series.map((series: any) => {
+    if (series.name !== seriesDatastream.value?.name) return series
+
+    const seriesOption = {
+      ...series,
+      ...updatedOptions,
+      lineStyle: {
+        ...series.lineStyle,
+        ...updatedOptions.lineStyle,
+      },
+      itemStyle: {
+        ...series.itemStyle,
+        ...updatedOptions.itemStyle,
+      },
+    }
+
+    // 2. Update series options in pinia store
+    graphSeriesArray.value = graphSeriesArray.value.map((graphSeries) => {
+      if (graphSeries.name === seriesDatastream.value?.name) {
+        graphSeries.seriesOption = { ...seriesOption }
+      }
+      return graphSeries
+    })
+
+    return seriesOption
+  })
+}
+
+onUnmounted(() => {
+  if (echartsRef.value && echartsRef.value.echarts) {
+    echartsRef.value.echarts.off(
+      'legendselectchanged',
+      echartsRef.value.echarts._customLegendClickHandler
+    )
+  }
 })
 </script>
 

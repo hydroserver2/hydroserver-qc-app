@@ -1,3 +1,5 @@
+import { LineSeriesOption } from 'echarts'
+
 export type DataPoint = {
   date: Date
   value: number
@@ -34,11 +36,10 @@ export class ObservationRecord {
 
 export interface GraphSeries {
   id: string
-  isSelected: boolean
   name: string
   data: DataPoint[]
   yAxisLabel: string
-  lineColor: string
+  seriesOption: LineSeriesOption
 }
 
 export type TimeSpacingUnit = 'seconds' | 'minutes' | 'hours' | 'days'

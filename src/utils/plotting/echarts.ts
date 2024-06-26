@@ -33,10 +33,15 @@ export function createYAxisConfigurations(
 
   data.forEach((series) => {
     if (!yAxisConfigurations.has(series.yAxisLabel)) {
+      const color =
+        typeof series.seriesOption.itemStyle?.color === 'string'
+          ? series.seriesOption.itemStyle?.color
+          : '#5571c7' // default blue
+
       yAxisConfigurations.set(series.yAxisLabel, {
         index: yAxisConfigurations.size,
         yAxisLabel: series.yAxisLabel,
-        color: series.lineColor,
+        color: color,
       })
     } else {
       const existingEntry = yAxisConfigurations.get(series.yAxisLabel)
@@ -87,6 +92,7 @@ export function generateYAxisOptions(
   })
 }
 
+// TODO: Instead of merging manually, use a spread operator on seriesOption
 export function generateSeriesOptions(
   seriesArray: GraphSeries[],
   yAxisConfigurations: yAxisConfigurationMap
@@ -98,19 +104,21 @@ export function generateSeriesOptions(
     xAxisIndex: 0,
     yAxisIndex: yAxisConfigurations.get(series.yAxisLabel)?.index,
     itemStyle: {
-      color: series.lineColor,
+      color: series.seriesOption.itemStyle?.color,
     },
     lineStyle: {
       width: 1,
+      type: series.seriesOption.lineStyle?.type,
     },
     emphasis: {
       focus: 'series',
-      lineStyle: {
-        width: 2,
-      },
+      // lineStyle: {
+      //   width: 2,
+      // },
     },
     sampling: 'lttb',
-    showSymbol: false,
+    symbol: series.seriesOption.symbol,
+    showSymbol: !!series.seriesOption.symbol,
   }))
 }
 
