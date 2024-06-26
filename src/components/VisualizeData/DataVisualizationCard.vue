@@ -174,34 +174,35 @@ watch(echartsRef, (newValue) => {
 })
 
 const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
-  const echartsInstance = echartsRef.value!.chart
-  if (!echartsInstance || !seriesDatastream.value) return
+  if (!option.value?.series || !seriesDatastream.value) return
 
   // 1. Update ECharts series state
-  const options = echartsInstance.getOption()
-  options.series = options.series.map((series: any) => {
-    if (series.name === seriesDatastream.value?.name) {
-      // Merging the updatedOptions with the current series
-      return {
-        ...series,
-        ...updatedOptions,
-        lineStyle: {
-          ...series.lineStyle,
-          ...updatedOptions.lineStyle,
-        },
-        itemStyle: {
-          ...series.itemStyle,
-          ...updatedOptions.itemStyle,
-        },
-      }
+  option.value.series = option.value.series.map((series: any) => {
+    if (series.name !== seriesDatastream.value?.name) return series
+
+    const seriesOption = {
+      ...series,
+      ...updatedOptions,
+      lineStyle: {
+        ...series.lineStyle,
+        ...updatedOptions.lineStyle,
+      },
+      itemStyle: {
+        ...series.itemStyle,
+        ...updatedOptions.itemStyle,
+      },
     }
-    return series // Return unmodified series if not the target
+
+    // 2. Update series options in pinia store
+    graphSeriesArray.value = graphSeriesArray.value.map((graphSeries) => {
+      if (graphSeries.name === seriesDatastream.value?.name) {
+        graphSeries.seriesOption = { ...seriesOption }
+      }
+      return graphSeries
+    })
+
+    return seriesOption
   })
-
-  // 2. Save state to store
-
-  // 3. Refresh plot
-  echartsInstance.setOption({ series: options.series }, false)
 }
 
 onUnmounted(() => {
