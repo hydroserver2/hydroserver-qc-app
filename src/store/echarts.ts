@@ -48,20 +48,15 @@ export const useEChartsStore = defineStore('ECharts', () => {
     return '#000000'
   }
 
-  function getOrCreateSeriesOption(id: string): LineSeriesOption {
-    const option = graphSeriesArray.value.find((s) => s.id === id)
-    if (option) return option
-
-    return {
-      itemStyle: {
-        color: assignColor(),
-      },
-      lineStyle: {
-        type: 'solid',
-      },
-      symbol: undefined,
-    }
-  }
+  const getDefaultSeriesOption = (): LineSeriesOption => ({
+    itemStyle: {
+      color: assignColor(),
+    },
+    lineStyle: {
+      type: 'solid',
+    },
+    symbol: undefined,
+  })
 
   function resetChartZoom() {
     dataZoomStart.value = 0
@@ -82,20 +77,30 @@ export const useEChartsStore = defineStore('ECharts', () => {
     prevIds.value = graphSeriesArray.value.map((series) => series.id)
   }
 
-  const fetchGraphSeries = async (
+  const fetchGraphSeriesData = async (
     datastream: Datastream,
     start: string,
     end: string
   ) => {
-    const observationsPromise = fetchObservationsInRange(
+    const observations = await fetchObservationsInRange(
       datastream,
       start,
       end
     ).catch((error) => {
       Snackbar.error('Failed to fetch observations')
       console.error('Failed to fetch observations:', error)
-      return null
+      return []
     })
+
+    return preProcessData(observations, datastream)
+  }
+
+  const fetchGraphSeries = async (
+    datastream: Datastream,
+    start: string,
+    end: string
+  ) => {
+    const observationsPromise = fetchGraphSeriesData(datastream, start, end)
     const fetchUnitPromise = api.getUnit(datastream.unitId).catch((error) => {
       console.error('Failed to fetch Unit:', error)
       return null
@@ -107,13 +112,11 @@ export const useEChartsStore = defineStore('ECharts', () => {
         return null
       })
 
-    const [observations, unit, observedProperty] = await Promise.all([
+    const [data, unit, observedProperty] = await Promise.all([
       observationsPromise,
       fetchUnitPromise,
       fetchObservedPropertyPromise,
     ])
-
-    const processedData = preProcessData(observations, datastream)
 
     const yAxisLabel =
       observedProperty && unit
@@ -123,9 +126,9 @@ export const useEChartsStore = defineStore('ECharts', () => {
     return {
       id: datastream.id,
       name: datastream.name,
-      data: processedData,
+      data,
       yAxisLabel,
-      seriesOption: getOrCreateSeriesOption(datastream.id),
+      seriesOption: getDefaultSeriesOption(),
     } as GraphSeries
   }
 
@@ -164,5 +167,6 @@ export const useEChartsStore = defineStore('ECharts', () => {
     clearChartState,
     resetChartZoom,
     fetchGraphSeries,
+    fetchGraphSeriesData,
   }
 })
