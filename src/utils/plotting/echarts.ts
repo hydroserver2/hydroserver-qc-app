@@ -14,7 +14,6 @@ import {
   TooltipOption,
   XAXisOption,
   YAXisOption,
-  ZRColor,
 } from 'echarts/types/dist/shared'
 
 type yAxisConfigurationMap = Map<

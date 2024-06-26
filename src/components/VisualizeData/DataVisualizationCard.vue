@@ -4,17 +4,15 @@
       <v-progress-linear color="primary" :active="isActive" indeterminate />
     </template>
 
-    <keep-alive>
-      <v-card-text v-if="option && isDataAvailable">
-        <v-chart
-          ref="echartsRef"
-          :option="option"
-          @datazoom="handleDataZoom"
-          autoresize
-          :style="{ height: `${cardHeight}vh` }"
-        />
-      </v-card-text>
-    </keep-alive>
+    <v-card-text v-if="option && isDataAvailable">
+      <v-chart
+        ref="echartsRef"
+        :option="option"
+        @datazoom="handleDataZoom"
+        autoresize
+        :style="{ height: `${cardHeight}vh` }"
+      />
+    </v-card-text>
 
     <div v-if="!isDataAvailable" :style="{ 'min-height': `${cardHeight}vh` }">
       <v-card-text>
