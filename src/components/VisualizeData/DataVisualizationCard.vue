@@ -174,7 +174,12 @@ watch(echartsRef, (newValue) => {
 })
 
 const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
-  if (!option.value?.series || !seriesDatastream.value) return
+  if (
+    !option.value?.series ||
+    !seriesDatastream.value ||
+    !Array.isArray(option.value.series)
+  )
+    return
 
   // 1. Update ECharts series state
   option.value.series = option.value.series.map((series: any) => {
