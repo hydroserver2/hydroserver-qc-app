@@ -130,9 +130,6 @@ export function generateToolboxOptions() {
       },
       restore: {},
       saveAsImage: { name: 'plot_export' },
-      brush: {
-        type: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
-      },
     },
   }
 }
@@ -354,6 +351,10 @@ export const createEChartsOption = (
     dataZoom: generateDataZoomOptions(initializeZoomed),
     legend: createLegendConfig(),
     toolbox: generateToolboxOptions() as {},
+    brush: {
+      toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+      xAxisIndex: [0],
+    },
   }
 
   // Add result qualifier options if there's a datastream selected for quality control with qualifiers
