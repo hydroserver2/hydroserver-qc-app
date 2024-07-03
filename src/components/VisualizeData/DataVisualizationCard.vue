@@ -211,9 +211,12 @@ const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
 
   // 1. Update ECharts series state
   option.value.series = option.value.series.map((series: any) => {
-    if (series.name !== seriesDatastream.value?.name) return series
+    // Hack: Assume an empty name is the line plot overlaying the selected scatter plot
+    // TODO: Once Echarts allows selecting data on line plots, update this code.
+    if (series.name && series.name !== seriesDatastream.value?.name)
+      return series
 
-    const seriesOption = {
+    let seriesOption: LineSeriesOption = {
       ...series,
       ...updatedOptions,
       lineStyle: {
@@ -224,6 +227,10 @@ const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
         ...series.itemStyle,
         ...updatedOptions.itemStyle,
       },
+    }
+
+    if (!series.name) {
+      seriesOption.showSymbol = false
     }
 
     // 2. Update series options in pinia store
