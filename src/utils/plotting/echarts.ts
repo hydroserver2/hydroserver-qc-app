@@ -93,33 +93,55 @@ export function generateYAxisOptions(
 }
 
 // TODO: Instead of merging manually, use a spread operator on seriesOption
+// The reason we're overlaying a line plot on top of a scatter plot for the selected
+// datastream is because ECharts currently only supports data selection for scatter plots not line plots
 export function generateSeriesOptions(
   seriesArray: GraphSeries[],
-  yAxisConfigurations: yAxisConfigurationMap
+  yAxisConfigurations: yAxisConfigurationMap,
+  selectedIndex: number
 ): SeriesOption[] {
-  return seriesArray.map((series) => ({
-    name: series.name,
-    type: 'line',
-    data: series.data.map((dp) => [dp.date.getTime(), dp.value]),
-    xAxisIndex: 0,
-    yAxisIndex: yAxisConfigurations.get(series.yAxisLabel)?.index,
-    itemStyle: {
-      color: series.seriesOption.itemStyle?.color,
-    },
-    lineStyle: {
-      width: 1,
-      type: series.seriesOption.lineStyle?.type,
-    },
-    emphasis: {
-      focus: 'series',
-      // lineStyle: {
-      //   width: 2,
-      // },
-    },
-    sampling: 'lttb',
-    symbol: series.seriesOption.symbol,
-    showSymbol: !!series.seriesOption.symbol,
-  }))
+  return seriesArray.flatMap((series, index): SeriesOption[] => {
+    const baseSeries: SeriesOption = {
+      name: series.name,
+      type: 'line',
+      data: series.data.map((dp) => [dp.date.getTime(), dp.value]),
+      xAxisIndex: 0,
+      yAxisIndex: yAxisConfigurations.get(series.yAxisLabel)?.index,
+      itemStyle: {
+        color: series.seriesOption.itemStyle?.color,
+      },
+      lineStyle: {
+        width: 1,
+        type: series.seriesOption.lineStyle?.type,
+      },
+      emphasis: {
+        focus: 'series',
+      },
+      sampling: 'lttb',
+      symbol: series.seriesOption.symbol,
+      showSymbol: !!series.seriesOption.symbol,
+    }
+
+    if (index === selectedIndex) {
+      const scatterSeries: SeriesOption = {
+        ...baseSeries,
+        type: 'scatter',
+      }
+
+      const lineSeries: SeriesOption = {
+        ...baseSeries,
+        name: '', // No name for this series so it won't appear in the legend
+        lineStyle: { ...baseSeries.lineStyle, opacity: 0.5 },
+        emphasis: { focus: 'none' },
+        showSymbol: false,
+        tooltip: { show: false },
+      }
+
+      return [scatterSeries, lineSeries]
+    }
+
+    return [baseSeries]
+  })
 }
 
 export function generateToolboxOptions() {
@@ -311,9 +333,18 @@ export const createEChartsOption = (
   const { initializeZoomed = true } = opts
   const { qcDatastream } = storeToRefs(useDataVisStore())
 
+  let qcIndex = -1
+  if (qcDatastream.value?.id) {
+    qcIndex = findSelectedDatastreamIndex(seriesArray, qcDatastream.value)
+  }
+
   const yAxisConfigurations = createYAxisConfigurations(seriesArray)
   const yAxisOptions = generateYAxisOptions(yAxisConfigurations)
-  const seriesOptions = generateSeriesOptions(seriesArray, yAxisConfigurations)
+  const seriesOptions = generateSeriesOptions(
+    seriesArray,
+    yAxisConfigurations,
+    qcIndex
+  )
 
   const leftYAxesCount = Math.ceil(yAxisConfigurations.size / 2)
   const rightYAxesCount = yAxisConfigurations.size - leftYAxesCount
@@ -353,22 +384,25 @@ export const createEChartsOption = (
     toolbox: generateToolboxOptions() as {},
     brush: {
       toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
-      xAxisIndex: [0],
+      xAxisIndex: 'all',
+      seriesIndex: 'all',
+      throttleType: 'debounce',
+      throttleDelay: 100,
+      outOfBrush: {
+        colorAlpha: 0.25, // dims the points outside the brushed area
+      },
     },
   }
 
   // Add result qualifier options if there's a datastream selected for quality control with qualifiers
-  if (qcDatastream.value?.id) {
-    const qcIndex = findSelectedDatastreamIndex(seriesArray, qcDatastream.value)
-    if (qcIndex !== -1 && hasStringQualifier(seriesArray[qcIndex].data)) {
-      echartsOption = addQualifierOptions(
-        seriesArray[qcIndex],
-        echartsOption,
-        yAxisConfigurations.size,
-        gridRightPadding,
-        gridLeftPadding
-      )
-    }
+  if (qcIndex !== -1 && hasStringQualifier(seriesArray[qcIndex].data)) {
+    echartsOption = addQualifierOptions(
+      seriesArray[qcIndex],
+      echartsOption,
+      yAxisConfigurations.size,
+      gridRightPadding,
+      gridLeftPadding
+    )
   }
 
   return echartsOption

@@ -149,25 +149,55 @@ watch(selectedQualifier, () => {
   option.value = createEChartsOption(graphSeriesArray.value)
 })
 
-let isLegendListenerCreated = false
-watch(echartsRef, (newValue) => {
-  if (newValue && !isLegendListenerCreated) {
-    isLegendListenerCreated = true
-    const echartsInstance = newValue.chart
-    echartsInstance.on('legendselectchanged', (params: any) => {
-      if (params.name && params.selected?.hasOwnProperty(params.name)) {
-        const matchingDatastream = plottedDatastreams.value.find(
-          (d) => d.name === params.name
-        )
+function handleLegendSelected(params: any) {
+  if (!params.name || !params.selected?.hasOwnProperty(params.name)) return
+  const matchingDatastream = plottedDatastreams.value.find(
+    (d) => d.name === params.name
+  )
+  if (!matchingDatastream) return
 
-        if (!matchingDatastream) return
-        seriesDatastream.value = matchingDatastream
-        openStyleModal.value = true
-        params.selected[params.name] = true
-        const legendOption = [{ selected: params.selected }]
-        echartsInstance.setOption({ legend: legendOption }, false)
-      }
-    })
+  seriesDatastream.value = matchingDatastream
+  openStyleModal.value = true
+  params.selected[params.name] = true
+  if (option.value) option.value.legend = [{ selected: params.selected }]
+}
+
+function handleBrushSelected(params: any) {
+  const brushedData = params
+  console.log('selectedData', brushedData)
+  console.log('params', params)
+}
+
+let areListenersCreated = false
+watch(echartsRef, (newValue) => {
+  if (newValue && !areListenersCreated) {
+    areListenersCreated = true
+    const echartsInstance = newValue.chart
+    echartsInstance.on('legendSelectChanged', handleLegendSelected)
+    echartsInstance.on('brushSelected', handleBrushSelected)
+
+    // echartsInstance.on('brushSelected', function (params: any) {
+    //   var brushed = []
+    //   var brushComponent = params.batch[0]
+    //   for (var sIdx = 0; sIdx < brushComponent.selected.length; sIdx++) {
+    //     var rawIndices = brushComponent.selected[sIdx].dataIndex
+    //     console.log('rawIndices', rawIndices)
+    //     brushed.push('[Series ' + sIdx + '] ' + rawIndices.join(', '))
+    //   }
+    //   echartsInstance.setOption({
+    //     title: {
+    //       backgroundColor: '#333',
+    //       text: 'SELECTED DATA INDICES: \n' + brushed.join('\n'),
+    //       bottom: 0,
+    //       right: '10%',
+    //       width: 100,
+    //       textStyle: {
+    //         fontSize: 12,
+    //         color: '#fff',
+    //       },
+    //     },
+    //   })
+    // })
   }
 })
 
