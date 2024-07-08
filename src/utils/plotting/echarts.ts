@@ -332,10 +332,14 @@ export const createEChartsOption = (
 ): EChartsOption => {
   const { initializeZoomed = true } = opts
   const { qcDatastream } = storeToRefs(useDataVisStore())
+  const { selectedSeriesIndex } = storeToRefs(useEChartsStore())
 
-  let qcIndex = -1
+  selectedSeriesIndex.value = -1
   if (qcDatastream.value?.id) {
-    qcIndex = findSelectedDatastreamIndex(seriesArray, qcDatastream.value)
+    selectedSeriesIndex.value = findSelectedDatastreamIndex(
+      seriesArray,
+      qcDatastream.value
+    )
   }
 
   const yAxisConfigurations = createYAxisConfigurations(seriesArray)
@@ -343,7 +347,7 @@ export const createEChartsOption = (
   const seriesOptions = generateSeriesOptions(
     seriesArray,
     yAxisConfigurations,
-    qcIndex
+    selectedSeriesIndex.value
   )
 
   const leftYAxesCount = Math.ceil(yAxisConfigurations.size / 2)
@@ -384,8 +388,8 @@ export const createEChartsOption = (
     toolbox: generateToolboxOptions() as {},
     brush: {
       toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
-      xAxisIndex: 'all',
-      seriesIndex: 'all',
+      xAxisIndex: [0],
+      seriesIndex: selectedSeriesIndex.value,
       throttleType: 'debounce',
       throttleDelay: 100,
       outOfBrush: {
@@ -395,9 +399,12 @@ export const createEChartsOption = (
   }
 
   // Add result qualifier options if there's a datastream selected for quality control with qualifiers
-  if (qcIndex !== -1 && hasStringQualifier(seriesArray[qcIndex].data)) {
+  if (
+    selectedSeriesIndex.value !== -1 &&
+    hasStringQualifier(seriesArray[selectedSeriesIndex.value].data)
+  ) {
     echartsOption = addQualifierOptions(
-      seriesArray[qcIndex],
+      seriesArray[selectedSeriesIndex.value],
       echartsOption,
       yAxisConfigurations.size,
       gridRightPadding,

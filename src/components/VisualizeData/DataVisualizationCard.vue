@@ -106,6 +106,7 @@ const {
   dataZoomEnd,
   graphSeriesArray,
   echartsOption: option,
+  selectedSeriesIndex,
 } = storeToRefs(useEChartsStore())
 
 const echartsRef = ref<typeof VChart | null>(null)
@@ -163,9 +164,33 @@ function handleLegendSelected(params: any) {
 }
 
 function handleBrushSelected(params: any) {
-  const brushedData = params
-  console.log('selectedData', brushedData)
-  console.log('params', params)
+  console.log('params', params.batch[0].selected)
+
+  if (!echartsRef.value || selectedSeriesIndex.value === -1) return
+
+  let selectedData = []
+
+  const brushSelections = params.batch[0].selected
+  const s = brushSelections.find(
+    (s: any) => s.seriesIndex === selectedSeriesIndex.value
+  )
+
+  const seriesIndex = s.seriesIndex
+  const dataIndexes = s.dataIndex
+  const seriesData = echartsRef.value.getOption().series[seriesIndex].data
+
+  // Retrieve the actual data points using dataIndex
+  const dataPoints = dataIndexes.map((index: number) => ({
+    date: new Date(seriesData[index][0]),
+    value: seriesData[index][1],
+  }))
+
+  selectedData.push({
+    seriesIndex: seriesIndex,
+    data: dataPoints,
+  })
+
+  console.log('selectedData', selectedData)
 }
 
 let areListenersCreated = false
@@ -175,29 +200,6 @@ watch(echartsRef, (newValue) => {
     const echartsInstance = newValue.chart
     echartsInstance.on('legendSelectChanged', handleLegendSelected)
     echartsInstance.on('brushSelected', handleBrushSelected)
-
-    // echartsInstance.on('brushSelected', function (params: any) {
-    //   var brushed = []
-    //   var brushComponent = params.batch[0]
-    //   for (var sIdx = 0; sIdx < brushComponent.selected.length; sIdx++) {
-    //     var rawIndices = brushComponent.selected[sIdx].dataIndex
-    //     console.log('rawIndices', rawIndices)
-    //     brushed.push('[Series ' + sIdx + '] ' + rawIndices.join(', '))
-    //   }
-    //   echartsInstance.setOption({
-    //     title: {
-    //       backgroundColor: '#333',
-    //       text: 'SELECTED DATA INDICES: \n' + brushed.join('\n'),
-    //       bottom: 0,
-    //       right: '10%',
-    //       width: 100,
-    //       textStyle: {
-    //         fontSize: 12,
-    //         color: '#fff',
-    //       },
-    //     },
-    //   })
-    // })
   }
 })
 
