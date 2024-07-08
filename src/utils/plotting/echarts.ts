@@ -387,7 +387,7 @@ export const createEChartsOption = (
     legend: createLegendConfig(),
     toolbox: generateToolboxOptions() as {},
     brush: {
-      toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+      toolbox: ['rect', 'polygon', 'keep', 'clear'],
       xAxisIndex: [0],
       seriesIndex: selectedSeriesIndex.value,
       throttleType: 'debounce',
