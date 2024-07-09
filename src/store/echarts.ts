@@ -23,6 +23,8 @@ export const useEChartsStore = defineStore('ECharts', () => {
 
   const graphSeriesArray = ref<GraphSeries[]>([])
   const prevIds = ref<string[]>([]) // DatastreamIds that were previously plotted
+  /** The index of the ECharts series that represents the datastream selected for quality control */
+  const selectedSeriesIndex = ref(-1)
 
   const echartsOption = ref<EChartsOption | undefined>()
   const dataZoomStart = ref(0)
@@ -163,6 +165,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
     showLegend,
     showTooltip,
     prevIds,
+    selectedSeriesIndex,
     updateVisualization,
     clearChartState,
     resetChartZoom,

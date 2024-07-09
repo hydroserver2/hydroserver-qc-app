@@ -97,7 +97,7 @@ const props = defineProps({
 })
 
 const { loadingStates, plottedDatastreams } = storeToRefs(useDataVisStore())
-const { selectedQualifier } = storeToRefs(useDataVisStore())
+const { selectedQualifier, selectedData } = storeToRefs(useDataVisStore())
 const openStyleModal = ref(false)
 const seriesDatastream = ref<Datastream | null>(null)
 
@@ -106,6 +106,7 @@ const {
   dataZoomEnd,
   graphSeriesArray,
   echartsOption: option,
+  selectedSeriesIndex,
 } = storeToRefs(useEChartsStore())
 
 const echartsRef = ref<typeof VChart | null>(null)
@@ -149,25 +150,82 @@ watch(selectedQualifier, () => {
   option.value = createEChartsOption(graphSeriesArray.value)
 })
 
-let isLegendListenerCreated = false
-watch(echartsRef, (newValue) => {
-  if (newValue && !isLegendListenerCreated) {
-    isLegendListenerCreated = true
-    const echartsInstance = newValue.chart
-    echartsInstance.on('legendselectchanged', (params: any) => {
-      if (params.name && params.selected?.hasOwnProperty(params.name)) {
-        const matchingDatastream = plottedDatastreams.value.find(
-          (d) => d.name === params.name
-        )
+function handleLegendSelected(params: any) {
+  if (!params.name || !params.selected?.hasOwnProperty(params.name)) return
+  const matchingDatastream = plottedDatastreams.value.find(
+    (d) => d.name === params.name
+  )
+  if (!matchingDatastream) return
 
-        if (!matchingDatastream) return
-        seriesDatastream.value = matchingDatastream
-        openStyleModal.value = true
-        params.selected[params.name] = true
-        const legendOption = [{ selected: params.selected }]
-        echartsInstance.setOption({ legend: legendOption }, false)
+  seriesDatastream.value = matchingDatastream
+  openStyleModal.value = true
+  params.selected[params.name] = true
+  if (option.value) option.value.legend = [{ selected: params.selected }]
+}
+
+const previousBrushAreas = ref<string | null>(null)
+
+interface BrushArea {
+  coordRange?: [number, number][]
+}
+
+/** This function assumes only the ECharts box select is being used. Manually check if each point is
+ * within the boundaries of at least one selected area since ECharts doesn't keep the actual selections
+ * alive if they're outside of the view window.
+ */
+function handleBrushSelected(params: any) {
+  if (!echartsRef.value || selectedSeriesIndex.value === -1) return
+
+  const selectedAreas = params.batch[0].areas
+  if (selectedAreas.length <= 0) return
+
+  const currentBrush = JSON.stringify(
+    selectedAreas.map((a: BrushArea) => a.coordRange)
+  )
+  if (!currentBrush || currentBrush === previousBrushAreas.value) return
+
+  previousBrushAreas.value = currentBrush
+
+  const seriesData =
+    echartsRef.value.getOption().series[selectedSeriesIndex.value].data
+
+  const selectedDataPoints = new Set<[number, number]>()
+
+  seriesData.forEach((point: [number, number]) => {
+    const x = point[0]
+    const y = point[1]
+
+    for (const area of selectedAreas) {
+      if (area.coordRange) {
+        const [rangeX, rangeY] = area.coordRange
+        if (
+          x >= rangeX[0] &&
+          x <= rangeX[1] &&
+          y >= rangeY[0] &&
+          y <= rangeY[1]
+        ) {
+          selectedDataPoints.add(point)
+          break
+        }
       }
-    })
+    }
+  })
+
+  selectedData.value = Array.from(selectedDataPoints).map((point) => ({
+    date: new Date(point[0]),
+    value: point[1],
+  }))
+
+  console.log('selectedData updated', selectedData.value)
+}
+
+let areListenersCreated = false
+watch(echartsRef, (newValue) => {
+  if (newValue && !areListenersCreated) {
+    areListenersCreated = true
+    const echartsInstance = newValue.chart
+    echartsInstance.on('legendSelectChanged', handleLegendSelected)
+    echartsInstance.on('brushSelected', handleBrushSelected)
   }
 })
 
@@ -181,9 +239,12 @@ const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
 
   // 1. Update ECharts series state
   option.value.series = option.value.series.map((series: any) => {
-    if (series.name !== seriesDatastream.value?.name) return series
+    // Hack: Assume an empty name is the line plot overlaying the selected scatter plot
+    // TODO: Once Echarts allows selecting data on line plots, update this code.
+    if (series.name && series.name !== seriesDatastream.value?.name)
+      return series
 
-    const seriesOption = {
+    let seriesOption: LineSeriesOption = {
       ...series,
       ...updatedOptions,
       lineStyle: {
@@ -194,6 +255,10 @@ const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
         ...series.itemStyle,
         ...updatedOptions.itemStyle,
       },
+    }
+
+    if (!series.name) {
+      seriesOption.showSymbol = false
     }
 
     // 2. Update series options in pinia store
@@ -207,15 +272,6 @@ const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
     return seriesOption
   })
 }
-
-onUnmounted(() => {
-  if (echartsRef.value && echartsRef.value.echarts) {
-    echartsRef.value.echarts.off(
-      'legendselectchanged',
-      echartsRef.value.echarts._customLegendClickHandler
-    )
-  }
-})
 </script>
 
 <style scoped>
