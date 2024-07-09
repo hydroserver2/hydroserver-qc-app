@@ -163,34 +163,46 @@ function handleLegendSelected(params: any) {
   if (option.value) option.value.legend = [{ selected: params.selected }]
 }
 
+// TODO: This is also called each time the chart is zoomed. Prevent that or return early if brush selections haven't changed
+/** This function assumes only the ECharts box select is being used. Manually check if each point is
+ * within the boundaries of at least one selected area since ECharts doesn't keep the actual selections
+ * alive if they're outside of the view window.
+ */
 function handleBrushSelected(params: any) {
-  console.log('params', params.batch[0].selected)
-
   if (!echartsRef.value || selectedSeriesIndex.value === -1) return
 
-  let selectedData = []
+  const selectedAreas = params.batch[0].areas
+  const seriesData =
+    echartsRef.value.getOption().series[selectedSeriesIndex.value].data
 
-  const brushSelections = params.batch[0].selected
-  const s = brushSelections.find(
-    (s: any) => s.seriesIndex === selectedSeriesIndex.value
-  )
+  const selectedDataPoints = new Set<[number, number]>()
 
-  const seriesIndex = s.seriesIndex
-  const dataIndexes = s.dataIndex
-  const seriesData = echartsRef.value.getOption().series[seriesIndex].data
+  seriesData.forEach((point: [number, number]) => {
+    const x = point[0]
+    const y = point[1]
 
-  // Retrieve the actual data points using dataIndex
-  const dataPoints = dataIndexes.map((index: number) => ({
-    date: new Date(seriesData[index][0]),
-    value: seriesData[index][1],
-  }))
-
-  selectedData.push({
-    seriesIndex: seriesIndex,
-    data: dataPoints,
+    for (const area of selectedAreas) {
+      if (area.coordRange) {
+        const [rangeX, rangeY] = area.coordRange
+        if (
+          x >= rangeX[0] &&
+          x <= rangeX[1] &&
+          y >= rangeY[0] &&
+          y <= rangeY[1]
+        ) {
+          selectedDataPoints.add(point)
+          break
+        }
+      }
+    }
   })
 
-  console.log('selectedData', selectedData)
+  const dataPoints = Array.from(selectedDataPoints).map((point) => ({
+    date: new Date(point[0]),
+    value: point[1],
+  }))
+
+  console.log('data points', dataPoints)
 }
 
 let areListenersCreated = false
@@ -246,15 +258,6 @@ const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
     return seriesOption
   })
 }
-
-onUnmounted(() => {
-  if (echartsRef.value && echartsRef.value.echarts) {
-    echartsRef.value.echarts.off(
-      'legendselectchanged',
-      echartsRef.value.echarts._customLegendClickHandler
-    )
-  }
-})
 </script>
 
 <style scoped>

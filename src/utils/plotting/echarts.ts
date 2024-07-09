@@ -126,6 +126,7 @@ export function generateSeriesOptions(
       const scatterSeries: SeriesOption = {
         ...baseSeries,
         type: 'scatter',
+        large: true, // Makes the series render more efficiently
       }
 
       const lineSeries: SeriesOption = {
@@ -387,13 +388,13 @@ export const createEChartsOption = (
     legend: createLegendConfig(),
     toolbox: generateToolboxOptions() as {},
     brush: {
-      toolbox: ['rect', 'polygon', 'keep', 'clear'],
+      toolbox: ['rect', 'keep', 'clear'],
       xAxisIndex: [0],
       seriesIndex: selectedSeriesIndex.value,
       throttleType: 'debounce',
       throttleDelay: 100,
       outOfBrush: {
-        colorAlpha: 0.25, // dims the points outside the brushed area
+        colorAlpha: 0.1, // dims the points outside the brushed area
       },
     },
   }
