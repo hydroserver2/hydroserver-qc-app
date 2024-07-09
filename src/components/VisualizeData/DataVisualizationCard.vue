@@ -97,7 +97,7 @@ const props = defineProps({
 })
 
 const { loadingStates, plottedDatastreams } = storeToRefs(useDataVisStore())
-const { selectedQualifier } = storeToRefs(useDataVisStore())
+const { selectedQualifier, selectedData } = storeToRefs(useDataVisStore())
 const openStyleModal = ref(false)
 const seriesDatastream = ref<Datastream | null>(null)
 
@@ -163,7 +163,12 @@ function handleLegendSelected(params: any) {
   if (option.value) option.value.legend = [{ selected: params.selected }]
 }
 
-// TODO: This is also called each time the chart is zoomed. Prevent that or return early if brush selections haven't changed
+const previousBrushAreas = ref<string | null>(null)
+
+interface BrushArea {
+  coordRange?: [number, number][]
+}
+
 /** This function assumes only the ECharts box select is being used. Manually check if each point is
  * within the boundaries of at least one selected area since ECharts doesn't keep the actual selections
  * alive if they're outside of the view window.
@@ -172,6 +177,15 @@ function handleBrushSelected(params: any) {
   if (!echartsRef.value || selectedSeriesIndex.value === -1) return
 
   const selectedAreas = params.batch[0].areas
+  if (selectedAreas.length <= 0) return
+
+  const currentBrush = JSON.stringify(
+    selectedAreas.map((a: BrushArea) => a.coordRange)
+  )
+  if (!currentBrush || currentBrush === previousBrushAreas.value) return
+
+  previousBrushAreas.value = currentBrush
+
   const seriesData =
     echartsRef.value.getOption().series[selectedSeriesIndex.value].data
 
@@ -197,12 +211,12 @@ function handleBrushSelected(params: any) {
     }
   })
 
-  const dataPoints = Array.from(selectedDataPoints).map((point) => ({
+  selectedData.value = Array.from(selectedDataPoints).map((point) => ({
     date: new Date(point[0]),
     value: point[1],
   }))
 
-  console.log('data points', dataPoints)
+  console.log('selectedData updated', selectedData.value)
 }
 
 let areListenersCreated = false
