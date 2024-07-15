@@ -221,24 +221,21 @@ function handleBrushSelected(params: any) {
   brushSelections.value = selectedAreas
 }
 
-// TODO: Fix this. dispatchAction won't work without the echartsRef's options initialized,
-// but there's a delay between when the Pinia option is updated and the echartsRef option is updated.
-// Fix this function so it gets triggered whenever the plot is initialized just after the
-// echartsRef option is ready.
 function applyBrushSelection() {
-  setTimeout(() => {
-    if (!echartsRef.value?.getOption()) {
-      console.warn('echartsRef is not ready', brushSelections.value)
-      return
-    }
+  if (!echartsRef.value) {
+    console.warn('echartsRef is not ready')
+    return
+  }
 
-    if (brushSelections.value.length === 0) return
+  // Guarantee echartsRef has an option since dispatchAction won't work without one
+  echartsRef.value.setOption(option.value)
 
-    echartsRef.value!.chart.dispatchAction({
-      type: 'brush',
-      areas: brushSelections.value,
-    })
-  }, 200)
+  if (brushSelections.value.length === 0) return
+
+  echartsRef.value!.chart.dispatchAction({
+    type: 'brush',
+    areas: brushSelections.value,
+  })
 }
 
 let areListenersCreated = false
@@ -249,6 +246,7 @@ watch(echartsRef, (newValue) => {
     echartsInstance.on('legendSelectChanged', handleLegendSelected)
     echartsInstance.on('brushSelected', handleBrushSelected)
     echartsInstance.on('finished', applyBrushSelection())
+    applyBrushSelection()
   }
 })
 
