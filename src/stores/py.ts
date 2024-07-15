@@ -69,6 +69,18 @@ export const usePyStore = defineStore('py', () => {
   }
 
   /**
+   * Shifts the selected indexes by a constant
+   * @param index The index list of entries to shift
+   * @param timeUnit {@link TimeUnit}
+   * @param timeValue Number of {@link TimeUnit}
+   * @returns
+   */
+  const shift = (index: number[], timeValue: number, timeUnit: TimeUnit) => {
+    const handleShift = interpreter.value.globals.get('shift_points')
+    handleShift?.(index, timeValue, timeUnit)
+  }
+
+  /**
    * Retrieve the DataFrame object from EditService as json
    * @returns
    */
@@ -127,5 +139,6 @@ export const usePyStore = defineStore('py', () => {
     changeValues,
     getDataFrame,
     setFilter,
+    shift,
   }
 })

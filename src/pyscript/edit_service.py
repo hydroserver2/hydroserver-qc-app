@@ -148,9 +148,9 @@ class EditService():
     return pd.DataFrame(
       points, columns=[self.get_date_col(), self.get_value_col()])
 
-  ###################
+  ######################################
   # Data point operations
-  ###################
+  ######################################
 
   def add_points(self, points, index=None):
     """
@@ -220,4 +220,15 @@ class EditService():
 
   def delete_points(self, index_list):
     self._df.drop(index=index_list, inplace=True)
+    self._df.reset_index(drop=True, inplace=True)
+
+  def shift_points(self, index_list, time_value, time_unit):
+    shift_value = np.timedelta64(time_value, time_unit)
+    condition = self._df.index.isin(index_list)
+
+    # Apply the shift
+    self._df.loc[condition, self.get_date_col()] = self._df.loc[condition,
+                                                                self.get_date_col()] + shift_value
+
+    self._df = self._df.sort_values(self.get_date_col())
     self._df.reset_index(drop=True, inplace=True)

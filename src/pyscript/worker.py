@@ -22,8 +22,8 @@ def get_data_frame():
   return edit_service._df.to_json()
 
 
-def find_gaps(value, unit):
-  return edit_service.find_gaps(value, unit).to_json()
+def find_gaps(time_value, time_unit):
+  return edit_service.find_gaps(time_value, time_unit).to_json()
 
 
 def fill_gaps(gap, fill):
@@ -44,6 +44,10 @@ def change_values(index, operator, value):
 
 def add_points(points):
   return edit_service.add_points(points)
+
+
+def shift_points(index_list, time_value, time_unit):
+  return edit_service.shift_points(index_list, time_value, time_unit)
 
 
 # Signal start

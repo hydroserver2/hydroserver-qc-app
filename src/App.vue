@@ -24,29 +24,39 @@
         <v-card v-show="initialized">
           <v-card-title>{{ data.value[0].components[0] }}</v-card-title>
           <v-divider></v-divider>
-          <v-card-text>
-            <v-table>
-              <thead>
-                <tr>
-                  <th class="text-left">Date</th>
-                  <th class="text-left">Value</th>
-                  <th class="text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(point, index) in timeseries" :key="index">
-                  <td>{{ new Date(point[0]).toISOString() }}</td>
-                  <td>{{ point[1] }}</td>
-                  <td>
-                    <v-btn class="mr-4" @click="deleteDataPoints([index])">
-                      Delete
-                    </v-btn>
-                    <v-btn @click="changeValues([index])">Add</v-btn>
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
+          <v-card-text class="text-right">
+            <!-- <div>Selected: {{ selected }}</div> -->
+            <div>
+              <v-btn class="mr-4" @click="deleteDataPoints(selected)">
+                Delete
+              </v-btn>
+              <v-btn class="mr-4" @click="changeValues(selected)">Add</v-btn>
+              <v-btn class="mr-4" @click="shift(selected)">Shift</v-btn>
+            </div>
           </v-card-text>
+          <v-card-text>
+            <v-data-table
+              v-model="selected"
+              :items="timeseries"
+              item-value="index"
+              items-per-page="100"
+              show-select
+            >
+              <template v-slot:item.index="{ value }">
+                {{ value }}
+              </template>
+
+              <template v-slot:item.datetime="{ value }">
+                {{ new Date(value).toLocaleDateString() }}
+                {{ new Date(value).toLocaleTimeString() }}
+              </template>
+
+              <template v-slot:item.value="{ value }">
+                {{ value }}
+              </template>
+            </v-data-table>
+          </v-card-text>
+
           <v-divider></v-divider>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -74,9 +84,11 @@ const theme = useTheme()
 const py = usePyStore()
 const initialized = ref(false)
 
-const timeseries: Ref<(string | number)[][]> = ref([])
+const timeseries: Ref<{ index: number; datetime: number; value: number }[]> =
+  ref([])
 
 const drawer = ref(false)
+const selected: Ref<number[]> = ref([])
 
 function toggleTheme() {
   theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
@@ -107,11 +119,12 @@ const fetchDataFrame = () => {
 
   // TODO: PyScript cannot convert a Pandas DataFrame to a JS object. For now, we iterate the JSON serialized data to build the timeseries
   for (let i = 0; i < length; i++) {
-    data.push(
-      keys.map((key) => {
-        return df[key][i]
-      })
-    )
+    data.push({
+      index: i,
+      datetime: df[keys[0]][i],
+      value: df[keys[1]][i],
+      // selectable: true,
+    })
   }
 
   timeseries.value = data
@@ -125,6 +138,11 @@ const findGaps = () => {
 const fillGaps = () => {
   const gaps = py.fillGaps([15, TimeUnit.MINUTE], [15, TimeUnit.MINUTE])
   console.log(gaps)
+  fetchDataFrame()
+}
+
+const shift = (index: number[]) => {
+  py.shift(index, 10, TimeUnit.MINUTE)
   fetchDataFrame()
 }
 

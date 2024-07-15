@@ -6,22 +6,24 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "up": "taze major -I"
   },
   "dependencies": {
-    "@types/node": "^20.8.9",
+    "@types/node": "^20.14.10",
     "pinia": "^2.1.7",
     "rxjs": "^7.8.1",
-    "vue": "^3.3.4",
-    "vuetify": "^3.3.23"
+    "vue": "^3.4.31",
+    "vuetify": "^3.6.12"
   },
   "devDependencies": {
-    "@mdi/font": "^7.3.67",
-    "@vitejs/plugin-vue": "^4.2.3",
-    "autoprefixer": "^10.4.16",
-    "typescript": "^5.0.2",
-    "vite": "^4.4.5",
-    "vite-plugin-pwa": "^0.16.7",
-    "vue-tsc": "^1.8.5"
+    "@mdi/font": "^7.4.47",
+    "@vitejs/plugin-vue": "^5.0.5",
+    "autoprefixer": "^10.4.19",
+    "taze": "^0.15.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3",
+    "vite-plugin-pwa": "^0.20.0",
+    "vue-tsc": "^2.0.26"
   }
 }
