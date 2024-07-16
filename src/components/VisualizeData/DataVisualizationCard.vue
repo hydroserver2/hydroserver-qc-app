@@ -231,8 +231,7 @@ function applyBrushSelection() {
   echartsRef.value.setOption(option.value)
 
   if (brushSelections.value.length === 0) return
-
-  echartsRef.value!.chart.dispatchAction({
+  echartsRef.value.chart.dispatchAction({
     type: 'brush',
     areas: brushSelections.value,
   })
@@ -246,9 +245,23 @@ watch(echartsRef, (newValue) => {
     echartsInstance.on('legendSelectChanged', handleLegendSelected)
     echartsInstance.on('brushSelected', handleBrushSelected)
     echartsInstance.on('finished', applyBrushSelection())
-    applyBrushSelection()
   }
 })
+
+// TODO: I think ECharts uses a different reactivity system than Vue so the plot isn't always ready when
+// option changes. setTimeout is the only way I could figure getting the selections to reliably repopulate
+// but probably there's a way to do this without setTimeout.
+watch(
+  () => option.value,
+  (newOption) => {
+    setTimeout(() => {
+      if (echartsRef.value && newOption) {
+        applyBrushSelection()
+      }
+    }, 100)
+  },
+  { deep: true }
+)
 
 const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
   if (
