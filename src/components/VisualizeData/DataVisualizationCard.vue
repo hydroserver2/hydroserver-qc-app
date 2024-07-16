@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import { useDataVisStore } from '@/store/dataVisualization'
-import { ref, watch, computed, nextTick, onUnmounted } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import VChart from 'vue-echarts'
 import 'echarts'
@@ -91,6 +91,7 @@ import { createEChartsOption } from '@/utils/plotting/echarts'
 import SeriesStyleCard from '@/components/VisualizeData/SeriesStyleCard.vue'
 import { Datastream } from '@/types'
 import { LineSeriesOption } from 'echarts'
+import { onMounted } from 'vue'
 
 const props = defineProps({
   cardHeight: { type: Number, required: true },
@@ -107,6 +108,7 @@ const {
   graphSeriesArray,
   echartsOption: option,
   selectedSeriesIndex,
+  brushSelections,
 } = storeToRefs(useEChartsStore())
 
 const echartsRef = ref<typeof VChart | null>(null)
@@ -216,7 +218,23 @@ function handleBrushSelected(params: any) {
     value: point[1],
   }))
 
-  console.log('selectedData updated', selectedData.value)
+  brushSelections.value = selectedAreas
+}
+
+function applyBrushSelection() {
+  if (!echartsRef.value) {
+    console.warn('echartsRef is not ready')
+    return
+  }
+
+  // Guarantee echartsRef has an option since dispatchAction won't work without one
+  echartsRef.value.setOption(option.value)
+
+  if (brushSelections.value.length === 0) return
+  echartsRef.value.chart.dispatchAction({
+    type: 'brush',
+    areas: brushSelections.value,
+  })
 }
 
 let areListenersCreated = false
@@ -226,8 +244,24 @@ watch(echartsRef, (newValue) => {
     const echartsInstance = newValue.chart
     echartsInstance.on('legendSelectChanged', handleLegendSelected)
     echartsInstance.on('brushSelected', handleBrushSelected)
+    echartsInstance.on('finished', applyBrushSelection())
   }
 })
+
+// TODO: I think ECharts uses a different reactivity system than Vue so the plot isn't always ready when
+// option changes. setTimeout is the only way I could figure getting the selections to reliably repopulate
+// but probably there's a way to do this without setTimeout.
+watch(
+  () => option.value,
+  (newOption) => {
+    setTimeout(() => {
+      if (echartsRef.value && newOption) {
+        applyBrushSelection()
+      }
+    }, 100)
+  },
+  { deep: true }
+)
 
 const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
   if (

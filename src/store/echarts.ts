@@ -28,6 +28,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
 
   const echartsOption = ref<EChartsOption | undefined>()
   const dataZoomStart = ref(0)
+  const brushSelections = ref([])
 
   /**
    * This function searches through the Pinia store's GraphSeries[] to determine which colors,
@@ -71,9 +72,6 @@ export const useEChartsStore = defineStore('ECharts', () => {
     echartsOption.value = undefined
   }
 
-  // TODO: This should only trigger an ECharts refresh. Move the line coloring somewhere else
-  // Also, I'm thinking the line colors shouldn't change once set to a series. I think it would
-  // be better instead to have them loop through the colors and somehow keep track of which ones are used
   function updateVisualization() {
     echartsOption.value = createEChartsOption(graphSeriesArray.value)
     prevIds.value = graphSeriesArray.value.map((series) => series.id)
@@ -166,6 +164,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
     showTooltip,
     prevIds,
     selectedSeriesIndex,
+    brushSelections,
     updateVisualization,
     clearChartState,
     resetChartZoom,
