@@ -146,6 +146,9 @@ export function generateSeriesOptions(
 }
 
 export function generateToolboxOptions() {
+  const { brushSelections } = storeToRefs(useEChartsStore())
+  const { updateVisualization } = useEChartsStore()
+
   return {
     feature: {
       dataZoom: {
@@ -153,6 +156,15 @@ export function generateToolboxOptions() {
       },
       restore: {},
       saveAsImage: { name: 'plot_export' },
+      myClearSelected: {
+        show: true,
+        title: 'Clear selections',
+        icon: 'path://M2 2h20v20h-20z M7 7l10 10 M7 17l10-10',
+        onclick: function () {
+          brushSelections.value = []
+          updateVisualization() // call updateVisualization to rerender the plot with the empty brushSelections
+        },
+      },
     },
   }
 }
@@ -388,7 +400,7 @@ export const createEChartsOption = (
     legend: createLegendConfig(),
     toolbox: generateToolboxOptions() as {},
     brush: {
-      toolbox: ['rect', 'keep', 'clear'],
+      toolbox: ['rect', 'keep'],
       xAxisIndex: [0],
       seriesIndex: selectedSeriesIndex.value,
       throttleType: 'debounce',
