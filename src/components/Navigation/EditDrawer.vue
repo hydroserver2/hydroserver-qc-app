@@ -52,9 +52,9 @@
     <v-list :items="editData" density="compact"> </v-list>
   </v-navigation-drawer>
 
-  <v-dialog v-model="openVT" max-width="500">
+  <!-- <v-dialog v-model="openVT" max-width="500">
     <ValueThresholdsCard @close="openVT = false" />
-  </v-dialog>
+  </v-dialog> -->
 
   <v-dialog v-model="openRateOfChange" max-width="500">
     <RateOfChangeCard @close="openRateOfChange = false" />
@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import ValueThresholdsCard from '@/components/FilterPoints/ValueThresholdsCard.vue'
+// import ValueThresholdsCard from '@/components/FilterPoints/ValueThresholdsCard.vue'
 import RateOfChangeCard from '@/components/FilterPoints/RateOfChangeCard.vue'
 import PersistenceCard from '@/components/FilterPoints/PersistenceCard.vue'
 import { ref, watch } from 'vue'
@@ -78,22 +78,22 @@ watch(selected, (newValue, oldValue) => {
   console.log(`Selected item changed from ${oldValue} to ${newValue}`)
 })
 
-const openVT = ref(false)
+// const openVT = ref(false)
 const openRateOfChange = ref(false)
 const openGaps = ref(false)
 const openPersistence = ref(false)
 
 const filterPoints = [
-  {
-    title: 'Value thresholds',
-    props: {
-      prependIcon: 'mdi-align-vertical-center',
-    },
-    value: 1,
-    clickAction: () => {
-      openVT.value = true
-    },
-  },
+  // {
+  //   title: 'Value thresholds',
+  //   props: {
+  //     prependIcon: 'mdi-align-vertical-center',
+  //   },
+  //   value: 1,
+  //   clickAction: () => {
+  //     openVT.value = true
+  //   },
+  // },
   {
     title: 'Rate of change',
     props: {

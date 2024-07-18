@@ -199,15 +199,20 @@ function handleBrushSelected(params: any) {
 
     for (const area of selectedAreas) {
       if (area.coordRange) {
-        const [rangeX, rangeY] = area.coordRange
-        if (
-          x >= rangeX[0] &&
-          x <= rangeX[1] &&
-          y >= rangeY[0] &&
-          y <= rangeY[1]
-        ) {
-          selectedDataPoints.add(point)
-          break
+        if (area.brushType === 'rect') {
+          const [rangeX, rangeY] = area.coordRange
+          if (
+            x >= rangeX[0] &&
+            x <= rangeX[1] &&
+            y >= rangeY[0] &&
+            y <= rangeY[1]
+          ) {
+            selectedDataPoints.add(point)
+            break
+          }
+        } else if (area.brushType === 'lineY') {
+          if (y >= area.coordRange[0] && y <= area.coordRange[1])
+            selectedDataPoints.add(point)
         }
       }
     }
