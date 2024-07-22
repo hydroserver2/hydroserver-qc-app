@@ -4,10 +4,10 @@ from datetime import datetime
 from enum import Enum
 
 # Tools
-# [ ] Interpolate
+# [x] Interpolate
 # [x] Set a value to a constant
 # [x] Change value by applying arithmetic (+, -, *, /)
-# [ ] Shift
+# [x] Shift
 # [ ] Drift correction (linear)
 # [x] Delete values
 # [x] Fill values
@@ -54,7 +54,7 @@ class EditService():
     self._populate_series()
 
   def _populate_series(self) -> None:
-    rows = self.data["value"][0]["dataArray"][0:10]
+    rows = self.data["value"][0]["dataArray"][10:20]
     cols = self.data["value"][0]["components"]
 
     # Parse date fields
@@ -232,3 +232,46 @@ class EditService():
 
     self._df = self._df.sort_values(self.get_date_col())
     self._df.reset_index(drop=True, inplace=True)
+
+  # def interpolate(self, start, end):
+  #   masked_df = self._df[self.get_value_col()].mask(
+  #     self._df.index.isin(self._df.index[start:end]))
+
+  #   masked_df.interpolate(method="linear", inplace=True)
+  #   self._df[self.get_value_col()] = masked_df
+
+  def interpolate(self, index_list):
+    condition = self._df.index.isin(index_list)
+    self._df[self.get_value_col()].mask(condition, inplace=True)
+    self._df[self.get_value_col()].interpolate(method="linear", inplace=True)
+
+  def drift_correction(self, index_list, gap_width):
+    condition = self._df.index.isin(index_list)
+    points = self._df.loc[condition, self.get_date_col()]
+    startdate = points[self.get_date_col()].loc[0]
+    print(startdate)
+    pass
+    x_l = (points.index[-1] - startdate).total_seconds()
+    nodv = -9999
+    # y_n = y_0 + G(x_i / x_l)
+
+    def f(row):
+      if row[self.get_value_col()] != nodv:
+        return row[self.get_value_col()] + (gap_width * ((row.name - startdate).total_seconds() / x_l))
+      else:
+        return row[self.get_value_col()]
+
+    points[self.get_value_col()] = points.apply(f, axis=1)
+
+    print(points)
+
+    # update_list = [{"value": row[self.get_value_col()], "id": index}
+    #                for index, row in tmp_filter_list.iterrows()]
+
+    # ids = tmp_filter_list.index.tolist()
+    # self.memDB.update(update_list)
+
+    # self._populate_series()
+
+    # self.filtered_dataframe = self._series_points_df[self._series_points_df.index.isin(
+    #   ids)]

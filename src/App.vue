@@ -32,6 +32,12 @@
               </v-btn>
               <v-btn class="mr-4" @click="changeValues(selected)">Add</v-btn>
               <v-btn class="mr-4" @click="shift(selected)">Shift</v-btn>
+              <v-btn class="mr-4" @click="interpolate(selected)"
+                >Interpolate</v-btn
+              >
+              <v-btn class="mr-4" @click="driftCorrection(selected, 1)"
+                >Drift Correction</v-btn
+              >
             </div>
           </v-card-text>
           <v-card-text>
@@ -144,11 +150,13 @@ const fillGaps = () => {
 const shift = (index: number[]) => {
   py.shift(index, 10, TimeUnit.MINUTE)
   fetchDataFrame()
+  selected.value = []
 }
 
 const deleteDataPoints = (index: number[]) => {
   py.deleteDataPoints(index)
   fetchDataFrame()
+  selected.value = []
 }
 
 const changeValues = (index: number[]) => {
@@ -159,6 +167,18 @@ const changeValues = (index: number[]) => {
 const setFilter = () => {
   const filteredResults = py.setFilter({ [FilterOperation.GTE]: 10.45 })
   console.log(filteredResults)
+}
+
+const interpolate = (index: number[]) => {
+  py.interpolate(index)
+  selected.value = []
+  fetchDataFrame()
+}
+
+const driftCorrection = (index: number[], gapWidth: number) => {
+  py.driftCorrection(index, gapWidth)
+  selected.value = []
+  fetchDataFrame()
 }
 </script>
 

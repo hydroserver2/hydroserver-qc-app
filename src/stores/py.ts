@@ -111,6 +111,20 @@ export const usePyStore = defineStore('py', () => {
     return handleChangeValues?.(index, operator, value)
   }
 
+  /**
+   * @param range
+   */
+  const interpolate = (index: number[]) => {
+    const handleInterpolate = interpreter.value.globals.get('interpolate')
+    return handleInterpolate?.(index)
+  }
+
+  const driftCorrection = (index: number[], gapWidth: number) => {
+    const handleDriftCorrection =
+      interpreter.value.globals.get('drift_correction')
+    return handleDriftCorrection(index, gapWidth)
+  }
+
   if (startEl) {
     const init = () => {
       setTimeout(() => {
@@ -140,5 +154,7 @@ export const usePyStore = defineStore('py', () => {
     getDataFrame,
     setFilter,
     shift,
+    interpolate,
+    driftCorrection,
   }
 })
