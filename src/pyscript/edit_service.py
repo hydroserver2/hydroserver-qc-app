@@ -54,7 +54,7 @@ class EditService():
     self._populate_series()
 
   def _populate_series(self) -> None:
-    rows = self.data["value"][0]["dataArray"][10:20]
+    rows = self.data["value"][0]["dataArray"]
     cols = self.data["value"][0]["components"]
 
     # Parse date fields
@@ -245,6 +245,7 @@ class EditService():
     self._df[self.get_value_col()].mask(condition, inplace=True)
     self._df[self.get_value_col()].interpolate(method="linear", inplace=True)
 
+  # TODO: in progress...
   def drift_correction(self, index_list, gap_width):
     condition = self._df.index.isin(index_list)
     points = self._df.loc[condition, self.get_date_col()]
