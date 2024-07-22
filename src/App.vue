@@ -8,7 +8,18 @@
       <v-container>
         <v-card v-show="initialized">
           <v-card-title>{{ data.value[0].components[0] }} </v-card-title>
-          <v-card-subtitle> ({{ timeseries.length }}) items </v-card-subtitle>
+          <v-card-subtitle class="d-flex py-2 align-center">
+            <div>
+              {{ selected.length }} item{{
+                selected.length == 1 ? '' : 's'
+              }}
+              selected
+            </div>
+            <v-spacer></v-spacer>
+            <v-btn :disabled="!selected.length" @click="selected = []"
+              >Unselect All</v-btn
+            >
+          </v-card-subtitle>
           <v-divider class="mt-2"></v-divider>
 
           <v-card-text>
@@ -83,7 +94,7 @@
             <td class="text-medium-emphasis">
               {{ new Date(log.datetime).toLocaleTimeString() }}
             </td>
-            <td>{{ log.message }}</td>
+            <td class="text-caption">{{ log.message }}</td>
             <td class="text-medium-emphasis">{{ log.duration }} ms</td>
           </tr>
         </tbody>
@@ -120,6 +131,12 @@ const initializedSub = py.$initialized.subscribe(() => {
   initialized.value = true
   fetchDataFrame()
   initializedSub.unsubscribe()
+
+  logger.value.push({
+    datetime: Date.now(),
+    message: 'App started',
+    duration: 50,
+  })
 })
 
 onBeforeMount(() => {
