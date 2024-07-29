@@ -52,8 +52,8 @@ export function toDataPointArray(dataArray: DataArray): DataPoint[] {
   return dataArray.map(([dateString, value, qualifiers]) => ({
     date: new Date(dateString),
     value,
-    qualifierValue: qualifiers.result_qualifiers.length
-      ? qualifiers.result_qualifiers.map((q) => q.code).join(', ')
+    qualifierValue: qualifiers.resultQualifiers.length
+      ? qualifiers.resultQualifiers.map((q) => q.code).join(', ')
       : NaN,
   }))
 }

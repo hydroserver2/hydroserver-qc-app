@@ -12,8 +12,8 @@ export interface PartialQualifier {
 }
 
 export type Qualifier = {
-  quality_code: string | null
-  result_qualifiers: PartialQualifier[]
+  qualityCode: string | null
+  resultQualifiers: PartialQualifier[]
 }
 
 export type Observation = [string, number, Qualifier]
