@@ -15,11 +15,9 @@ def click_handler(event):
 
 
 def get_data_frame():
-  # TODO: `edit_service._df` will return a JsProxy of a PyProxy, which we cannot use in JS.
   # https://www.jhanley.com/blog/pyscript-javascript-and-python-interoperability/
   # https://pyodide.org/en/stable/usage/api/python-api/ffi.html#
-  # As a workaround we use `to_json` to serialize the data and send it to JS, but this cannot be made reactive.
-  return edit_service._df.to_json()
+  return edit_service._df
 
 
 def find_gaps(time_value, time_unit):
@@ -35,11 +33,11 @@ def delete_data_points(index):
 
 
 def set_filter(filter: dict[FilterOperation, float]):
-  return edit_service.filter(json.loads(filter)).to_json()
+  return edit_service.filter(json.loads(filter))
 
 
 def change_values(index, operator, value):
-  return edit_service.change_values(index, operator, value).to_json()
+  edit_service.change_values(index, operator, value)
 
 
 def add_points(points):

@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -50,23 +51,28 @@ class EditService():
     self.series_id = series_id
     self.data = data
 
+    print(sys.version)
+    print(pd.__version__)
+
     print("[EditService]: Initializing...")
     self._populate_series()
 
   def _populate_series(self) -> None:
-    rows = self.data["value"][0]["dataArray"]
-    cols = self.data["value"][0]["components"]
+    rows = self.data["dataArray"]
+    cols = self.data["components"]
 
     # Parse date fields
     for i, r in enumerate(rows):
-      rows[i][0] = datetime.strptime(r[0], "%Y-%m-%dT%H:%M:%SZ")
+      rows[i][0] = datetime.strptime(
+        r[0], "%Y-%m-%d %H:%M:%S")  # from tsa_data.csv
+    #   rows[i][0] = datetime.strptime(r[0], "%Y-%m-%dT%H:%M:%SZ")  # from data.json
     self._df = pd.DataFrame(rows, columns=cols)
 
   def get_date_col(self):
-    return self.data["value"][0]["components"][0]
+    return self.data["components"][0]
 
   def get_value_col(self):
-    return self.data["value"][0]["components"][1]
+    return self.data["components"][1]
 
   ###################
   # Filters
@@ -198,25 +204,27 @@ class EditService():
 
   def change_values(self, index_list, operator: str, value):
 
-    def operation(x):
-      if operator == Operator.MULT.value:
-        return x * value
-      elif operator == Operator.DIV.value:
-        return x / value
-      elif operator == Operator.ADD.value:
-        return x + value
-      elif operator == Operator.SUB.value:
-        return x - value
-      elif operator == Operator.ASSIGN.value:
-        return value
-      else:
-        return x
+    # def operation(x):
+    #   if operator == Operator.MULT.value:
+    #     return x * value
+    #   elif operator == Operator.DIV.value:
+    #     return x / value
+    #   elif operator == Operator.ADD.value:
+    #     return x + value
+    #   elif operator == Operator.SUB.value:
+    #     return x - value
+    #   elif operator == Operator.ASSIGN.value:
+    #     return value
+    #   else:
+    #     return x
 
-    self._df.loc[self._df.index.isin(
-        index_list), self.get_value_col()] = self._df.loc[self._df.index.isin(
-            index_list), self.get_value_col()].apply(operation)
+    # self._df.loc[index_list, self.get_value_col()] = self._df.loc[index_list, self.get_value_col()].apply(
+    #   operation)
 
-    return self._df
+    self._df.loc[index_list, self.get_value_col(
+    )] = self._df.loc[index_list, self.get_value_col()] + 1
+
+    # return self._df
 
   def delete_points(self, index_list):
     self._df.drop(index=index_list, inplace=True)
