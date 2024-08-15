@@ -711,6 +711,10 @@ const runTests = () => {
   shift(indexes)
   console.log('Done')
 
+  console.log(`Applying drift correction of 1 to first 10 values...`)
+  driftCorrection(0, 9, 1)
+  console.log('Done')
+
   parseDataFrame()
 }
 </script>
