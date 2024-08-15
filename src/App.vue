@@ -96,6 +96,12 @@
     </v-navigation-drawer>
 
     <v-navigation-drawer location="right" width="400">
+      <div class="d-flex pa-2 align-center">
+        Logs
+        <v-spacer></v-spacer>
+        <v-btn @click="clearLogs" variant="flat">Clear</v-btn>
+      </div>
+      <v-divider></v-divider>
       <v-table>
         <tbody>
           <tr v-for="log in logger">
@@ -103,7 +109,7 @@
               {{ new Date(log.datetime).toLocaleTimeString() }}
             </td>
             <td class="text-caption">{{ log.message }}</td>
-            <td class="text-medium-emphasis">
+            <td class="text-right" :class="getDurationColor(log.duration)">
               {{ log.duration.toFixed(2) }} ms
             </td>
           </tr>
@@ -206,6 +212,19 @@ const getDateTimeAt = (index: number) => {
 
 const getValueAt = (index: number) => {
   return py.getDataFrame()._mgr.arrays.get(VALUE_COL_INDEX).get(0).get(index)
+}
+
+const clearLogs = () => {
+  logger.value = []
+}
+
+const getDurationColor = (duration: number) => {
+  if (duration > 200) {
+    return 'text-red'
+  } else if (duration > 50) {
+    return 'text-orange-darken-2'
+  }
+  return 'text-green'
 }
 
 /**
