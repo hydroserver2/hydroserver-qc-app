@@ -249,34 +249,34 @@ class EditService():
     self._df[self.get_value_col()].mask(condition, inplace=True)
     self._df[self.get_value_col()].interpolate(method="linear", inplace=True)
 
-  # TODO: in progress...
-  def drift_correction(self, index_list, gap_width):
-    condition = self._df.index.isin(index_list)
-    points = self._df.loc[condition, self.get_date_col()]
-    startdate = points[self.get_date_col()].loc[0]
-    print(startdate)
-    pass
-    x_l = (points.index[-1] - startdate).total_seconds()
+  def drift_correction(self, start, end, gap_width):
+    # validate range
+    if start >= end:
+      print("Start and end index cannot overlap")
+      return self._df
+    elif end > len(self._df) - 1:
+      print("End index out of range")
+      return self._df
+    elif start < 0:
+      print("Start index must be greater than or equal to 0")
+      return self._df
+
+    points = self._df.iloc[start:end + 1]
+    startdate = points.iloc[0][self.get_date_col()]
+    enddate = points.iloc[-1][self.get_date_col()]
+
+    x_l = (enddate - startdate).total_seconds()
     nodv = -9999
     # y_n = y_0 + G(x_i / x_l)
 
     def f(row):
       if row[self.get_value_col()] != nodv:
-        return row[self.get_value_col()] + (gap_width * ((row.name - startdate).total_seconds() / x_l))
+        return row[self.get_value_col()] + (gap_width * ((row[self.get_date_col()] - startdate).total_seconds() / x_l))
       else:
         return row[self.get_value_col()]
 
     points[self.get_value_col()] = points.apply(f, axis=1)
 
-    print(points)
+    self._df.iloc[start:end + 1] = points
 
-    # update_list = [{"value": row[self.get_value_col()], "id": index}
-    #                for index, row in tmp_filter_list.iterrows()]
-
-    # ids = tmp_filter_list.index.tolist()
-    # self.memDB.update(update_list)
-
-    # self._populate_series()
-
-    # self.filtered_dataframe = self._series_points_df[self._series_points_df.index.isin(
-    #   ids)]
+    return self._df

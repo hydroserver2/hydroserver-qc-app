@@ -90,12 +90,21 @@
           <v-divider></v-divider>
           <v-card-text>
             <v-btn
-              :disabled="!selected.length || true"
+              :disabled="!selected.length"
               block
               color="blue"
-              @click="onDriftCorrection(selected, 1)"
+              @click="onDriftCorrection"
               >Drift Correction</v-btn
             >
+            <v-text-field
+              label="Gap Width"
+              type="number"
+              class="mt-2"
+              step="0.1"
+              v-model="driftGapWidth"
+              v-bind="cmmonAttrs"
+            >
+            </v-text-field>
           </v-card-text>
         </v-card>
 
@@ -310,6 +319,7 @@ const gapAmount = ref(15)
 const fillUnits = [...Object.keys(TimeUnit)]
 const selectedFillUnit = ref(fillUnits[1])
 const fillAmount = ref(15)
+const driftGapWidth = ref(1)
 
 onBeforeMount(() => {
   parsedData.value.components = ['DateTime', ' Value']
@@ -608,20 +618,44 @@ const interpolate = (index: number[]) => {
   })
 }
 
-const onDriftCorrection = (index: number[], gapWidth: number) => {
-  driftCorrection(index, gapWidth)
+const onDriftCorrection = () => {
+  if (!selected.value.length) {
+    return
+  }
+
+  const groups: number[][] = [[]]
+  const sorted = [...selected.value].sort((a, b) => a - b)
+
+  sorted.reduce((acc: number[][], curr: number) => {
+    const target: number[] = acc[acc.length - 1]
+
+    if (!target.length || curr == target[target.length - 1] + 1) {
+      target.push(curr)
+    } else {
+      acc.push([curr])
+    }
+
+    return acc
+  }, groups)
+
+  groups.forEach((g) => {
+    const start = g[0]
+    const end = g[g.length - 1]
+    driftCorrection(start, end, +driftGapWidth.value)
+  })
+
   parseDataFrame()
 }
 
-const driftCorrection = (index: number[], gapWidth: number) => {
-  const start = performance.now()
-  py.driftCorrection(index, gapWidth)
-  const end = performance.now()
+const driftCorrection = (start: number, end: number, gapWidth: number) => {
+  const s = performance.now()
+  py.driftCorrection(start, end, gapWidth)
+  const e = performance.now()
   selected.value = []
   logger.value.push({
     datetime: Date.now(),
     message: 'Drift correction',
-    duration: end - start,
+    duration: e - s,
   })
 }
 

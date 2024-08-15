@@ -55,8 +55,8 @@ def interpolate(index_list):
   return edit_service.interpolate(index_list)
 
 
-def drift_correction(index_list, gap_width):
-  return edit_service.drift_correction(index_list, gap_width)
+def drift_correction(start, end, gap_width):
+  return edit_service.drift_correction(start, end, gap_width)
 
 
 def get_datetime_at(index):

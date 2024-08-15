@@ -139,8 +139,12 @@ export const usePyStore = defineStore('py', () => {
     return interpreter.value.globals.get('get_datetime_at')?.(index)
   }
 
-  const driftCorrection = (index: number[], gapWidth: number) => {
-    return interpreter.value.globals.get('drift_correction')?.(index, gapWidth)
+  const driftCorrection = (start: number, end: number, gapWidth: number) => {
+    return interpreter.value.globals.get('drift_correction')?.(
+      start,
+      end,
+      gapWidth
+    )
   }
 
   if (startEl) {
