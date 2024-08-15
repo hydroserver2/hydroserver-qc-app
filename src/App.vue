@@ -31,21 +31,17 @@
               :items-per-page-options="[15, 25, 50, 100]"
               show-select
             >
-              <template v-slot:item.index="{ value }">
-                {{ value }}
+              <template v-slot:item.index="{ item }">
+                {{ item.index }}
               </template>
 
-              <template v-slot:item.datetime="{ value }">
-                {{
-                  new Date(parseInt(value.value) / 10 ** 6).toLocaleDateString()
-                }}
-                {{
-                  new Date(parseInt(value.value) / 10 ** 6).toLocaleTimeString()
-                }}
+              <template v-slot:item.datetime="{ item }">
+                {{ getDateTimeAt(item.index).toLocaleDateString() }}
+                {{ getDateTimeAt(item.index).toLocaleTimeString() }}
               </template>
 
-              <template v-slot:item.value="{ value }">
-                {{ value }}
+              <template v-slot:item.value="{ item }">
+                {{ getValueAt(item.index) }}
               </template>
             </v-data-table-virtual>
           </v-card-text>
@@ -135,9 +131,11 @@ import { TimeUnit, Operator } from '@/stores/py'
 const py = usePyStore()
 const initialized = ref(false)
 
-const timeseries: Ref<
-  { index: number; datetime: number; value: number; raw: any }[]
-> = ref([])
+const DATETIME_COL_INDEX = 0
+const VALUE_COL_INDEX = 1
+
+const timeseries: Ref<{ index: number; datetime: number; value: number }[]> =
+  ref([])
 
 const logger: Ref<
   { datetime: number; message: string; duration: number; isLoading?: boolean }[]
@@ -151,7 +149,7 @@ const parsedData: Ref<any> = ref({
 
 const initializedSub = py.$initialized.subscribe(() => {
   initialized.value = true
-  fetchDataFrame()
+  parseDataFrame()
   initializedSub.unsubscribe()
 
   logger.value.push({
@@ -197,15 +195,28 @@ const measureEllapsedTime = (fn: () => any, message?: string): any => {
   return response
 }
 
+const getDateTimeAt = (index: number) => {
+  const val = py
+    .getDataFrame()
+    ._mgr.arrays.get(DATETIME_COL_INDEX)
+    .get(0)
+    .get(index)
+  return new Date(parseInt(val.value) / 10 ** 6)
+}
+
+const getValueAt = (index: number) => {
+  return py.getDataFrame()._mgr.arrays.get(VALUE_COL_INDEX).get(0).get(index)
+}
+
 /**
  * Fetch the pandas DataFrame that was initialized in the EditService
  */
-const fetchDataFrame = () => {
-  const df = measureEllapsedTime(py.getDataFrame, 'Getting DataFrame...')
+const parseDataFrame = () => {
+  // const df = measureEllapsedTime(py.getDataFrame, 'Getting DataFrame...')
 
   // Using `pandas.DataFrame.iterrows`
   // timeseries.value = measureEllapsedTime(() => {
-  //   return [...df.iterrows()].map((item: [number, any]) => {
+  //   return [...df.value.iterrows()].map((item: [number, any]) => {
   //     const tuple: [number, any] = [...item]
   //     const series = [...tuple[1]]
   //     return {
@@ -219,7 +230,7 @@ const fetchDataFrame = () => {
 
   // Using `pandas.DataFrame.itertuples`
   // timeseries.value = measureEllapsedTime(() => {
-  //   return [...df.itertuples()].map((item: any) => {
+  //   return [...df.value.itertuples()].map((item: any) => {
   //     // TODO: these properties need to
   //     const obj = {
   //       index: item.get(0),
@@ -233,7 +244,7 @@ const fetchDataFrame = () => {
 
   // Using `pandas.DataFrame.values`
   // timeseries.value = measureEllapsedTime(() => {
-  //   return [...df.values].map((item: any) => {
+  //   return [...df.value.values].map((item: any) => {
   //     const obj = {
   //       index: item.get(0),
   //       datetime: item.get(1),
@@ -246,17 +257,18 @@ const fetchDataFrame = () => {
 
   // Fastest!!!
   // Using `pandas.DataFrame._mgr`
+  // Cells are populated using `getValueAt` and `getDateTimeAt`
   timeseries.value = measureEllapsedTime(() => {
-    const valuesArray = [...df._mgr.arrays.get(1).get(0)]
-    const dateTimesArray = [...df._mgr.arrays.get(0).get(0)]
-
-    return valuesArray.map((value, index) => {
-      return {
-        index: index,
-        datetime: dateTimesArray[index], // In nanoseconds, unwrap with parseInt(datetime.value) / 10 ** 6,
-        value: value,
-      }
-    })
+    return new Array(py.getDataFrame().length)
+      .fill(null)
+      .map((_value, index) => {
+        return {
+          index: index,
+          // We just need the properties to shape the virtual table
+          datetime: 0,
+          value: 0,
+        }
+      })
   }, 'Deconstructing DataFrame using `pandas.DataFrame._mgr`...')
 
   // Using `pandas.DataFrame.get`
@@ -266,7 +278,7 @@ const fetchDataFrame = () => {
 
   //   const collection = []
 
-  //   for (let i = 0; i < df.length; i++) {
+  //   for (let i = 0; i < df.value.length; i++) {
   //     collection.push({
   //       index: i,
   //       datetime: dateCol.get(i),
@@ -280,8 +292,8 @@ const fetchDataFrame = () => {
   // timeseries.value = measureEllapsedTime(() => {
   //   const collection: any = []
 
-  //   for (let i = 0; i < df.length; i++) {
-  //     const row = df.iloc.__getitem__(i)
+  //   for (let i = 0; i < df.value.length; i++) {
+  //     const row = df.value.iloc.__getitem__(i)
   //     collection.push({
   //       index: i,
   //       datetime: row.get(0),
@@ -293,7 +305,7 @@ const fetchDataFrame = () => {
 
   // Using numpy
   // timeseries.value = measureEllapsedTime(() => {
-  //   return [...df.to_numpy()].map((item: any, index: number) => {
+  //   return [...df.value.to_numpy()].map((item: any, index: number) => {
   //     const tuple = [...item]
   //     return {
   //       index,
@@ -305,7 +317,7 @@ const fetchDataFrame = () => {
 
   // // Using JSON serialization
   // timeseries.value = measureEllapsedTime(() => {
-  //   const parsed = JSON.parse(df.to_json())
+  //   const parsed = JSON.parse(df.value.to_json())
   //   const data = []
   //   const keys = Object.keys(parsed)
   //   const length = Object.entries(parsed[keys[0]]).length
@@ -337,7 +349,7 @@ const findGaps = () => {
 
 const onFillGaps = () => {
   fillGaps()
-  fetchDataFrame()
+  parseDataFrame()
 }
 
 const fillGaps = () => {
@@ -366,7 +378,7 @@ const shift = (index: number[]) => {
 
 const onShift = (index: number[]) => {
   shift(index)
-  fetchDataFrame()
+  parseDataFrame()
 }
 
 const deleteDataPoints = (index: number[]) => {
@@ -383,7 +395,7 @@ const deleteDataPoints = (index: number[]) => {
 
 const onDeleteDataPoints = (index: number[]) => {
   deleteDataPoints(index)
-  fetchDataFrame()
+  parseDataFrame()
 }
 
 const changeValues = (index: number[]) => {
@@ -399,7 +411,7 @@ const changeValues = (index: number[]) => {
 
 const onChangeValues = (index: number[]) => {
   changeValues(index)
-  fetchDataFrame()
+  parseDataFrame()
 }
 
 const setFilter = () => {
@@ -416,7 +428,7 @@ const setFilter = () => {
 
 const onInterpolate = (index: number[]) => {
   interpolate(index)
-  fetchDataFrame()
+  parseDataFrame()
 }
 
 const interpolate = (index: number[]) => {
@@ -433,7 +445,7 @@ const interpolate = (index: number[]) => {
 
 const onDriftCorrection = (index: number[], gapWidth: number) => {
   driftCorrection(index, gapWidth)
-  fetchDataFrame()
+  parseDataFrame()
 }
 
 const driftCorrection = (index: number[], gapWidth: number) => {
@@ -496,7 +508,7 @@ const runTests = () => {
   shift(indexes)
   console.log('Done')
 
-  fetchDataFrame()
+  parseDataFrame()
 }
 </script>
 
