@@ -90,23 +90,23 @@ class EditService():
 
     if self._has_filter(filter, FilterOperation.LT):
       query.append(
-        f'result < {filter[FilterOperation.LT.value]}')
+        f'`{self.get_value_col()}` < {filter[FilterOperation.LT.value]}')
 
     if self._has_filter(filter, FilterOperation.LTE):
       query.append(
-        f'result <= {filter[FilterOperation.LTE.value]}')
+        f'`{self.get_value_col()}` <= {filter[FilterOperation.LTE.value]}')
 
     if self._has_filter(filter, FilterOperation.GT):
       query.append(
-        f'result > {filter[FilterOperation.GT.value]}')
+        f'`{self.get_value_col()}` > {filter[FilterOperation.GT.value]}')
 
     if self._has_filter(filter, FilterOperation.GTE):
       query.append(
-        f'result >= {filter[FilterOperation.GTE.value]}')
+        f'`{self.get_value_col()}` >= {filter[FilterOperation.GTE.value]}')
 
     if self._has_filter(filter, FilterOperation.E):
       query.append(
-        f'result == {filter[FilterOperation.E.value]}')
+        f'`{self.get_value_col()}` == {filter[FilterOperation.E.value]}')
 
     if len(query):
       return self._df.query(" & ".join(query))
@@ -204,27 +204,22 @@ class EditService():
 
   def change_values(self, index_list, operator: str, value):
 
-    # def operation(x):
-    #   if operator == Operator.MULT.value:
-    #     return x * value
-    #   elif operator == Operator.DIV.value:
-    #     return x / value
-    #   elif operator == Operator.ADD.value:
-    #     return x + value
-    #   elif operator == Operator.SUB.value:
-    #     return x - value
-    #   elif operator == Operator.ASSIGN.value:
-    #     return value
-    #   else:
-    #     return x
-
-    # self._df.loc[index_list, self.get_value_col()] = self._df.loc[index_list, self.get_value_col()].apply(
-    #   operation)
+    def operation(x):
+      if operator == Operator.MULT.value:
+        return x * value
+      elif operator == Operator.DIV.value:
+        return x / value
+      elif operator == Operator.ADD.value:
+        return x + value
+      elif operator == Operator.SUB.value:
+        return x - value
+      elif operator == Operator.ASSIGN.value:
+        return value
+      else:
+        return x
 
     self._df.loc[index_list, self.get_value_col(
-    )] = self._df.loc[index_list, self.get_value_col()] + 1
-
-    # return self._df
+    )] = self._df.loc[index_list, self.get_value_col()].apply(operation)
 
   def delete_points(self, index_list):
     self._df.drop(index=index_list, inplace=True)
@@ -240,13 +235,6 @@ class EditService():
 
     self._df = self._df.sort_values(self.get_date_col())
     self._df.reset_index(drop=True, inplace=True)
-
-  # def interpolate(self, start, end):
-  #   masked_df = self._df[self.get_value_col()].mask(
-  #     self._df.index.isin(self._df.index[start:end]))
-
-  #   masked_df.interpolate(method="linear", inplace=True)
-  #   self._df[self.get_value_col()] = masked_df
 
   def interpolate(self, index_list):
     condition = self._df.index.isin(index_list)

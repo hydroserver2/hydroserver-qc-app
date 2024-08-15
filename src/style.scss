@@ -1,3 +1,13 @@
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  min-width: 450px;
+}
+
+
 /* py-config - not a component */
 py-config {
   display: none
@@ -19,3 +29,9 @@ py-repl:not(:defined) {
 /* .py-overlay, .py-pop-up, .label {
   display: none;
 } */
+
+@for $i from 1 through 4 {
+  .gap-#{$i} {
+    gap: #{$i}rem;
+  }
+}

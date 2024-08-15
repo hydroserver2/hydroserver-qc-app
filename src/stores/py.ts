@@ -42,8 +42,7 @@ export const usePyStore = defineStore('py', () => {
    * @returns
    */
   const deleteDataPoints = (index: number[]) => {
-    const handleDelete = interpreter.value.globals.get('delete_data_points')
-    return handleDelete?.(index)
+    return interpreter.value.globals.get('delete_data_points')?.(index)
   }
 
   /**
@@ -53,8 +52,7 @@ export const usePyStore = defineStore('py', () => {
    * @returns
    */
   const findGaps = (value: number, unit: TimeUnit) => {
-    const handleFindGaps = interpreter.value.globals.get('find_gaps')
-    return JSON.parse(handleFindGaps?.(value, unit))
+    return interpreter.value.globals.get('find_gaps')?.(value, unit)
   }
 
   /**
@@ -64,8 +62,7 @@ export const usePyStore = defineStore('py', () => {
    * @returns
    */
   const fillGaps = (gap: [number, TimeUnit], fill: [number, TimeUnit]) => {
-    const handleFillGaps = interpreter.value.globals.get('fill_gaps')
-    return JSON.parse(handleFillGaps?.(gap, fill))
+    return interpreter.value.globals.get('fill_gaps')?.(gap, fill)
   }
 
   /**
@@ -76,8 +73,7 @@ export const usePyStore = defineStore('py', () => {
    * @returns
    */
   const shift = (index: number[], timeValue: number, timeUnit: TimeUnit) => {
-    const handleShift = interpreter.value.globals.get('shift_points')
-    handleShift?.(index, timeValue, timeUnit)
+    interpreter.value.globals.get('shift_points')?.(index, timeValue, timeUnit)
   }
 
   /**
@@ -85,18 +81,15 @@ export const usePyStore = defineStore('py', () => {
    * @returns
    */
   const getDataFrame = () => {
-    const handleGetDataFrame = interpreter.value.globals.get('get_data_frame')
-    return handleGetDataFrame?.()
+    return interpreter.value.globals.get('get_data_frame')?.()
   }
 
   /**
-   *
    * @param filter A dictionary of key(FilterOperation) - value pairs
    * @returns
    */
   const setFilter = (filter: { [key: string]: number }) => {
-    const handleSetFilter = interpreter.value.globals.get('set_filter')
-    return JSON.parse(handleSetFilter?.(JSON.stringify(filter)))
+    return interpreter.value.globals.get('set_filter')?.(JSON.stringify(filter))
   }
 
   /**
@@ -107,22 +100,38 @@ export const usePyStore = defineStore('py', () => {
    * @returns The modified DataFrame
    */
   const changeValues = (index: number[], operator: Operator, value: number) => {
-    const handleChangeValues = interpreter.value.globals.get('change_values')
-    return handleChangeValues?.(index, operator, value)
+    return interpreter.value.globals.get('change_values')?.(
+      index,
+      operator,
+      value
+    )
   }
 
   /**
    * @param range
    */
   const interpolate = (index: number[]) => {
-    const handleInterpolate = interpreter.value.globals.get('interpolate')
-    return handleInterpolate?.(index)
+    return interpreter.value.globals.get('interpolate')?.(index)
+  }
+
+  /**
+   * @param index
+   * @returns The value for the row at the given index
+   */
+  const getValueAt = (index: number) => {
+    return interpreter.value.globals.get('get_value_at')?.(index)
+  }
+
+  /**
+   * @param index
+   * @returns The datetime for the row at the given index
+   */
+  const getDatetimeAt = (index: number) => {
+    return interpreter.value.globals.get('get_datetime_at')?.(index)
   }
 
   const driftCorrection = (index: number[], gapWidth: number) => {
-    const handleDriftCorrection =
-      interpreter.value.globals.get('drift_correction')
-    return handleDriftCorrection(index, gapWidth)
+    return interpreter.value.globals.get('drift_correction')?.(index, gapWidth)
   }
 
   if (startEl) {
@@ -156,5 +165,7 @@ export const usePyStore = defineStore('py', () => {
     shift,
     interpolate,
     driftCorrection,
+    getValueAt,
+    getDatetimeAt,
   }
 })

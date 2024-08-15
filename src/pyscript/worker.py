@@ -8,6 +8,9 @@ print("==== Worker thread ====")
 # Note: when binding events, the HTML component must be rendered in the document
 edit_service = EditService("test", json.loads(dataset))
 
+DATETIME_COL_INDEX = 0
+VALUE_COL_INDEX = 1
+
 
 @when("click", "#my_button")
 def click_handler(event):
@@ -21,11 +24,11 @@ def get_data_frame():
 
 
 def find_gaps(time_value, time_unit):
-  return edit_service.find_gaps(time_value, time_unit).to_json()
+  return edit_service.find_gaps(time_value, time_unit)
 
 
 def fill_gaps(gap, fill):
-  return edit_service.fill_gap(gap, fill).to_json()
+  return edit_service.fill_gap(gap, fill)
 
 
 def delete_data_points(index):
@@ -54,6 +57,15 @@ def interpolate(index_list):
 
 def drift_correction(index_list, gap_width):
   return edit_service.drift_correction(index_list, gap_width)
+
+
+def get_datetime_at(index):
+  val = edit_service._df._mgr.arrays[DATETIME_COL_INDEX][0][index]
+  return (val.value / 10 ** 6)
+
+
+def get_value_at(index):
+  return edit_service._df._mgr.arrays[VALUE_COL_INDEX][0][index]
 
 
 # Signal start

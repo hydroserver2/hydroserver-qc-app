@@ -1,97 +1,218 @@
 <template>
   <v-app id="inspire">
-    <v-app-bar class="px-3" color="grey-lighten-4" height="72" flat>
+    <v-app-bar class="px-3" color="grey-darken-3" flat>
       <v-app-bar-title>HydroServer QC</v-app-bar-title>
     </v-app-bar>
 
-    <v-main>
+    <v-main class="bg-grey-lighten-3">
       <v-container>
-        <v-card v-show="initialized">
-          <v-card-title>{{ data.value[0].components[0] }} </v-card-title>
+        <v-card v-show="initialized" class="bg-blue-darken-2">
+          <v-card-title>{{ data.value[0].components[0] }}</v-card-title>
           <v-card-subtitle class="d-flex py-2 align-center">
             <div>
               {{ selected.length }} item{{ selected.length == 1 ? '' : 's' }}
               selected
             </div>
             <v-spacer></v-spacer>
-            <v-btn :disabled="!selected.length" @click="selected = []"
+            <v-btn
+              variant="outlined"
+              :disabled="!selected.length"
+              @click="selected = []"
               >Unselect All</v-btn
             >
           </v-card-subtitle>
           <v-divider class="mt-2"></v-divider>
 
-          <v-card-text>
-            <v-data-table-virtual
-              v-model="selected"
-              :items="timeseries.slice(0, 100)"
-              height="400"
-              hover
-              item-value="index"
-              items-per-page="15"
-              :items-per-page-options="[15, 25, 50, 100]"
-              show-select
-            >
-              <template v-slot:item.index="{ item }">
-                {{ item.index }}
-              </template>
+          <v-data-table
+            v-model="selected"
+            :items="timeseries.slice(0, 100)"
+            height="70vh"
+            hover
+            item-value="index"
+            items-per-page="15"
+            :items-per-page-options="[15, 25, 50, 100]"
+            show-select
+          >
+            <template v-slot:item.index="{ item }">
+              {{ item.index }}
+            </template>
 
-              <template v-slot:item.datetime="{ item }">
-                {{ getDateTimeAt(item.index).toLocaleDateString() }}
-                {{ getDateTimeAt(item.index).toLocaleTimeString() }}
-              </template>
+            <template v-slot:item.datetime="{ item }">
+              {{ getDateTimeAt(item.index) }}
+            </template>
 
-              <template v-slot:item.value="{ item }">
-                {{ getValueAt(item.index) }}
-              </template>
-            </v-data-table-virtual>
-          </v-card-text>
+            <template v-slot:item.value="{ item }">
+              {{ getValueAt(item.index) }}
+            </template>
+          </v-data-table>
         </v-card>
       </v-container>
     </v-main>
 
-    <v-navigation-drawer location="left" width="350">
+    <v-navigation-drawer location="left" width="350" class="bg-grey-lighten-4">
       <div class="table-actions">
-        <v-btn
-          :disabled="!selected.length"
-          block
-          @click="onDeleteDataPoints(selected)"
-          color="red"
-        >
-          Delete points
-        </v-btn>
-        <v-btn
-          :disabled="!selected.length"
-          block
-          @click="onChangeValues(selected)"
-          >Change Values (Add +1)</v-btn
-        >
-        <v-btn :disabled="!selected.length" block @click="onShift(selected)"
-          >Shift Datetimes</v-btn
-        >
-        <v-btn
-          :disabled="!selected.length"
-          block
-          @click="onInterpolate(selected)"
-          >Interpolate Values</v-btn
-        >
-        <v-btn
-          :disabled="!selected.length || true"
-          block
-          @click="onDriftCorrection(selected, 1)"
-          >Drift Correction</v-btn
-        >
+        <v-card :disabled="!timeseries || !timeseries.length">
+          <v-card-title class="text-body-1"> Change Values </v-card-title>
+          <v-divider></v-divider>
+          <v-card-text>
+            <div class="d-flex gap-1">
+              <v-select
+                label="Operation"
+                :items="operators"
+                v-model="selectedOperator"
+              ></v-select>
+              <v-text-field
+                label="Value"
+                v-model="operationValue"
+                type="number"
+                width="30"
+              >
+              </v-text-field>
+            </div>
+            <v-btn
+              :disabled="!selected.length"
+              block
+              @click="onChangeValues(selected)"
+              color="blue"
+              >Apply Operation</v-btn
+            >
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-text>
+            <v-btn
+              :disabled="!selected.length"
+              block
+              color="blue"
+              @click="onInterpolate(selected)"
+              >Interpolate</v-btn
+            >
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-text>
+            <v-btn
+              :disabled="!selected.length || true"
+              block
+              color="blue"
+              @click="onDriftCorrection(selected, 1)"
+              >Drift Correction</v-btn
+            >
+          </v-card-text>
+        </v-card>
 
-        <v-divider></v-divider>
+        <v-card :disabled="!timeseries || !timeseries.length">
+          <v-card-title class="text-body-1"> Shift</v-card-title>
+          <v-divider></v-divider>
+          <v-card-text>
+            <div class="d-flex gap-1 mb-4">
+              <v-select
+                label="Time Unit"
+                :items="shiftUnits"
+                v-model="selectedShiftUnit"
+                v-bind="cmmonAttrs"
+              ></v-select>
+              <v-text-field
+                width="30"
+                label="Amount"
+                type="number"
+                v-model="shiftAmount"
+                v-bind="cmmonAttrs"
+              >
+              </v-text-field>
+            </div>
+            <v-btn
+              :disabled="!selected.length"
+              color="blue"
+              block
+              @click="onShift(selected)"
+              >Apply Shift</v-btn
+            >
+          </v-card-text>
+        </v-card>
 
-        <!-- <v-btn class="d-block" block id="my_button">Python Event</v-btn> -->
-        <v-btn block @click="findGaps">Find Gaps</v-btn>
-        <v-btn block @click="onFillGaps()">Fill Gaps</v-btn>
-        <v-btn block @click="setFilter()">Set Filter</v-btn>
+        <v-card :disabled="!timeseries || !timeseries.length">
+          <v-card-title class="text-body-1">Gap Analysis</v-card-title>
+          <v-divider></v-divider>
+          <v-card-text>
+            <div class="d-flex gap-1">
+              <v-select
+                label="Gap Unit"
+                :items="gapUnits"
+                v-model="selectedGapUnit"
+                v-bind="cmmonAttrs"
+              ></v-select>
+              <v-text-field
+                width="30"
+                label="Amount"
+                type="number"
+                v-model="gapAmount"
+                v-bind="cmmonAttrs"
+              >
+              </v-text-field>
+            </div>
+            <div class="mt-4 d-flex gap-1">
+              <v-select
+                label="Fill Unit"
+                :items="fillUnits"
+                v-model="selectedFillUnit"
+                v-bind="cmmonAttrs"
+              ></v-select>
+              <v-text-field
+                width="30"
+                label="Amount"
+                type="number"
+                v-model="fillAmount"
+                v-bind="cmmonAttrs"
+              >
+              </v-text-field>
+            </div>
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-text class="d-flex flex-column gap-1">
+            <v-btn block color="blue" @click="findGaps">Find Gaps</v-btn>
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-text>
+            <v-btn block color="blue" @click="onFillGaps"
+              >Find & Fill Gaps</v-btn
+            >
+            <div class="text-right">
+              <v-checkbox
+                label="Interpolate Values"
+                v-model="interpolateValues"
+                color="blue"
+                v-bind="cmmonAttrs"
+              ></v-checkbox>
+            </div>
+          </v-card-text>
+        </v-card>
 
-        <v-spacer></v-spacer>
-        <v-divider></v-divider>
-
-        <v-btn color="primary" block @click="runTests">Run Tests</v-btn>
+        <v-card :disabled="!timeseries || !timeseries.length">
+          <v-card-title class="text-body-1"> Other Operations </v-card-title>
+          <v-divider></v-divider>
+          <v-card-text>
+            <v-btn
+              :disabled="!selected.length"
+              block
+              @click="onDeleteDataPoints(selected)"
+              color="red"
+            >
+              Delete points
+            </v-btn>
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-text>
+            <v-btn
+              color="blue"
+              block
+              @click="setFilter({ [FilterOperation.GTE]: 10.45 })"
+              >Set Filter</v-btn
+            >
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-text>
+            <v-btn color="blue" block @click="runTests">Run Tests</v-btn>
+          </v-card-text>
+        </v-card>
       </div>
     </v-navigation-drawer>
 
@@ -99,7 +220,9 @@
       <div class="d-flex pa-2 align-center">
         Logs
         <v-spacer></v-spacer>
-        <v-btn @click="clearLogs" variant="flat">Clear</v-btn>
+        <v-btn @click="clearLogs" :disabled="!logger.length" variant="flat"
+          >Clear</v-btn
+        >
       </div>
       <v-divider></v-divider>
       <v-table>
@@ -110,7 +233,7 @@
             </td>
             <td class="text-caption">{{ log.message }}</td>
             <td class="text-right" :class="getDurationColor(log.duration)">
-              {{ log.duration.toFixed(2) }} ms
+              {{ log.duration.toFixed(0) }} ms
             </td>
           </tr>
         </tbody>
@@ -137,9 +260,6 @@ import { TimeUnit, Operator } from '@/stores/py'
 const py = usePyStore()
 const initialized = ref(false)
 
-const DATETIME_COL_INDEX = 0
-const VALUE_COL_INDEX = 1
-
 const timeseries: Ref<{ index: number; datetime: number; value: number }[]> =
   ref([])
 
@@ -153,17 +273,43 @@ const parsedData: Ref<any> = ref({
   dataArray: [],
 })
 
+const cmmonAttrs = {
+  hideDetails: true,
+}
+
 const initializedSub = py.$initialized.subscribe(() => {
+  const start = performance.now()
   initialized.value = true
   parseDataFrame()
   initializedSub.unsubscribe()
 
+  const end = performance.now()
   logger.value.push({
     datetime: Date.now(),
-    message: 'App started',
-    duration: 0,
+    message: `App Started`,
+    duration: end - start,
   })
 })
+
+// CHANGE VALUES
+const operators = [...Object.keys(Operator)]
+const selectedOperator = ref(operators[2])
+const operationValue = ref(1)
+
+// SHIFT VALUES
+const shiftUnits = [...Object.keys(TimeUnit)]
+const selectedShiftUnit = ref(shiftUnits[1])
+const shiftAmount = ref(5)
+
+// GAP ANALYSYS
+const interpolateValues = ref(false)
+const gapUnits = [...Object.keys(TimeUnit)]
+const selectedGapUnit = ref(gapUnits[1])
+const gapAmount = ref(15)
+
+const fillUnits = [...Object.keys(TimeUnit)]
+const selectedFillUnit = ref(fillUnits[1])
+const fillAmount = ref(15)
 
 onBeforeMount(() => {
   parsedData.value.components = ['DateTime', ' Value']
@@ -181,7 +327,6 @@ onBeforeMount(() => {
     item.DateTime,
     +item[' Value'],
   ])
-  console.log(tsaData)
   ;(window as _Window).dataset = JSON.stringify(tsaData) // Make the dataset available to the python script
   // ;(window as _Window).dataset = JSON.stringify(data.value[0]) // Make the dataset available to the python script
 })
@@ -202,16 +347,13 @@ const measureEllapsedTime = (fn: () => any, message?: string): any => {
 }
 
 const getDateTimeAt = (index: number) => {
-  const val = py
-    .getDataFrame()
-    ._mgr.arrays.get(DATETIME_COL_INDEX)
-    .get(0)
-    .get(index)
-  return new Date(parseInt(val.value) / 10 ** 6)
+  const datetime = new Date(py.getDatetimeAt(index))
+
+  return `${datetime.toLocaleDateString()} ${datetime.toLocaleTimeString()}`
 }
 
 const getValueAt = (index: number) => {
-  return py.getDataFrame()._mgr.arrays.get(VALUE_COL_INDEX).get(0).get(index)
+  return py.getValueAt(index).toFixed(2)
 }
 
 const clearLogs = () => {
@@ -283,7 +425,7 @@ const parseDataFrame = () => {
       .map((_value, index) => {
         return {
           index: index,
-          // We just need the properties to shape the virtual table
+          // We just need the properties to shape the table component
           datetime: 0,
           value: 0,
         }
@@ -356,7 +498,7 @@ const parseDataFrame = () => {
 
 const findGaps = () => {
   const start = performance.now()
-  const gaps = py.findGaps(15, TimeUnit.MINUTE)
+  const gaps = py.findGaps(gapAmount.value, TimeUnit[selectedGapUnit.value])
   const end = performance.now()
   console.log(gaps)
   logger.value.push({
@@ -373,19 +515,22 @@ const onFillGaps = () => {
 
 const fillGaps = () => {
   const start = performance.now()
-  const gaps = py.fillGaps([15, TimeUnit.MINUTE], [15, TimeUnit.MINUTE])
+  const gaps = py.fillGaps(
+    [gapAmount.value, TimeUnit[selectedGapUnit.value]],
+    [fillAmount.value, TimeUnit[selectedFillUnit.value]]
+  )
   const end = performance.now()
   console.log(gaps)
   logger.value.push({
     datetime: Date.now(),
-    message: 'Fill gaps',
+    message: 'Find & Fill gaps',
     duration: end - start,
   })
 }
 
 const shift = (index: number[]) => {
   const start = performance.now()
-  py.shift(index, 10, TimeUnit.MINUTE)
+  py.shift(index, shiftAmount.value, TimeUnit[selectedShiftUnit.value])
   const end = performance.now()
   selected.value = []
   logger.value.push({
@@ -433,9 +578,9 @@ const onChangeValues = (index: number[]) => {
   parseDataFrame()
 }
 
-const setFilter = () => {
+const setFilter = (filter: { [key: string]: number }) => {
   const start = performance.now()
-  const filteredResults = py.setFilter({ [FilterOperation.GTE]: 10.45 })
+  const filteredResults = py.setFilter(filter)
   const end = performance.now()
   console.log(filteredResults)
   logger.value.push({
@@ -504,6 +649,10 @@ const runTests = () => {
   console.log(`Deleting ${indexes.length} data points...`)
   deleteDataPoints(indexes)
   console.log('Done')
+
+  console.log(`Setting filter...`)
+  setFilter({ [FilterOperation.GTE]: 10.45 })
+  console.log('done')
 
   console.log(`Interpolating first 10 deleted data points...`)
   interpolate(indexes.slice(0, 10))
