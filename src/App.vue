@@ -15,7 +15,7 @@
             </div>
             <v-spacer></v-spacer>
             <v-btn
-              variant="outlined"
+              variant="flat"
               :disabled="!selected.length"
               @click="selected = []"
               >Unselect All</v-btn
@@ -517,7 +517,8 @@ const fillGaps = () => {
   const start = performance.now()
   const gaps = py.fillGaps(
     [gapAmount.value, TimeUnit[selectedGapUnit.value]],
-    [fillAmount.value, TimeUnit[selectedFillUnit.value]]
+    [fillAmount.value, TimeUnit[selectedFillUnit.value]],
+    interpolateValues.value
   )
   const end = performance.now()
   console.log(gaps)

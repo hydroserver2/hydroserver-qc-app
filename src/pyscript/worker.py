@@ -27,8 +27,8 @@ def find_gaps(time_value, time_unit):
   return edit_service.find_gaps(time_value, time_unit)
 
 
-def fill_gaps(gap, fill):
-  return edit_service.fill_gap(gap, fill)
+def fill_gaps(gap, fill, interpolate_values):
+  return edit_service.fill_gap(gap, fill, interpolate_values)
 
 
 def delete_data_points(index):

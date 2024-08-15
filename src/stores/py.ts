@@ -59,10 +59,19 @@ export const usePyStore = defineStore('py', () => {
    * Find gaps and fill them with placeholder value
    * @param gap Intervals to detect as gaps
    * @param fill Interval used to fill the detected gaps
+   * @param interpolateValues If true, the new values will be linearly interpolated
    * @returns
    */
-  const fillGaps = (gap: [number, TimeUnit], fill: [number, TimeUnit]) => {
-    return interpreter.value.globals.get('fill_gaps')?.(gap, fill)
+  const fillGaps = (
+    gap: [number, TimeUnit],
+    fill: [number, TimeUnit],
+    interpolateValues: boolean
+  ) => {
+    return interpreter.value.globals.get('fill_gaps')?.(
+      gap,
+      fill,
+      interpolateValues
+    )
   }
 
   /**

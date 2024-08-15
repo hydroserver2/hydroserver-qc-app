@@ -123,7 +123,7 @@ class EditService():
     """
     return self._df[self._df[self.get_date_col()].diff() > np.timedelta64(time_value, time_unit)]
 
-  def fill_gap(self, gap, fill):
+  def fill_gap(self, gap, fill, interpolate_values):
     """
     :return Pandas DataFrame:
     """
@@ -131,9 +131,10 @@ class EditService():
     timegap = np.timedelta64(fill[0], fill[1])
     points = []
     index = []
+    added_index = []
 
-    for gap in gaps_df.iterrows():
-      gap_end_index = gap[0]
+    for gap_row in gaps_df.iterrows():
+      gap_end_index = gap_row[0]
       gap_start_index = gap_end_index - 1
 
       gap_start_date = self._df.iloc[gap_start_index][self.get_date_col()]
@@ -148,7 +149,14 @@ class EditService():
         index.append(gap_start_index)
         start = start + timegap
 
+        if (interpolate_values):
+          # Keep an index of the position where the points will end up
+          added_index.append(gap_start_index + len(added_index) + 1)
+
     self.add_points(points, index)
+
+    if (interpolate_values):
+      self.interpolate(added_index)
 
     # Return the list of points that filled the gaps
     return pd.DataFrame(
