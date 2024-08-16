@@ -7,25 +7,36 @@
     <v-main class="bg-grey-lighten-3">
       <v-container>
         <v-card v-show="initialized" class="bg-blue-darken-2">
-          <v-card-title>{{ data.value[0].components[0] }}</v-card-title>
-          <v-card-subtitle class="d-flex py-2 align-center">
+          <v-card-title>
+            {{ data.value[0].components[0] }}
+          </v-card-title>
+          <v-card-text class="d-flex py-2 align-center gap-2">
             <div>
               {{ selected.length }} item{{ selected.length == 1 ? '' : 's' }}
               selected
             </div>
-            <v-spacer></v-spacer>
             <v-btn
-              variant="flat"
+              variant="text"
               :disabled="!selected.length"
               @click="selected = []"
               >Unselect All</v-btn
             >
-          </v-card-subtitle>
+            <v-spacer></v-spacer>
+            <v-switch
+              v-model="renderPreview"
+              label="Render Preview"
+              title="If toggled on, only the first 100 data points will be rendered."
+              hide-details
+              inset
+              color="white"
+              class="text-white"
+            ></v-switch>
+          </v-card-text>
           <v-divider class="mt-2"></v-divider>
 
           <v-data-table
             v-model="selected"
-            :items="timeseries.slice(0, 100)"
+            :items="renderPreview ? timeseries.slice(0, 100) : timeseries"
             :loading="isLoading"
             height="70vh"
             hover
@@ -237,8 +248,13 @@
         >
       </div>
       <v-divider></v-divider>
-      <!-- <div class="text-caption mt-2 ml-4 font-weight-light">Most recent</div> -->
-      <v-table>
+      <div
+        class="text-caption text-center py-1 font-weight-light bg-grey-lighten-4"
+      >
+        Most recent
+      </div>
+      <v-divider></v-divider>
+      <v-table density="compact">
         <tbody>
           <tr v-for="log in logger">
             <td class="text-medium-emphasis">
@@ -251,6 +267,7 @@
           </tr>
         </tbody>
       </v-table>
+      <v-divider v-if="logger.length"></v-divider>
     </v-navigation-drawer>
   </v-app>
 
@@ -281,6 +298,7 @@ const logger: Ref<
 > = ref([])
 
 const isLoading = ref(false)
+const renderPreview = ref(true)
 
 const selected: Ref<number[]> = ref([])
 const parsedData: Ref<any> = ref({
@@ -736,39 +754,39 @@ const runTests = () => {
   console.log('============= STARTING TESTS =================')
   let indexes = getNUniqueIndexes(50)
 
-  console.log(`Deleting ${indexes.length} data points...`)
+  console.log(`[TEST]: Deleting ${indexes.length} data points...`)
   deleteDataPoints(indexes)
-  console.log('Done')
+  console.log('\tDone')
 
-  console.log(`Setting filter...`)
+  console.log(`[TEST]: Setting filter...`)
   setFilter({ [FilterOperation.GTE]: 10.45 })
-  console.log('done')
+  console.log('\tdone')
 
-  console.log(`Interpolating first 10 deleted data points...`)
+  console.log(`[TEST]: Interpolating first 10 deleted data points...`)
   interpolate(indexes.slice(0, 10))
-  console.log('Done')
-
-  console.log(`Finding gaps...`)
-  findGaps()
-  console.log('Done')
-
-  console.log(`Filling gaps...`)
-  fillGaps()
-  console.log('Done')
+  console.log('\tDone')
 
   indexes = getNUniqueIndexes(50)
-  console.log(`Changing values of ${indexes.length} data points...`)
-  changeValues(indexes, Operator.ADD, 1)
-  console.log('Done')
-
-  indexes = getNUniqueIndexes(50)
-  console.log(`Shifting DateTime of ${indexes.length} data points...`)
+  console.log(`[TEST]: Shifting DateTime of ${indexes.length} data points...`)
   shift(indexes)
-  console.log('Done')
+  console.log('\tDone')
 
-  console.log(`Applying drift correction of 1 to first 10 values...`)
+  console.log(`[TEST]: Finding gaps...`)
+  findGaps()
+  console.log('\tDone')
+
+  console.log(`[TEST]: Filling gaps...`)
+  fillGaps()
+  console.log('\tDone')
+
+  indexes = getNUniqueIndexes(50)
+  console.log(`[TEST]: Changing values of ${indexes.length} data points...`)
+  changeValues(indexes, Operator.ADD, 1)
+  console.log('\tDone')
+
+  console.log(`[TEST]: Applying drift correction of 1 to first 10 values...`)
   driftCorrection(0, 9, 1)
-  console.log('Done')
+  console.log('\tDone')
 
   parseDataFrame()
 }
