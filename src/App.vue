@@ -26,12 +26,14 @@
           <v-data-table
             v-model="selected"
             :items="timeseries.slice(0, 100)"
+            :loading="isLoading"
             height="70vh"
             hover
             item-value="index"
-            items-per-page="15"
+            items-per-page="100"
             :items-per-page-options="[15, 25, 50, 100]"
             show-select
+            fixed-header
           >
             <template v-slot:item.index="{ item }">
               {{ item.index }}
@@ -89,6 +91,16 @@
           </v-card-text>
           <v-divider></v-divider>
           <v-card-text>
+            <v-text-field
+              label="Drift"
+              type="number"
+              class="mb-4"
+              step="0.1"
+              v-model="driftGapWidth"
+              v-bind="cmmonAttrs"
+            >
+            </v-text-field>
+
             <v-btn
               :disabled="!selected.length"
               block
@@ -96,15 +108,6 @@
               @click="onDriftCorrection"
               >Drift Correction</v-btn
             >
-            <v-text-field
-              label="Drift"
-              type="number"
-              class="mt-2"
-              step="0.1"
-              v-model="driftGapWidth"
-              v-bind="cmmonAttrs"
-            >
-            </v-text-field>
           </v-card-text>
         </v-card>
 
@@ -177,7 +180,7 @@
           </v-card-text>
           <v-divider></v-divider>
           <v-card-text class="d-flex flex-column gap-1">
-            <v-btn block color="blue" @click="findGaps">Find Gaps</v-btn>
+            <v-btn block color="blue" @click="onFindGaps">Find Gaps</v-btn>
           </v-card-text>
           <v-divider></v-divider>
           <v-card-text>
@@ -219,7 +222,7 @@
           </v-card-text>
           <v-divider></v-divider>
           <v-card-text>
-            <v-btn color="blue" block @click="runTests">Run Tests</v-btn>
+            <v-btn color="blue" block @click="onRunTests">Run Tests</v-btn>
           </v-card-text>
         </v-card>
       </div>
@@ -234,6 +237,7 @@
         >
       </div>
       <v-divider></v-divider>
+      <!-- <div class="text-caption mt-2 ml-4 font-weight-light">Most recent</div> -->
       <v-table>
         <tbody>
           <tr v-for="log in logger">
@@ -276,6 +280,8 @@ const logger: Ref<
   { datetime: number; message: string; duration: number; isLoading?: boolean }[]
 > = ref([])
 
+const isLoading = ref(false)
+
 const selected: Ref<number[]> = ref([])
 const parsedData: Ref<any> = ref({
   components: [],
@@ -293,7 +299,7 @@ const initializedSub = py.$initialized.subscribe(() => {
   initializedSub.unsubscribe()
 
   const end = performance.now()
-  logger.value.push({
+  logger.value.unshift({
     datetime: Date.now(),
     message: `App Started`,
     duration: end - start,
@@ -332,11 +338,11 @@ onBeforeMount(() => {
     components: ['DateTime', ' Value'],
     dataArray: tsadata.map((item: any) => [item.DateTime, +item[' Value']]),
   }
-  tsaData.components = ['DateTime', ' Value']
-  tsaData.dataArray = tsadata.map((item: any) => [
-    item.DateTime,
-    +item[' Value'],
-  ])
+  // tsaData.components = ['DateTime', ' Value']
+  // tsaData.dataArray = tsadata.map((item: any) => [
+  //   item.DateTime,
+  //   +item[' Value'],
+  // ])
   ;(window as _Window).dataset = JSON.stringify(tsaData) // Make the dataset available to the python script
   // ;(window as _Window).dataset = JSON.stringify(data.value[0]) // Make the dataset available to the python script
 })
@@ -508,19 +514,33 @@ const parseDataFrame = () => {
 
 const findGaps = () => {
   const start = performance.now()
+  // @ts-ignore
   const gaps = py.findGaps(gapAmount.value, TimeUnit[selectedGapUnit.value])
   const end = performance.now()
   console.log(gaps)
-  logger.value.push({
+  logger.value.unshift({
     datetime: Date.now(),
     message: 'Find gaps',
     duration: end - start,
   })
 }
 
+const onFindGaps = () => {
+  isLoading.value = true
+  setTimeout(() => {
+    findGaps()
+    // parseDataFrame()
+    isLoading.value = false
+  }, 0)
+}
+
 const onFillGaps = () => {
-  fillGaps()
-  parseDataFrame()
+  isLoading.value = true
+  setTimeout(() => {
+    fillGaps()
+    parseDataFrame()
+    isLoading.value = false
+  }, 0)
 }
 
 const fillGaps = () => {
@@ -534,7 +554,7 @@ const fillGaps = () => {
   )
   const end = performance.now()
   console.log(gaps)
-  logger.value.push({
+  logger.value.unshift({
     datetime: Date.now(),
     message: 'Find & Fill gaps',
     duration: end - start,
@@ -547,7 +567,7 @@ const shift = (index: number[]) => {
   py.shift(index, +shiftAmount.value, TimeUnit[selectedShiftUnit.value])
   const end = performance.now()
   selected.value = []
-  logger.value.push({
+  logger.value.unshift({
     datetime: Date.now(),
     message: 'Shift',
     duration: end - start,
@@ -555,8 +575,12 @@ const shift = (index: number[]) => {
 }
 
 const onShift = (index: number[]) => {
-  shift(index)
-  parseDataFrame()
+  isLoading.value = true
+  setTimeout(() => {
+    shift(index)
+    parseDataFrame()
+    isLoading.value = false
+  }, 0)
 }
 
 const deleteDataPoints = (index: number[]) => {
@@ -564,7 +588,7 @@ const deleteDataPoints = (index: number[]) => {
   py.deleteDataPoints(index)
   const end = performance.now()
   selected.value = []
-  logger.value.push({
+  logger.value.unshift({
     datetime: Date.now(),
     message: 'Delete data points',
     duration: end - start,
@@ -572,8 +596,12 @@ const deleteDataPoints = (index: number[]) => {
 }
 
 const onDeleteDataPoints = (index: number[]) => {
-  deleteDataPoints(index)
-  parseDataFrame()
+  isLoading.value = true
+  setTimeout(() => {
+    deleteDataPoints(index)
+    parseDataFrame()
+    isLoading.value = false
+  }, 0)
 }
 
 const changeValues = (index: number[], operator: Operator, value: number) => {
@@ -581,7 +609,7 @@ const changeValues = (index: number[], operator: Operator, value: number) => {
 
   py.changeValues(index, operator, value)
   const end = performance.now()
-  logger.value.push({
+  logger.value.unshift({
     datetime: Date.now(),
     message: 'Change values',
     duration: end - start,
@@ -589,13 +617,17 @@ const changeValues = (index: number[], operator: Operator, value: number) => {
 }
 
 const onChangeValues = (index: number[]) => {
-  changeValues(
-    index,
-    // @ts-ignore
-    Operator[selectedOperator.value],
-    +operationValue.value
-  )
-  parseDataFrame()
+  isLoading.value = true
+  setTimeout(() => {
+    changeValues(
+      index,
+      // @ts-ignore
+      Operator[selectedOperator.value],
+      +operationValue.value
+    )
+    parseDataFrame()
+    isLoading.value = false
+  }, 0)
 }
 
 const setFilter = (filter: { [key: string]: number }) => {
@@ -603,7 +635,7 @@ const setFilter = (filter: { [key: string]: number }) => {
   const filteredResults = py.setFilter(filter)
   const end = performance.now()
   console.log(filteredResults)
-  logger.value.push({
+  logger.value.unshift({
     datetime: Date.now(),
     message: 'Set filter',
     duration: end - start,
@@ -611,15 +643,19 @@ const setFilter = (filter: { [key: string]: number }) => {
 }
 
 const onInterpolate = (index: number[]) => {
-  interpolate(index)
-  parseDataFrame()
+  isLoading.value = true
+  setTimeout(() => {
+    interpolate(index)
+    parseDataFrame()
+    isLoading.value = false
+  }, 0)
 }
 
 const interpolate = (index: number[]) => {
   const start = performance.now()
   py.interpolate(index)
   const end = performance.now()
-  logger.value.push({
+  logger.value.unshift({
     datetime: Date.now(),
     message: 'Interpolate',
     duration: end - start,
@@ -631,35 +667,39 @@ const onDriftCorrection = () => {
     return
   }
 
-  const groups: number[][] = [[]]
-  const sorted = [...selected.value].sort((a, b) => a - b)
+  isLoading.value = true
+  setTimeout(() => {
+    const groups: number[][] = [[]]
+    const sorted = [...selected.value].sort((a, b) => a - b)
 
-  sorted.reduce((acc: number[][], curr: number) => {
-    const target: number[] = acc[acc.length - 1]
+    sorted.reduce((acc: number[][], curr: number) => {
+      const target: number[] = acc[acc.length - 1]
 
-    if (!target.length || curr == target[target.length - 1] + 1) {
-      target.push(curr)
-    } else {
-      acc.push([curr])
-    }
+      if (!target.length || curr == target[target.length - 1] + 1) {
+        target.push(curr)
+      } else {
+        acc.push([curr])
+      }
 
-    return acc
-  }, groups)
+      return acc
+    }, groups)
 
-  groups.forEach((g) => {
-    const start = g[0]
-    const end = g[g.length - 1]
-    driftCorrection(start, end, +driftGapWidth.value)
-  })
+    groups.forEach((g) => {
+      const start = g[0]
+      const end = g[g.length - 1]
+      driftCorrection(start, end, +driftGapWidth.value)
+    })
 
-  parseDataFrame()
+    parseDataFrame()
+    isLoading.value = false
+  }, 0)
 }
 
 const driftCorrection = (start: number, end: number, gapWidth: number) => {
   const s = performance.now()
   py.driftCorrection(start, end, gapWidth)
   const e = performance.now()
-  logger.value.push({
+  logger.value.unshift({
     datetime: Date.now(),
     message: 'Drift correction',
     duration: e - s,
@@ -682,6 +722,14 @@ const getNUniqueIndexes = (n: number) => {
   collection.sort((a, b) => a - b)
 
   return collection
+}
+
+const onRunTests = () => {
+  isLoading.value = true
+  setTimeout(() => {
+    runTests()
+    isLoading.value = false
+  }, 0)
 }
 
 const runTests = () => {

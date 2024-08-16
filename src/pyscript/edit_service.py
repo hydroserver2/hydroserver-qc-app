@@ -275,8 +275,6 @@ class EditService():
       else:
         return row[self.get_value_col()]
 
-    points[self.get_value_col()] = points.apply(f, axis=1)
-
-    self._df.iloc[start:end + 1] = points
+    self._df.loc[points.index, self.get_value_col()] = points.apply(f, axis=1)
 
     return self._df
