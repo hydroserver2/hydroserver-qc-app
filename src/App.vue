@@ -97,7 +97,7 @@
               >Drift Correction</v-btn
             >
             <v-text-field
-              label="Gap Width"
+              label="Drift"
               type="number"
               class="mt-2"
               step="0.1"
@@ -526,8 +526,10 @@ const onFillGaps = () => {
 const fillGaps = () => {
   const start = performance.now()
   const gaps = py.fillGaps(
-    [gapAmount.value, TimeUnit[selectedGapUnit.value]],
-    [fillAmount.value, TimeUnit[selectedFillUnit.value]],
+    // @ts-ignore
+    [+gapAmount.value, TimeUnit[selectedGapUnit.value]],
+    // @ts-ignore
+    [+fillAmount.value, TimeUnit[selectedFillUnit.value]],
     interpolateValues.value
   )
   const end = performance.now()
@@ -541,7 +543,8 @@ const fillGaps = () => {
 
 const shift = (index: number[]) => {
   const start = performance.now()
-  py.shift(index, shiftAmount.value, TimeUnit[selectedShiftUnit.value])
+  // @ts-ignore
+  py.shift(index, +shiftAmount.value, TimeUnit[selectedShiftUnit.value])
   const end = performance.now()
   selected.value = []
   logger.value.push({
@@ -573,9 +576,10 @@ const onDeleteDataPoints = (index: number[]) => {
   parseDataFrame()
 }
 
-const changeValues = (index: number[]) => {
+const changeValues = (index: number[], operator: Operator, value: number) => {
   const start = performance.now()
-  py.changeValues(index, Operator.ADD, 1)
+
+  py.changeValues(index, operator, value)
   const end = performance.now()
   logger.value.push({
     datetime: Date.now(),
@@ -585,7 +589,12 @@ const changeValues = (index: number[]) => {
 }
 
 const onChangeValues = (index: number[]) => {
-  changeValues(index)
+  changeValues(
+    index,
+    // @ts-ignore
+    Operator[selectedOperator.value],
+    +operationValue.value
+  )
   parseDataFrame()
 }
 
@@ -610,7 +619,6 @@ const interpolate = (index: number[]) => {
   const start = performance.now()
   py.interpolate(index)
   const end = performance.now()
-  selected.value = []
   logger.value.push({
     datetime: Date.now(),
     message: 'Interpolate',
@@ -651,7 +659,6 @@ const driftCorrection = (start: number, end: number, gapWidth: number) => {
   const s = performance.now()
   py.driftCorrection(start, end, gapWidth)
   const e = performance.now()
-  selected.value = []
   logger.value.push({
     datetime: Date.now(),
     message: 'Drift correction',
@@ -703,7 +710,7 @@ const runTests = () => {
 
   indexes = getNUniqueIndexes(50)
   console.log(`Changing values of ${indexes.length} data points...`)
-  changeValues(indexes)
+  changeValues(indexes, Operator.ADD, 1)
   console.log('Done')
 
   indexes = getNUniqueIndexes(50)

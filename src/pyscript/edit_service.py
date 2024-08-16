@@ -9,15 +9,12 @@ from enum import Enum
 # [x] Set a value to a constant
 # [x] Change value by applying arithmetic (+, -, *, /)
 # [x] Shift
-# [ ] Drift correction (linear)
+# [x] Drift correction (linear)
 # [x] Delete values
 # [x] Fill values
 
 # Automation
 # [x] Gap filling
-# [ ] Setting rules based on sensor values - if stage gets below some value, then some sensor is out of the water
-# [ ] Water temperature - identifying icing conditions
-# [ ] Looking between stations
 
 
 class TimeUnit(Enum):
@@ -216,6 +213,9 @@ class EditService():
       if operator == Operator.MULT.value:
         return x * value
       elif operator == Operator.DIV.value:
+        if value == 0:
+          print("Error: cannot divide by 0")
+          return x
         return x / value
       elif operator == Operator.ADD.value:
         return x + value
