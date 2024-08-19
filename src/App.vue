@@ -1,15 +1,74 @@
 <template>
   <v-app id="inspire">
-    <v-app-bar class="px-3" color="grey-darken-3" flat>
+    <v-app-bar class="px-3" color="blue-grey-darken-4" flat>
       <v-app-bar-title>HydroServer QC</v-app-bar-title>
     </v-app-bar>
 
     <v-main class="bg-grey-lighten-3">
       <v-container>
-        <v-card v-show="initialized" class="bg-blue-darken-2">
+        <v-card class="mb-4">
+          <v-card-title class="text-body-1 bg-grey-lighten-3">
+            Filters
+            <v-badge
+              v-if="Object.keys(appliedFilters).length"
+              :content="Object.keys(appliedFilters).length"
+              inline
+              color="blue"
+            ></v-badge>
+          </v-card-title>
+          <v-divider></v-divider>
+          <template v-if="Object.keys(appliedFilters).length">
+            <v-card-text class="d-flex gap-1">
+              <div class="d-flex gap-1">
+                <v-chip
+                  border="double blue"
+                  variant="outlined"
+                  closable
+                  color="blue"
+                  v-for="key of Object.keys(appliedFilters)"
+                  :key="key"
+                  @click:close="removeFilter(key)"
+                  >{{ key }}: {{ appliedFilters[key] }}</v-chip
+                >
+              </div>
+              <v-spacer></v-spacer>
+              <v-btn @click="clearFilters" variant="flat">Clear</v-btn>
+            </v-card-text>
+
+            <v-divider></v-divider>
+          </template>
+          <v-card-text>
+            <div class="d-flex gap-1">
+              <v-select
+                label="Operation"
+                :items="filterOperators"
+                v-model="selectedFilter"
+                v-bind="commonAttrs"
+              ></v-select>
+              <v-text-field
+                label="Value"
+                v-model="filterValue"
+                step="0.1"
+                type="number"
+                width="30"
+                v-bind="commonAttrs"
+              >
+              </v-text-field>
+              <v-btn
+                color="blue-grey-lighten-1"
+                @click="onAddFilter(selectedFilter, filterValue)"
+                prepend-icon="mdi-plus"
+                >Add Filter</v-btn
+              >
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <v-card v-show="initialized" class="bg-blue-grey-darken-2">
           <v-card-title>
             {{ data.value[0].components[0] }}
           </v-card-title>
+          <v-card-subtitle>{{ timeseries.length }} Data Points</v-card-subtitle>
           <v-card-text class="d-flex py-2 align-center gap-2">
             <div>
               {{ selected.length }} item{{ selected.length == 1 ? '' : 's' }}
@@ -28,7 +87,7 @@
               title="If toggled on, only the first 100 data points will be rendered."
               hide-details
               inset
-              color="white"
+              color="light-blue-lighten-3"
               class="text-white"
             ></v-switch>
           </v-card-text>
@@ -47,25 +106,27 @@
             fixed-header
           >
             <template v-slot:item.index="{ item }">
-              {{ item.index }}
+              {{ getIndexAt(item.index) }}
             </template>
 
             <template v-slot:item.datetime="{ item }">
-              {{ getDateTimeAt(item.index) }}
+              {{ getDateTimeAt(getIndexAt(item.index)) }}
             </template>
 
             <template v-slot:item.value="{ item }">
-              {{ getValueAt(item.index) }}
+              {{ getValueAt(getIndexAt(item.index)) }}
             </template>
           </v-data-table>
         </v-card>
       </v-container>
     </v-main>
 
-    <v-navigation-drawer location="left" width="350" class="bg-grey-lighten-4">
+    <v-navigation-drawer location="left" width="350">
       <div class="table-actions">
         <v-card :disabled="!timeseries || !timeseries.length">
-          <v-card-title class="text-body-1"> Change Values </v-card-title>
+          <v-card-title class="text-body-1 bg-grey-lighten-3">
+            Change Values
+          </v-card-title>
           <v-divider></v-divider>
           <v-card-text>
             <div class="d-flex gap-1">
@@ -86,7 +147,7 @@
               :disabled="!selected.length"
               block
               @click="onChangeValues(selected)"
-              color="blue"
+              color="blue-grey-lighten-1"
               >Apply Operation</v-btn
             >
           </v-card-text>
@@ -95,7 +156,7 @@
             <v-btn
               :disabled="!selected.length"
               block
-              color="blue"
+              color="blue-grey-lighten-1"
               @click="onInterpolate(selected)"
               >Interpolate</v-btn
             >
@@ -108,14 +169,14 @@
               class="mb-4"
               step="0.1"
               v-model="driftGapWidth"
-              v-bind="cmmonAttrs"
+              v-bind="commonAttrs"
             >
             </v-text-field>
 
             <v-btn
               :disabled="!selected.length"
               block
-              color="blue"
+              color="blue-grey-lighten-1"
               @click="onDriftCorrection"
               >Drift Correction</v-btn
             >
@@ -123,7 +184,9 @@
         </v-card>
 
         <v-card :disabled="!timeseries || !timeseries.length">
-          <v-card-title class="text-body-1"> Shift</v-card-title>
+          <v-card-title class="text-body-1 bg-grey-lighten-3">
+            Shift</v-card-title
+          >
           <v-divider></v-divider>
           <v-card-text>
             <div class="d-flex gap-1 mb-4">
@@ -131,20 +194,20 @@
                 label="Time Unit"
                 :items="shiftUnits"
                 v-model="selectedShiftUnit"
-                v-bind="cmmonAttrs"
+                v-bind="commonAttrs"
               ></v-select>
               <v-text-field
                 width="30"
                 label="Amount"
                 type="number"
                 v-model="shiftAmount"
-                v-bind="cmmonAttrs"
+                v-bind="commonAttrs"
               >
               </v-text-field>
             </div>
             <v-btn
               :disabled="!selected.length"
-              color="blue"
+              color="blue-grey-lighten-1"
               block
               @click="onShift(selected)"
               >Apply Shift</v-btn
@@ -153,7 +216,9 @@
         </v-card>
 
         <v-card :disabled="!timeseries || !timeseries.length">
-          <v-card-title class="text-body-1">Gap Analysis</v-card-title>
+          <v-card-title class="text-body-1 bg-grey-lighten-3"
+            >Gap Analysis</v-card-title
+          >
           <v-divider></v-divider>
           <v-card-text>
             <div class="d-flex gap-1">
@@ -161,14 +226,14 @@
                 label="Gap Unit"
                 :items="gapUnits"
                 v-model="selectedGapUnit"
-                v-bind="cmmonAttrs"
+                v-bind="commonAttrs"
               ></v-select>
               <v-text-field
                 width="30"
                 label="Amount"
                 type="number"
                 v-model="gapAmount"
-                v-bind="cmmonAttrs"
+                v-bind="commonAttrs"
               >
               </v-text-field>
             </div>
@@ -177,40 +242,44 @@
                 label="Fill Unit"
                 :items="fillUnits"
                 v-model="selectedFillUnit"
-                v-bind="cmmonAttrs"
+                v-bind="commonAttrs"
               ></v-select>
               <v-text-field
                 width="30"
                 label="Amount"
                 type="number"
                 v-model="fillAmount"
-                v-bind="cmmonAttrs"
+                v-bind="commonAttrs"
               >
               </v-text-field>
             </div>
           </v-card-text>
           <v-divider></v-divider>
           <v-card-text class="d-flex flex-column gap-1">
-            <v-btn block color="blue" @click="onFindGaps">Find Gaps</v-btn>
+            <v-btn block color="blue-grey-lighten-1" @click="onFindGaps"
+              >Find Gaps</v-btn
+            >
           </v-card-text>
           <v-divider></v-divider>
           <v-card-text>
-            <v-btn block color="blue" @click="onFillGaps"
+            <v-btn block color="blue-grey-lighten-1" @click="onFillGaps"
               >Find & Fill Gaps</v-btn
             >
             <div class="text-right">
               <v-checkbox
                 label="Interpolate Values"
                 v-model="interpolateValues"
-                color="blue"
-                v-bind="cmmonAttrs"
+                color="light-blue"
+                v-bind="commonAttrs"
               ></v-checkbox>
             </div>
           </v-card-text>
         </v-card>
 
         <v-card :disabled="!timeseries || !timeseries.length">
-          <v-card-title class="text-body-1"> Other Operations </v-card-title>
+          <v-card-title class="text-body-1 bg-grey-lighten-3">
+            Other Operations
+          </v-card-title>
           <v-divider></v-divider>
           <v-card-text>
             <v-btn
@@ -218,6 +287,7 @@
               block
               @click="onDeleteDataPoints(selected)"
               color="red"
+              prepend-icon="mdi-delete"
             >
               Delete points
             </v-btn>
@@ -225,15 +295,12 @@
           <v-divider></v-divider>
           <v-card-text>
             <v-btn
-              color="blue"
+              prepend-icon="mdi-play"
+              color="blue-grey-lighten-1"
               block
-              @click="setFilter({ [FilterOperation.GTE]: 10.45 })"
-              >Set Filter</v-btn
+              @click="onRunTests"
+              >Run All</v-btn
             >
-          </v-card-text>
-          <v-divider></v-divider>
-          <v-card-text>
-            <v-btn color="blue" block @click="onRunTests">Run Tests</v-btn>
           </v-card-text>
         </v-card>
       </div>
@@ -241,7 +308,7 @@
 
     <v-navigation-drawer location="right" width="400">
       <div class="d-flex pa-2 align-center">
-        Logs
+        <v-icon color="grey" class="mr-2">mdi-history</v-icon> Logs
         <v-spacer></v-spacer>
         <v-btn @click="clearLogs" :disabled="!logger.length" variant="flat"
           >Clear</v-btn
@@ -306,7 +373,7 @@ const parsedData: Ref<any> = ref({
   dataArray: [],
 })
 
-const cmmonAttrs = {
+const commonAttrs = {
   hideDetails: true,
 }
 
@@ -340,10 +407,19 @@ const gapUnits = [...Object.keys(TimeUnit)]
 const selectedGapUnit = ref(gapUnits[1])
 const gapAmount = ref(15)
 
+// FILL
 const fillUnits = [...Object.keys(TimeUnit)]
 const selectedFillUnit = ref(fillUnits[1])
 const fillAmount = ref(15)
+
+// DRIFT
 const driftGapWidth = ref(1)
+
+// FILTER
+const filterOperators = [...Object.keys(FilterOperation)]
+const selectedFilter = ref(filterOperators[2])
+const filterValue = ref(11)
+const appliedFilters: Ref<{ [key: string]: number }> = ref({})
 
 onBeforeMount(() => {
   parsedData.value.components = ['DateTime', ' Value']
@@ -378,6 +454,10 @@ const measureEllapsedTime = (fn: () => any, message?: string): any => {
   const end = performance.now()
   console.log(`\tDone in ${(end - start).toFixed(2)} ms`)
   return response
+}
+
+const getIndexAt = (index: number) => {
+  return py.getIndexAt(index)
 }
 
 const getDateTimeAt = (index: number) => {
@@ -572,6 +652,7 @@ const fillGaps = () => {
   )
   const end = performance.now()
   console.log(gaps)
+  selected.value = []
   logger.value.unshift({
     datetime: Date.now(),
     message: 'Find & Fill gaps',
@@ -592,7 +673,8 @@ const shift = (index: number[]) => {
   })
 }
 
-const onShift = (index: number[]) => {
+const onShift = (tableIndex: number[]) => {
+  const index = tableIndex.map((i) => py.getIndexAt(i))
   isLoading.value = true
   setTimeout(() => {
     shift(index)
@@ -613,7 +695,8 @@ const deleteDataPoints = (index: number[]) => {
   })
 }
 
-const onDeleteDataPoints = (index: number[]) => {
+const onDeleteDataPoints = (tableIndex: number[]) => {
+  const index = tableIndex.map((i) => py.getIndexAt(i))
   isLoading.value = true
   setTimeout(() => {
     deleteDataPoints(index)
@@ -624,7 +707,6 @@ const onDeleteDataPoints = (index: number[]) => {
 
 const changeValues = (index: number[], operator: Operator, value: number) => {
   const start = performance.now()
-
   py.changeValues(index, operator, value)
   const end = performance.now()
   logger.value.unshift({
@@ -634,7 +716,8 @@ const changeValues = (index: number[], operator: Operator, value: number) => {
   })
 }
 
-const onChangeValues = (index: number[]) => {
+const onChangeValues = (tableIndex: number[]) => {
+  const index = tableIndex.map((i) => py.getIndexAt(i))
   isLoading.value = true
   setTimeout(() => {
     changeValues(
@@ -648,11 +731,20 @@ const onChangeValues = (index: number[]) => {
   }, 0)
 }
 
-const setFilter = (filter: { [key: string]: number }) => {
+const onAddFilter = (key: string, value: number) => {
+  isLoading.value = true
+  setTimeout(() => {
+    addFilter(key, value)
+    parseDataFrame()
+    isLoading.value = false
+  }, 0)
+}
+
+const addFilter = (key: string, value: number) => {
   const start = performance.now()
-  const filteredResults = py.setFilter(filter)
+  appliedFilters.value[key] = +value
+  py.setFilter(appliedFilters.value)
   const end = performance.now()
-  console.log(filteredResults)
   logger.value.unshift({
     datetime: Date.now(),
     message: 'Set filter',
@@ -660,7 +752,42 @@ const setFilter = (filter: { [key: string]: number }) => {
   })
 }
 
-const onInterpolate = (index: number[]) => {
+const removeFilter = (key: string) => {
+  isLoading.value = true
+  setTimeout(() => {
+    const start = performance.now()
+    delete appliedFilters.value[key]
+    py.setFilter(appliedFilters.value)
+    const end = performance.now()
+    parseDataFrame()
+    isLoading.value = false
+    logger.value.unshift({
+      datetime: Date.now(),
+      message: 'Remove filter',
+      duration: end - start,
+    })
+  }, 0)
+}
+
+const clearFilters = () => {
+  isLoading.value = true
+  setTimeout(() => {
+    const start = performance.now()
+    appliedFilters.value = {}
+    py.setFilter(appliedFilters.value)
+    parseDataFrame()
+    const end = performance.now()
+    isLoading.value = false
+    logger.value.unshift({
+      datetime: Date.now(),
+      message: 'Clear filters',
+      duration: end - start,
+    })
+  }, 0)
+}
+
+const onInterpolate = (tableIndex: number[]) => {
+  const index = tableIndex.map((i) => py.getIndexAt(i))
   isLoading.value = true
   setTimeout(() => {
     interpolate(index)
@@ -688,7 +815,8 @@ const onDriftCorrection = () => {
   isLoading.value = true
   setTimeout(() => {
     const groups: number[][] = [[]]
-    const sorted = [...selected.value].sort((a, b) => a - b)
+    const index = [...selected.value].map((i) => py.getIndexAt(i))
+    const sorted = index.sort((a, b) => a - b)
 
     sorted.reduce((acc: number[][], curr: number) => {
       const target: number[] = acc[acc.length - 1]
@@ -759,7 +887,8 @@ const runTests = () => {
   console.log('\tDone')
 
   console.log(`[TEST]: Setting filter...`)
-  setFilter({ [FilterOperation.GTE]: 10.45 })
+  addFilter(FilterOperation.GTE, 10.45)
+  clearFilters()
   console.log('\tdone')
 
   console.log(`[TEST]: Interpolating first 10 deleted data points...`)

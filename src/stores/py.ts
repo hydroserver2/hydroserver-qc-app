@@ -133,6 +133,14 @@ export const usePyStore = defineStore('py', () => {
 
   /**
    * @param index
+   * @returns The value for the row at the given index
+   */
+  const getIndexAt = (index: number) => {
+    return interpreter.value.globals.get('get_index_at')?.(index)
+  }
+
+  /**
+   * @param index
    * @returns The datetime for the row at the given index
    */
   const getDatetimeAt = (index: number) => {
@@ -180,5 +188,6 @@ export const usePyStore = defineStore('py', () => {
     driftCorrection,
     getValueAt,
     getDatetimeAt,
+    getIndexAt,
   }
 })

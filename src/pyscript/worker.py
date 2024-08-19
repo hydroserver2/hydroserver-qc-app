@@ -20,7 +20,7 @@ def click_handler(event):
 def get_data_frame():
   # https://www.jhanley.com/blog/pyscript-javascript-and-python-interoperability/
   # https://pyodide.org/en/stable/usage/api/python-api/ffi.html#
-  return edit_service._df
+  return edit_service.get_dataframe()
 
 
 def find_gaps(time_value, time_unit):
@@ -57,6 +57,10 @@ def interpolate(index_list):
 
 def drift_correction(start, end, gap_width):
   return edit_service.drift_correction(start, end, gap_width)
+
+
+def get_index_at(index):
+  return edit_service.get_dataframe().index[index]
 
 
 def get_datetime_at(index):

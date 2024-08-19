@@ -47,9 +47,7 @@ class EditService():
   def __init__(self, series_id, data) -> None:
     self.series_id = series_id
     self.data = data
-
-    print(sys.version)
-    print(pd.__version__)
+    self._filtered_df = None
 
     print("[EditService]: Initializing...")
     self._populate_series()
@@ -61,9 +59,13 @@ class EditService():
     # Parse date fields
     for i, r in enumerate(rows):
       rows[i][0] = datetime.strptime(
-        r[0], "%Y-%m-%d %H:%M:%S")  # from tsa_data.csv
-    #   rows[i][0] = datetime.strptime(r[0], "%Y-%m-%dT%H:%M:%SZ")  # from data.json
+        r[0], "%Y-%m-%d %H:%M:%S")
     self._df = pd.DataFrame(rows, columns=cols)
+
+  def get_dataframe(self):
+    if self._filtered_df is None:
+      return self._df
+    return self._filtered_df
 
   def get_date_col(self):
     return self.data["components"][0]
@@ -76,7 +78,7 @@ class EditService():
   ###################
 
   def _has_filter(self, filter: dict[FilterOperation, float], key: FilterOperation) -> bool:
-    return key.value in filter and isinstance(filter[key.value], float)
+    return key.value in filter and (isinstance(filter[key.value], float) or isinstance(filter[key.value], int))
 
   def filter(self, filter: dict[FilterOperation, float]) -> None:
     """
@@ -106,9 +108,9 @@ class EditService():
         f'`{self.get_value_col()}` == {filter[FilterOperation.E.value]}')
 
     if len(query):
-      return self._df.query(" & ".join(query))
+      self._filtered_df = self._df.query(" | ".join(query))
     else:
-      return self._df
+      self._filtered_df = None
 
   ###################
   # Gap Analysis
@@ -118,7 +120,7 @@ class EditService():
     """
     :return Pandas DataFrame:
     """
-    return self._df[self._df[self.get_date_col()].diff() > np.timedelta64(time_value, time_unit)]
+    return self.get_dataframe()[self._df[self.get_date_col()].diff() > np.timedelta64(time_value, time_unit)]
 
   def fill_gap(self, gap, fill, interpolate_values):
     """
