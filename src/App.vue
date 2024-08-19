@@ -230,6 +230,7 @@
             :items-per-page-options="[15, 25, 50, 100]"
             show-select
             fixed-header
+            :rowProps="getRowProps"
           >
             <template v-slot:item.index="{ item }">
               {{ getIndexAt(item.index) }}
@@ -546,7 +547,7 @@ const driftGapWidth = ref(1)
 // FILTERS
 const filterOperators = [...Object.keys(FilterOperation)]
 const selectedFilter = ref(filterOperators[2])
-const filterValue = ref(11)
+const filterValue = ref(12)
 const appliedFilters: Ref<{ [key: string]: number }> = ref({})
 // WORK IN PROGRESS: DATETIME PICKER
 const showPickerMenu = ref(false)
@@ -749,6 +750,13 @@ const parseDataFrame = () => {
   //   }
   //   return data
   // }, 'Deconstructing DataFrame using JSON serialization...')
+}
+
+const getRowProps = (row: any) => {
+  if (selected.value.includes(row.index)) {
+    return { class: 'bg-blue-grey-lighten-2' }
+  }
+  return undefined
 }
 
 const findGaps = () => {
