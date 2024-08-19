@@ -885,6 +885,7 @@ const onAddFilter = (key: string, value: number) => {
   setTimeout(() => {
     addFilter(key, value)
     parseDataFrame()
+    selected.value = []
     isLoading.value = false
   }, 0)
 }
@@ -894,6 +895,7 @@ const addFilter = (key: string, value: number) => {
   appliedFilters.value[key] = +value
   py.setFilter(appliedFilters.value)
   const end = performance.now()
+  selected.value = []
   logger.value.unshift({
     datetime: Date.now(),
     message: 'Set filter',
@@ -909,6 +911,7 @@ const removeFilter = (key: string) => {
     py.setFilter(appliedFilters.value)
     const end = performance.now()
     parseDataFrame()
+    selected.value = []
     isLoading.value = false
     logger.value.unshift({
       datetime: Date.now(),
@@ -924,8 +927,9 @@ const clearFilters = () => {
     const start = performance.now()
     appliedFilters.value = {}
     py.setFilter(appliedFilters.value)
-    parseDataFrame()
     const end = performance.now()
+    parseDataFrame()
+    selected.value = []
     isLoading.value = false
     logger.value.unshift({
       datetime: Date.now(),

@@ -39,8 +39,8 @@ def set_filter(filter: dict[FilterOperation, float]):
   return edit_service.filter(json.loads(filter))
 
 
-def change_values(index, operator, value):
-  edit_service.change_values(index, operator, value)
+def change_values(index_list, operator, value):
+  edit_service.change_values(index_list.to_py(), operator, value)
 
 
 def add_points(points):
@@ -48,11 +48,11 @@ def add_points(points):
 
 
 def shift_points(index_list, time_value, time_unit):
-  return edit_service.shift_points(index_list, time_value, time_unit)
+  return edit_service.shift_points(index_list.to_py(), time_value, time_unit)
 
 
 def interpolate(index_list):
-  return edit_service.interpolate(index_list)
+  return edit_service.interpolate(index_list.to_py())
 
 
 def drift_correction(start, end, gap_width):
