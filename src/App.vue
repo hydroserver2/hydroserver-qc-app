@@ -37,30 +37,156 @@
 
             <v-divider></v-divider>
           </template>
+          <!-- WORK IN PROGRESS: DATETIME RANGE PICKERS -->
+          <v-tabs v-model="filterTab">
+            <v-tab value="logical">Logical</v-tab>
+            <v-tab value="daterange">Date Range</v-tab>
+          </v-tabs>
+
           <v-card-text>
-            <div class="d-flex gap-1">
-              <v-select
-                label="Operation"
-                :items="filterOperators"
-                v-model="selectedFilter"
-                v-bind="commonAttrs"
-              ></v-select>
-              <v-text-field
-                label="Value"
-                v-model="filterValue"
-                step="0.1"
-                type="number"
-                width="30"
-                v-bind="commonAttrs"
-              >
-              </v-text-field>
-              <v-btn
-                color="blue-grey-lighten-1"
-                @click="onAddFilter(selectedFilter, filterValue)"
-                prepend-icon="mdi-plus"
-                >Add Filter</v-btn
-              >
-            </div>
+            <v-tabs-window v-model="filterTab">
+              <v-tabs-window-item value="logical">
+                <div class="d-flex gap-1">
+                  <v-select
+                    label="Operation"
+                    :items="filterOperators"
+                    v-model="selectedFilter"
+                    v-bind="commonAttrs"
+                  ></v-select>
+                  <v-text-field
+                    label="Value"
+                    v-model="filterValue"
+                    step="0.1"
+                    type="number"
+                    width="30"
+                    v-bind="commonAttrs"
+                  >
+                  </v-text-field>
+                  <v-btn
+                    color="blue-grey-lighten-1"
+                    @click="onAddFilter(selectedFilter, filterValue)"
+                    prepend-icon="mdi-plus"
+                    >Add Filter</v-btn
+                  >
+                </div>
+              </v-tabs-window-item>
+
+              <v-tabs-window-item value="daterange">
+                <div class="d-flex gap-1">
+                  <v-menu
+                    v-model="showPickerMenu"
+                    :close-on-content-click="false"
+                    min-width="50px"
+                  >
+                    <template #activator="{ props }">
+                      <v-text-field
+                        clearable
+                        v-bind="{ ...commonAttrs, ...props }"
+                        prepend-inner-icon="mdi-calendar-clock"
+                        :model-value="datePickerValue"
+                        label="From"
+                      >
+                      </v-text-field>
+                    </template>
+
+                    <v-card>
+                      <v-tabs v-model="activePickerTab" class="bg-blue-grey">
+                        <v-tab value="date">
+                          <v-icon>mdi-calendar</v-icon>
+                        </v-tab>
+                        <v-spacer />
+                        <v-tab value="time">
+                          <v-icon>mdi-clock-outline</v-icon>
+                        </v-tab>
+                      </v-tabs>
+
+                      <v-window v-model="activePickerTab">
+                        <v-window-item value="date">
+                          <v-date-picker
+                            :model-value="datePickerValue"
+                            header="Select date"
+                            tile
+                          ></v-date-picker>
+                        </v-window-item>
+
+                        <v-window-item value="time">
+                          <v-time-picker
+                            :model-value="timePickerValue"
+                            v-bind="commonAttrs"
+                            use-seconds
+                            ampm-in-title
+                            scrollable
+                          />
+                        </v-window-item>
+                      </v-window>
+
+                      <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn variant="text" @click="showPickerMenu = false">
+                          Cancel
+                        </v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-menu>
+
+                  <v-menu
+                    v-model="showPickerMenu"
+                    :close-on-content-click="false"
+                    min-width="50px"
+                  >
+                    <template #activator="{ props }">
+                      <v-text-field
+                        clearable
+                        v-bind="{ ...commonAttrs, ...props }"
+                        prepend-inner-icon="mdi-calendar-clock"
+                        :model-value="pickerInputValue"
+                        label="To"
+                      >
+                      </v-text-field>
+                    </template>
+
+                    <v-card>
+                      <v-tabs v-model="activePickerTab" class="bg-blue-grey">
+                        <v-tab value="date">
+                          <v-icon>mdi-calendar</v-icon>
+                        </v-tab>
+                        <v-spacer />
+                        <v-tab value="time">
+                          <v-icon>mdi-clock-outline</v-icon>
+                        </v-tab>
+                      </v-tabs>
+
+                      <v-window v-model="activePickerTab">
+                        <v-window-item value="date">
+                          <v-date-picker
+                            :model-value="datePickerValue"
+                            header="Select date"
+                            tile
+                          ></v-date-picker>
+                        </v-window-item>
+
+                        <v-window-item value="time">
+                          <v-time-picker
+                            :model-value="timePickerValue"
+                            v-bind="commonAttrs"
+                            use-seconds
+                            ampm-in-title
+                            scrollable
+                          />
+                        </v-window-item>
+                      </v-window>
+
+                      <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn variant="text" @click="showPickerMenu = false">
+                          Cancel
+                        </v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-menu>
+                </div>
+              </v-tabs-window-item>
+            </v-tabs-window>
           </v-card-text>
         </v-card>
 
@@ -97,7 +223,7 @@
             v-model="selected"
             :items="renderPreview ? timeseries.slice(0, 100) : timeseries"
             :loading="isLoading"
-            height="70vh"
+            height="60vh"
             hover
             item-value="index"
             items-per-page="100"
@@ -178,7 +304,7 @@
               block
               color="blue-grey-lighten-1"
               @click="onDriftCorrection"
-              >Drift Correction</v-btn
+              >Apply Drift Correction</v-btn
             >
           </v-card-text>
         </v-card>
@@ -345,13 +471,14 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref, onBeforeMount } from 'vue'
+import { Ref, ref, onBeforeMount, watch } from 'vue'
 import { usePyStore, FilterOperation } from '@/stores/py'
 import data from '@/mock/data.json'
 // @ts-ignore
 import tsadata from '@/mock/tsa_data.csv'
 import { _Window } from './types'
 import { TimeUnit, Operator } from '@/stores/py'
+import { VTimePicker } from 'vuetify/labs/VTimePicker'
 
 // Use stores
 const py = usePyStore()
@@ -366,6 +493,7 @@ const logger: Ref<
 
 const isLoading = ref(false)
 const renderPreview = ref(true)
+const filterTab = ref(0)
 
 const selected: Ref<number[]> = ref([])
 const parsedData: Ref<any> = ref({
@@ -415,11 +543,24 @@ const fillAmount = ref(15)
 // DRIFT
 const driftGapWidth = ref(1)
 
-// FILTER
+// FILTERS
 const filterOperators = [...Object.keys(FilterOperation)]
 const selectedFilter = ref(filterOperators[2])
 const filterValue = ref(11)
 const appliedFilters: Ref<{ [key: string]: number }> = ref({})
+// WORK IN PROGRESS: DATETIME PICKER
+const showPickerMenu = ref(false)
+const pickerInputValue = ref(null)
+const datePickerValue = ref(new Date('2018-03-02'))
+const timePickerValue = ref('11:15')
+const activePickerTab = ref('date')
+
+watch(showPickerMenu, (show: boolean) => {
+  if (!show) {
+    // menu is closing then reset the activeTab
+    activePickerTab.value = 'date'
+  }
+})
 
 onBeforeMount(() => {
   parsedData.value.components = ['DateTime', ' Value']
