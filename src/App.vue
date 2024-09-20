@@ -15,6 +15,10 @@
 <script setup lang="ts">
 import Notifications from '@/components/base/Notifications.vue'
 import { setupRouteGuards } from '@/router/router'
+import { usePyStore } from './store/py'
+
+// Use stores
+const py = usePyStore()
 
 setupRouteGuards()
 </script>

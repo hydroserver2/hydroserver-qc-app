@@ -7,3 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_APP_ORCID_OAUTH_ENABLED: string
   readonly VITE_APP_HYDROSHARE_OAUTH_ENABLED: string
 }
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}
