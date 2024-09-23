@@ -52,9 +52,8 @@ export function toDataPointArray(dataArray: DataArray): DataPoint[] {
   return dataArray.map(([dateString, value, qualifiers]) => ({
     date: new Date(dateString),
     value,
-    qualifierValue: qualifiers.resultQualifiers.length
-      ? qualifiers.resultQualifiers.map((q) => q.code).join(', ')
-      : NaN,
+    qualifierValue:
+      qualifiers.resultQualifiers.map((q) => q.code).join(', ') || NaN,
   }))
 }
 
@@ -110,6 +109,7 @@ export function preProcessData(dataArray: DataArray, datastream: Datastream) {
   const { noDataValue, intendedTimeSpacing, intendedTimeSpacingUnits } =
     datastream
 
+  // TODO: avoid extra iterations and perform all transformations in one
   let data = toDataPointArray(dataArray)
   data = replaceNoDataValues(data, noDataValue)
 

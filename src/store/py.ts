@@ -45,6 +45,13 @@ export const usePyStore = defineStore('py', () => {
     return interpreter.value.globals.get('delete_data_points')?.(index)
   }
 
+  /** Instantiates a new Pandas DataFrame and returns the instance */
+  const instantiateDataFrame = (data: any) => {
+    const wrapperClass = interpreter.value.globals.get('edit_service_wrapper')
+    const instance = wrapperClass(data)
+    return instance
+  }
+
   /**
    * Find gaps in the data
    * @param value The time value
@@ -99,6 +106,22 @@ export const usePyStore = defineStore('py', () => {
    */
   const setFilter = (filter: { [key: string]: number }) => {
     return interpreter.value.globals.get('set_filter')?.(JSON.stringify(filter))
+  }
+
+  /**
+   * @param points An array [date, value, qualifierCode] representing the points to add.
+   * @returns
+   */
+  const addPoints = (points: [string, number, any][]) => {
+    return interpreter.value.globals.get('add_points')?.(points)
+  }
+
+  /**
+   * @param points An array [date, value, qualifierCode] representing the points to add.
+   * @returns The length of the current DataFrame
+   */
+  const count = () => {
+    return interpreter.value.globals.get('count')?.()
   }
 
   /**
@@ -189,5 +212,8 @@ export const usePyStore = defineStore('py', () => {
     getValueAt,
     getDatetimeAt,
     getIndexAt,
+    instantiateDataFrame,
+    addPoints,
+    count,
   }
 })

@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Datastream, ObservationRecord } from '@/types'
 import { fetchObservationsParallel } from '@/utils/observationsUtils'
+import { usePyStore } from '@/store/py'
+
+const { instantiateDataFrame } = usePyStore()
 
 export const useObservationStore = defineStore('observations', () => {
   const observations = ref<Record<string, ObservationRecord>>({})
@@ -9,32 +12,36 @@ export const useObservationStore = defineStore('observations', () => {
   /**
    * Fetches requested observations that aren't currently in the pinia store,
    * updates the store, then returns the requested observations.
+   * TODO: this method performs too many iterations over the dataset
    */
   const fetchObservationsInRange = async (
     datastream: Datastream,
     beginTime: string,
     endTime: string
-  ) => {
+  ): Promise<ObservationRecord> => {
     const id = datastream.id
 
     // If nothing is stored yet, create a new record and fetch the data in range
-    if (!observations.value[id]?.dataArray) {
-      observations.value[id] = {
-        dataArray: [],
-        beginTime,
-        endTime,
-        loading: true,
-      }
-
+    if (!observations.value[id]?.dataFrame) {
+      // TODO: handle error
       const fetchedData = await fetchObservationsParallel(
         datastream,
         beginTime,
         endTime
       )
-      observations.value[id].dataArray = fetchedData
-      observations.value[id].loading = false
 
-      return fetchedData
+      const dataFrame = instantiateDataFrame(
+        JSON.stringify({
+          dataArray: fetchedData,
+          components: ['date', 'value', 'qualifierCode'],
+        })
+      )
+
+      observations.value[id] = new ObservationRecord(dataFrame)
+
+      // TODO: return from data frame
+      // Return the entire dataframe
+      return observations.value[id]
     } else {
       const existingRecord = observations.value[id]
       const newBeginTime = new Date(beginTime).getTime()
@@ -69,18 +76,27 @@ export const useObservationStore = defineStore('observations', () => {
         endDataPromise,
       ])
 
+      // TODO: append and prepend to data frame
       if (beginData.length > 0) {
-        existingRecord.dataArray = [...beginData, ...existingRecord.dataArray]
+        JSON.stringify(beginData)
+        observations.value[id].dataFrame.add_points(beginData)
+        // existingRecord.dataArray = [...beginData, ...existingRecord.dataArray]
         existingRecord.beginTime = beginTime
       }
+
       if (endData.length > 0) {
-        existingRecord.dataArray = [...existingRecord.dataArray, ...endData]
+        observations.value[id].dataFrame.add_points(endData)
+        // existingRecord.dataArray = [...existingRecord.dataArray, ...endData]
         existingRecord.endTime = endTime
       }
 
       existingRecord.loading = false
 
       // Return only the data within the requested range
+      // TODO: return from dataframe
+      // TODO: set a dataframe date filter using beginTime and endTime
+      return observations.value[id]
+
       return observations.value[id].dataArray.filter(([dateString, _]) => {
         const observationTimestamp = new Date(dateString).getTime()
         return (

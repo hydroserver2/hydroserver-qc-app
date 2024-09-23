@@ -1,4 +1,4 @@
-import { Datastream, GraphSeries } from '@/types'
+import { Datastream, GraphSeries, ObservationRecord } from '@/types'
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { EChartsOption, LineSeriesOption } from 'echarts'
@@ -81,18 +81,24 @@ export const useEChartsStore = defineStore('ECharts', () => {
     datastream: Datastream,
     start: string,
     end: string
-  ) => {
-    const observations = await fetchObservationsInRange(
+  ): Promise<ObservationRecord | null> => {
+    console.log('fetchGraphSeriesData')
+    const obsRecord = await fetchObservationsInRange(
       datastream,
       start,
       end
     ).catch((error) => {
       Snackbar.error('Failed to fetch observations')
       console.error('Failed to fetch observations:', error)
-      return []
+      return null
     })
 
-    return preProcessData(observations, datastream)
+    // qualifiers.resultQualifiers.map((q) => q.code).join(', ')
+
+    return obsRecord
+
+    // TODO: try to avoid this pre processing
+    // return preProcessData(observations, datastream)
   }
 
   const fetchGraphSeries = async (
@@ -100,6 +106,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
     start: string,
     end: string
   ) => {
+    console.log('fetchGraphSeries')
     const observationsPromise = fetchGraphSeriesData(datastream, start, end)
     const fetchUnitPromise = api.getUnit(datastream.unitId).catch((error) => {
       console.error('Failed to fetch Unit:', error)

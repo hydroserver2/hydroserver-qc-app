@@ -108,6 +108,8 @@
 import { computed, ref, watch } from 'vue'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
+import { usePyStore } from '@/store/py'
+const py = usePyStore()
 
 const {
   matchesSelectedObservedProperty,

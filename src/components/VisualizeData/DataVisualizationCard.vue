@@ -89,9 +89,8 @@ import 'echarts'
 import { useEChartsStore } from '@/store/echarts'
 import { createEChartsOption } from '@/utils/plotting/echarts'
 import SeriesStyleCard from '@/components/VisualizeData/SeriesStyleCard.vue'
-import { Datastream } from '@/types'
 import { LineSeriesOption } from 'echarts'
-import { onMounted } from 'vue'
+import { Datastream } from '@/types'
 
 const props = defineProps({
   cardHeight: { type: Number, required: true },
@@ -118,7 +117,7 @@ const updating = computed(() =>
 )
 
 const isDataAvailable = computed(() =>
-  graphSeriesArray.value.some((series) => series.data && series.data.length > 0)
+  graphSeriesArray.value.some((series) => series.data?.dataFrame?.count?.() > 0)
 )
 
 function handleDataZoom(event: any) {

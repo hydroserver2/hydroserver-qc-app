@@ -4,6 +4,7 @@ import {
   SeriesOption,
   LegendComponentOption,
   TooltipComponentOption,
+  // registerTransform,
 } from 'echarts'
 import { DataPoint, Datastream, GraphSeries } from '@/types'
 import { storeToRefs } from 'pinia'
@@ -20,6 +21,25 @@ type yAxisConfigurationMap = Map<
   string,
   { index: number; yAxisLabel: string; color: string }
 >
+
+// registerTransform({
+//   type: 'hydroserver:pandas-df-map',
+//   transform: function (params) {
+//     // const rawData = params.upstream.cloneRawData() // TODO: too expensive
+//     // TODO: why does this run 3 times?
+//     // @ts-ignore
+//     // const data = rawData.map((o, index) => ({
+//     //   ...o,
+//     // }))
+//     console.log('transform')
+//     const count = params.upstream.count()
+//     return [
+//       {
+//         data: [],
+//       },
+//     ]
+//   },
+// })
 
 /**
 Function that processes an array of GraphSeries and returns a map for Y-Axis configurations in order 
@@ -57,6 +77,27 @@ export function createYAxisConfigurations(
   return yAxisConfigurations
 }
 
+// export function generateDataset(seriesArray: GraphSeries[]) {
+//   console.log(seriesArray)
+//   return [
+//     {
+//       source: [],
+//     },
+//     ...seriesArray.map((gs) => {
+//       return {
+//         transform: {
+//           // Reference the registered external transform.
+//           type: 'hydroserver:pandas-df-map',
+//           config: {
+//             // Parameters needed by the external transform.
+//             // someParam: 'someValue',
+//           },
+//         },
+//       }
+//     }),
+//   ]
+// }
+
 export function generateYAxisOptions(
   yAxisConfigurations: yAxisConfigurationMap
 ): YAXisComponentOption[] {
@@ -92,6 +133,18 @@ export function generateYAxisOptions(
   })
 }
 
+export function generateDatasetOptions(data: GraphSeries[]) {
+  return data.map((gs) => {
+    return {
+      dimensions: ['date', 'value'],
+      source: {
+        date: Array.from(gs.data.dataFrame.get_date_column()),
+        value: Array.from(gs.data.dataFrame.get_value_column()),
+      },
+    }
+  })
+}
+
 // TODO: Instead of merging manually, use a spread operator on seriesOption
 // The reason we're overlaying a line plot on top of a scatter plot for the selected
 // datastream is because ECharts currently only supports data selection for scatter plots not line plots
@@ -104,7 +157,6 @@ export function generateSeriesOptions(
     const baseSeries: SeriesOption = {
       name: series.name,
       type: 'line',
-      data: series.data.map((dp) => [dp.date.getTime(), dp.value]),
       xAxisIndex: 0,
       yAxisIndex: yAxisConfigurations.get(series.yAxisLabel)?.index,
       itemStyle: {
@@ -120,6 +172,12 @@ export function generateSeriesOptions(
       sampling: 'lttb',
       symbol: series.seriesOption.symbol,
       showSymbol: !!series.seriesOption.symbol,
+      // dimensions: ['date', 'value'],
+      encode: {
+        x: 'date',
+        y: 'value',
+      },
+      datasetIndex: index,
     }
 
     if (index === selectedIndex) {
@@ -277,6 +335,7 @@ export function addQualifierOptions(
     type: 'scatter',
     name: 'Qualifiers',
     // XAxis data must be the same or the on mouse vertical lines won't sync up
+    // TODO
     data: series.data.map((dp) => {
       return [
         dp.date.getTime(),
@@ -362,6 +421,7 @@ export const createEChartsOption = (
     yAxisConfigurations,
     selectedSeriesIndex.value
   )
+  const datasetOptions = generateDatasetOptions(seriesArray)
 
   const leftYAxesCount = Math.ceil(yAxisConfigurations.size / 2)
   const rightYAxesCount = yAxisConfigurations.size - leftYAxesCount
@@ -369,6 +429,8 @@ export const createEChartsOption = (
   let gridLeftPadding = leftYAxesCount * 85
 
   let echartsOption: EChartsOption = {
+    // https://echarts.apache.org/en/option.html#dataset.source
+    dataset: datasetOptions,
     grid: [
       {
         bottom: '160',

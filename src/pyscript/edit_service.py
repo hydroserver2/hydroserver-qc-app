@@ -44,13 +44,13 @@ class Operator(Enum):
 
 
 class EditService():
-  def __init__(self, series_id, data) -> None:
-    self.series_id = series_id
+  def __init__(self, data) -> None:
     self.data = data
     self._filtered_df = None
 
     print("[EditService]: Initializing...")
     self._populate_series()
+    print("[EditService]: Initialized")
 
   def _populate_series(self) -> None:
     rows = self.data["dataArray"]
@@ -59,7 +59,7 @@ class EditService():
     # Parse date fields
     for i, r in enumerate(rows):
       rows[i][0] = datetime.strptime(
-        r[0], "%Y-%m-%d %H:%M:%S")
+        r[0], "%Y-%m-%dT%H:%M:%SZ")
     self._df = pd.DataFrame(rows, columns=cols)
 
   def get_dataframe(self):

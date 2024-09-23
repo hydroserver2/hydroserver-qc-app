@@ -184,6 +184,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     start: string,
     end: string
   ) => {
+    console.log('updateOrFetchGraphSeries')
     try {
       const seriesIndex = graphSeriesArray.value.findIndex(
         (series) => series.id === datastream.id
@@ -191,14 +192,17 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
       if (seriesIndex >= 0) {
         // Update the existing graph series with new data
-        const data = await fetchGraphSeriesData(datastream, start, end)
-        graphSeriesArray.value[seriesIndex].data = data
+        const obsRecord = await fetchGraphSeriesData(datastream, start, end)
+        if (obsRecord) {
+          graphSeriesArray.value[seriesIndex].data = obsRecord
+        }
       } else {
         // Add new graph series
         const newSeries = await fetchGraphSeries(datastream, start, end)
         graphSeriesArray.value.push(newSeries)
       }
 
+      // TODO: when updating use setOption https://echarts.apache.org/en/api.html#echartsInstance.setOption
       updateVisualization()
     } catch (error) {
       console.error(
@@ -212,6 +216,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
   /** Refreshes the graphSeriesArray based on the current selection of datastreams */
   const refreshGraphSeriesArray = async (datastreams: Datastream[]) => {
+    console.log('refreshGraphSeriesArray')
     // Remove graphSeries that are no longer selected
     const currentIds = new Set(datastreams.map((ds) => ds.id))
     graphSeriesArray.value = graphSeriesArray.value.filter((s) =>
@@ -288,14 +293,15 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
     qualifierSet.value = new Set([])
     if (series) {
-      for (const dataPoint of series.data) {
-        if (typeof dataPoint.qualifierValue === 'string') {
-          // Split the qualifierValue string into individual qualifiers and add them to the set
-          dataPoint.qualifierValue
-            .split(',')
-            .forEach((qualifier) => qualifierSet.value.add(qualifier.trim()))
-        }
-      }
+      // TODO
+      // for (const dataPoint of series.data) {
+      //   if (typeof dataPoint.qualifierValue === 'string') {
+      //     // Split the qualifierValue string into individual qualifiers and add them to the set
+      //     dataPoint.qualifierValue
+      //       .split(',')
+      //       .forEach((qualifier) => qualifierSet.value.add(qualifier.trim()))
+      //   }
+      // }
     }
     selectedQualifier.value = ''
   }

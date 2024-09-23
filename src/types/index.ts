@@ -21,13 +21,14 @@ export type Observation = [string, number, Qualifier]
 export type DataArray = Observation[]
 
 export class ObservationRecord {
-  dataArray: DataArray
-  beginTime: string
-  endTime: string
+  // dataArray: DataArray  // TODO: store in a data frame
+  dataFrame: any
+  beginTime: string // TODO: redundant
+  endTime: string // TODO: redundant
   loading: boolean
 
-  constructor() {
-    this.dataArray = []
+  constructor(dataFrame: any) {
+    this.dataFrame = dataFrame
     this.beginTime = ''
     this.endTime = ''
     this.loading = false
@@ -37,7 +38,8 @@ export class ObservationRecord {
 export interface GraphSeries {
   id: string
   name: string
-  data: DataPoint[]
+  // data: DataPoint[]
+  data: ObservationRecord // dataframe
   yAxisLabel: string
   seriesOption: LineSeriesOption
 }
@@ -410,3 +412,8 @@ export enum OAuthProvider {
   orcid = 'orcid',
   hydroshare = 'hydroshare',
 }
+
+export type _Window = Window &
+  typeof globalThis & { pyscript: any; loadPyodide: any; pyGlobals: any } & {
+    [key: string]: any
+  }
