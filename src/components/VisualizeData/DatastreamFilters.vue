@@ -1,6 +1,6 @@
 <template>
-  <v-btn @click="deletePoints">Delete Points</v-btn>
   <DataVisualizationControls />
+  <v-btn @click="deletePoints">Test Delete Points</v-btn>
   <div class="d-flex justify-end mb-4 mx-2">
     <v-btn
       color="primary-lighten-2"

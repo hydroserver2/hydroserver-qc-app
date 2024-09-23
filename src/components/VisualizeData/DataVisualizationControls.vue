@@ -319,12 +319,12 @@ const shiftAmount = ref(5)
 const interpolateValues = ref(false)
 const gapUnits = [...Object.keys(TimeUnit)]
 const selectedGapUnit = ref(gapUnits[1])
-const gapAmount = ref(15)
+const gapAmount = ref(30)
 
 // FILL
 const fillUnits = [...Object.keys(TimeUnit)]
 const selectedFillUnit = ref(fillUnits[1])
-const fillAmount = ref(15)
+const fillAmount = ref(30)
 
 // DRIFT
 const driftGapWidth = ref(1)
@@ -597,6 +597,7 @@ const onInterpolate = (tableIndex: number[]) => {
   )
   isLoading.value = true
   setTimeout(() => {
+    // TODO: value error when interpolating values lesser than 1
     interpolate(index)
     updateVisualization()
     // parseDataFrame()
@@ -679,7 +680,7 @@ const getNUniqueIndexes = (n: number) => {
   ) {
     const index = randomIntFromInterval(
       0,
-      graphSeriesArray.value[0].data.dataFrame.count()
+      graphSeriesArray.value[0].data.dataFrame.count() - 1
     )
     if (!collection.includes(index)) {
       collection.push(index)
