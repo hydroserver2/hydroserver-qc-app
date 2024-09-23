@@ -36,14 +36,14 @@ export const usePyStore = defineStore('py', () => {
   const $initialized = new Subject<boolean>()
   const startEl = document.getElementById('start') // Used to detect when PyScript has finished initializing
 
-  /**
-   * Delete rows from the DataFrame
-   * @param index An array containing the list of index of values to perform the operations on.
-   * @returns
-   */
-  const deleteDataPoints = (index: number[]) => {
-    return interpreter.value.globals.get('delete_data_points')?.(index)
-  }
+  // /**
+  //  * Delete rows from the DataFrame
+  //  * @param index An array containing the list of index of values to perform the operations on.
+  //  * @returns
+  //  */
+  // const deleteDataPoints = (index: number[]) => {
+  //   return interpreter.value.globals.get('delete_data_points')?.(index)
+  // }
 
   /** Instantiates a new Pandas DataFrame and returns the instance */
   const instantiateDataFrame = (data: any) => {
@@ -52,131 +52,131 @@ export const usePyStore = defineStore('py', () => {
     return instance
   }
 
-  /**
-   * Find gaps in the data
-   * @param value The time value
-   * @param unit The time unit (TimeUnit)
-   * @returns
-   */
-  const findGaps = (value: number, unit: TimeUnit) => {
-    return interpreter.value.globals.get('find_gaps')?.(value, unit)
-  }
+  // /**
+  //  * Find gaps in the data
+  //  * @param value The time value
+  //  * @param unit The time unit (TimeUnit)
+  //  * @returns
+  //  */
+  // const findGaps = (value: number, unit: TimeUnit) => {
+  //   return interpreter.value.globals.get('find_gaps')?.(value, unit)
+  // }
 
-  /**
-   * Find gaps and fill them with placeholder value
-   * @param gap Intervals to detect as gaps
-   * @param fill Interval used to fill the detected gaps
-   * @param interpolateValues If true, the new values will be linearly interpolated
-   * @returns
-   */
-  const fillGaps = (
-    gap: [number, TimeUnit],
-    fill: [number, TimeUnit],
-    interpolateValues: boolean
-  ) => {
-    return interpreter.value.globals.get('fill_gaps')?.(
-      gap,
-      fill,
-      interpolateValues
-    )
-  }
+  // /**
+  //  * Find gaps and fill them with placeholder value
+  //  * @param gap Intervals to detect as gaps
+  //  * @param fill Interval used to fill the detected gaps
+  //  * @param interpolateValues If true, the new values will be linearly interpolated
+  //  * @returns
+  //  */
+  // const fillGaps = (
+  //   gap: [number, TimeUnit],
+  //   fill: [number, TimeUnit],
+  //   interpolateValues: boolean
+  // ) => {
+  //   return interpreter.value.globals.get('fill_gaps')?.(
+  //     gap,
+  //     fill,
+  //     interpolateValues
+  //   )
+  // }
 
-  /**
-   * Shifts the selected indexes by a constant
-   * @param index The index list of entries to shift
-   * @param timeUnit {@link TimeUnit}
-   * @param timeValue Number of {@link TimeUnit}
-   * @returns
-   */
-  const shift = (index: number[], timeValue: number, timeUnit: TimeUnit) => {
-    interpreter.value.globals.get('shift_points')?.(index, timeValue, timeUnit)
-  }
+  // /**
+  //  * Shifts the selected indexes by a constant
+  //  * @param index The index list of entries to shift
+  //  * @param timeUnit {@link TimeUnit}
+  //  * @param timeValue Number of {@link TimeUnit}
+  //  * @returns
+  //  */
+  // const shift = (index: number[], timeValue: number, timeUnit: TimeUnit) => {
+  //   interpreter.value.globals.get('shift_points')?.(index, timeValue, timeUnit)
+  // }
 
-  /**
-   * Retrieve the DataFrame object from EditService as json
-   * @returns
-   */
-  const getDataFrame = () => {
-    return interpreter.value.globals.get('get_data_frame')?.()
-  }
+  // /**
+  //  * Retrieve the DataFrame object from EditService as json
+  //  * @returns
+  //  */
+  // const getDataFrame = () => {
+  //   return interpreter.value.globals.get('get_data_frame')?.()
+  // }
 
-  /**
-   * @param filter A dictionary of key(FilterOperation) - value pairs
-   * @returns
-   */
-  const setFilter = (filter: { [key: string]: number }) => {
-    return interpreter.value.globals.get('set_filter')?.(JSON.stringify(filter))
-  }
+  // /**
+  //  * @param filter A dictionary of key(FilterOperation) - value pairs
+  //  * @returns
+  //  */
+  // const setFilter = (filter: { [key: string]: number }) => {
+  //   return interpreter.value.globals.get('set_filter')?.(JSON.stringify(filter))
+  // }
 
-  /**
-   * @param points An array [date, value, qualifierCode] representing the points to add.
-   * @returns
-   */
-  const addPoints = (points: [string, number, any][]) => {
-    return interpreter.value.globals.get('add_points')?.(points)
-  }
+  // /**
+  //  * @param points An array [date, value, qualifierCode] representing the points to add.
+  //  * @returns
+  //  */
+  // const addPoints = (points: [string, number, any][]) => {
+  //   return interpreter.value.globals.get('add_points')?.(points)
+  // }
 
-  /**
-   * @param points An array [date, value, qualifierCode] representing the points to add.
-   * @returns The length of the current DataFrame
-   */
-  const count = () => {
-    return interpreter.value.globals.get('count')?.()
-  }
+  // /**
+  //  * @param points An array [date, value, qualifierCode] representing the points to add.
+  //  * @returns The length of the current DataFrame
+  //  */
+  // const count = () => {
+  //   return interpreter.value.globals.get('count')?.()
+  // }
 
   /**
    *
-   * @param index An array containing the list of index of values to perform the operations on.
-   * @param operator The operator that will be applied
-   * @param value The value to use in the operation
-   * @returns The modified DataFrame
-   */
-  const changeValues = (index: number[], operator: Operator, value: number) => {
-    return interpreter.value.globals.get('change_values')?.(
-      index,
-      operator,
-      value
-    )
-  }
+  //  * @param index An array containing the list of index of values to perform the operations on.
+  //  * @param operator The operator that will be applied
+  //  * @param value The value to use in the operation
+  //  * @returns The modified DataFrame
+  //  */
+  // const changeValues = (index: number[], operator: Operator, value: number) => {
+  //   return interpreter.value.globals.get('change_values')?.(
+  //     index,
+  //     operator,
+  //     value
+  //   )
+  // }
 
-  /**
-   * @param range
-   */
-  const interpolate = (index: number[]) => {
-    return interpreter.value.globals.get('interpolate')?.(index)
-  }
+  // /**
+  //  * @param range
+  //  */
+  // const interpolate = (index: number[]) => {
+  //   return interpreter.value.globals.get('interpolate')?.(index)
+  // }
 
-  /**
-   * @param index
-   * @returns The value for the row at the given index
-   */
-  const getValueAt = (index: number) => {
-    return interpreter.value.globals.get('get_value_at')?.(index)
-  }
+  // /**
+  //  * @param index
+  //  * @returns The value for the row at the given index
+  //  */
+  // const getValueAt = (index: number) => {
+  //   return interpreter.value.globals.get('get_value_at')?.(index)
+  // }
 
-  /**
-   * @param index
-   * @returns The value for the row at the given index
-   */
-  const getIndexAt = (index: number) => {
-    return interpreter.value.globals.get('get_index_at')?.(index)
-  }
+  // /**
+  //  * @param index
+  //  * @returns The value for the row at the given index
+  //  */
+  // const getIndexAt = (index: number) => {
+  //   return interpreter.value.globals.get('get_index_at')?.(index)
+  // }
 
-  /**
-   * @param index
-   * @returns The datetime for the row at the given index
-   */
-  const getDatetimeAt = (index: number) => {
-    return interpreter.value.globals.get('get_datetime_at')?.(index)
-  }
+  // /**
+  //  * @param index
+  //  * @returns The datetime for the row at the given index
+  //  */
+  // const getDatetimeAt = (index: number) => {
+  //   return interpreter.value.globals.get('get_datetime_at')?.(index)
+  // }
 
-  const driftCorrection = (start: number, end: number, gapWidth: number) => {
-    return interpreter.value.globals.get('drift_correction')?.(
-      start,
-      end,
-      gapWidth
-    )
-  }
+  // const driftCorrection = (start: number, end: number, gapWidth: number) => {
+  //   return interpreter.value.globals.get('drift_correction')?.(
+  //     start,
+  //     end,
+  //     gapWidth
+  //   )
+  // }
 
   if (startEl) {
     const init = () => {
@@ -200,20 +200,20 @@ export const usePyStore = defineStore('py', () => {
     $initialized,
 
     // Actions
-    deleteDataPoints,
-    findGaps,
-    fillGaps,
-    changeValues,
-    getDataFrame,
-    setFilter,
-    shift,
-    interpolate,
-    driftCorrection,
-    getValueAt,
-    getDatetimeAt,
-    getIndexAt,
+    // deleteDataPoints,
+    // findGaps,
+    // fillGaps,
+    // changeValues,
+    // getDataFrame,
+    // setFilter,
+    // shift,
+    // interpolate,
+    // driftCorrection,
+    // getValueAt,
+    // getDatetimeAt,
+    // getIndexAt,
     instantiateDataFrame,
-    addPoints,
-    count,
+    // addPoints,
+    // count,
   }
 })

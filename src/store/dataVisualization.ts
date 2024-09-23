@@ -43,7 +43,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const endDate = ref<Date>(new Date())
   const oneWeek = 7 * 24 * 60 * 60 * 1000
   const beginDate = ref<Date>(new Date(endDate.value.getTime() - oneWeek))
-  const selectedDateBtnId = ref(2)
+  const selectedDateBtnId = ref(0)
 
   function resetState() {
     selectedThings.value = []
@@ -52,7 +52,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     selectedProcessingLevelNames.value = []
     endDate.value = new Date()
     beginDate.value = new Date(new Date().getTime() - oneWeek)
-    selectedDateBtnId.value = 2
+    selectedDateBtnId.value = 0
     resetChartZoom()
   }
 
