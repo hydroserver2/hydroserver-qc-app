@@ -52,8 +52,8 @@ export const getObservationsEndpoint = ({
 }: GetObservationsEndpointParams): string => {
   let url = `${SENSORTHINGS_BASE}/Datastreams('${id}')/Observations?$resultFormat=dataArray`
   url += `&$top=${pageSize}`
-  url += `&$filter=phenomenonTime%20ge%20${startTime}`
-  if (endTime) url += `%20and%20phenomenonTime%20lt%20${endTime}`
+  url += `&$filter=phenomenonTime%20gt%20${startTime}`
+  if (endTime) url += `%20and%20phenomenonTime%20le%20${endTime}`
   if (skipCount) url += `&$skip=${skipCount}`
   if (addResultQualifiers) url += `&$select=phenomenonTime,result,resultQuality`
   return url
