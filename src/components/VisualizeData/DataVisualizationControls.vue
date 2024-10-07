@@ -266,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref, onBeforeMount, watch } from 'vue'
+import { Ref, ref } from 'vue'
 import { usePyStore, FilterOperation, TimeUnit, Operator } from '@/store/py'
 // @ts-ignore
 import { _Window } from '@/types'
@@ -333,6 +333,8 @@ const driftGapWidth = ref(1)
 const filterOperators = [...Object.keys(FilterOperation)]
 const selectedFilter = ref(filterOperators[2])
 const filterValue = ref(12)
+
+// TODO: move to store
 const appliedFilters: Ref<{ [key: string]: number }> = ref({})
 
 // =============
@@ -538,9 +540,7 @@ const onAddFilter = (key: string, value: number) => {
 const addFilter = (key: string, value: number) => {
   const start = performance.now()
   appliedFilters.value[key] = +value
-  graphSeriesArray.value[0].data.dataFrame.set_filter(
-    JSON.stringify(appliedFilters.value)
-  )
+  graphSeriesArray.value[0].data.dataFrame.set_filter(appliedFilters.value)
   const end = performance.now()
   selected.value = []
   logger.value.unshift({
@@ -555,9 +555,7 @@ const removeFilter = (key: string) => {
   setTimeout(() => {
     const start = performance.now()
     delete appliedFilters.value[key]
-    graphSeriesArray.value[0].data.dataFrame.set_filter(
-      JSON.stringify(appliedFilters.value)
-    )
+    graphSeriesArray.value[0].data.dataFrame.set_filter(appliedFilters.value)
     const end = performance.now()
     updateVisualization()
     // parseDataFrame()
@@ -576,9 +574,7 @@ const clearFilters = () => {
   setTimeout(() => {
     const start = performance.now()
     appliedFilters.value = {}
-    graphSeriesArray.value[0].data.dataFrame.set_filter(
-      JSON.stringify(appliedFilters.value)
-    )
+    graphSeriesArray.value[0].data.dataFrame.set_filter(appliedFilters.value)
     const end = performance.now()
     updateVisualization()
     selected.value = []

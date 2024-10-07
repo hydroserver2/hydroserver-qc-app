@@ -1,7 +1,9 @@
-import { defineStore } from 'pinia'
+import { defineStore, storeToRefs } from 'pinia'
 import { _Window } from '@/types'
 import { Ref, ref } from 'vue'
 import { Subject } from 'rxjs'
+import { useEChartsStore } from '@/store/echarts'
+import { useDataVisStore } from './dataVisualization'
 
 const _window = window as _Window
 
@@ -29,12 +31,22 @@ export enum FilterOperation {
   GT = 'GT',
   GTE = 'GTE',
   E = 'E',
+  START = 'START',
+  END = 'END',
 }
 
 export const usePyStore = defineStore('py', () => {
   const interpreter: Ref<any> = ref(null)
   const $initialized = new Subject<boolean>()
   const startEl = document.getElementById('start') // Used to detect when PyScript has finished initializing
+  const isLoading = ref(false)
+  const operators = [...Object.keys(Operator)]
+  const selectedOperator = ref(operators[2])
+  const operationValue = ref(1)
+  const { updateVisualization } = useEChartsStore()
+  const { graphSeriesArray, selectedSeriesIndex } = storeToRefs(
+    useEChartsStore()
+  )
 
   // /**
   //  * Delete rows from the DataFrame
@@ -50,6 +62,30 @@ export const usePyStore = defineStore('py', () => {
     const wrapperClass = interpreter.value.globals.get('edit_service_wrapper')
     const instance = wrapperClass(data)
     return instance
+  }
+
+  const changeValues = () => {
+    const { selectedData } = storeToRefs(useDataVisStore())
+
+    const df = graphSeriesArray.value[selectedSeriesIndex.value].data.dataFrame
+
+    // TODO
+    const index = selectedData.value.map(
+      (point: { date: Date; value: number; index: number }) =>
+        df.get_index_at(point.index)
+    )
+    isLoading.value = true
+    console.log(index, Operator[selectedOperator.value], operationValue.value)
+    setTimeout(() => {
+      df.change_values(
+        index,
+        // @ts-ignore
+        Operator[selectedOperator.value],
+        +operationValue.value
+      )
+      updateVisualization()
+      isLoading.value = false
+    })
   }
 
   // /**
@@ -203,7 +239,7 @@ export const usePyStore = defineStore('py', () => {
     // deleteDataPoints,
     // findGaps,
     // fillGaps,
-    // changeValues,
+    changeValues,
     // getDataFrame,
     // setFilter,
     // shift,

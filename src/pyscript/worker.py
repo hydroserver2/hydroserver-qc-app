@@ -15,6 +15,7 @@ services = []
 
 DATETIME_COL_INDEX = 0
 VALUE_COL_INDEX = 1
+QUALIFIER_COL_INDEX = 2
 
 # @when("click", "#my_button")
 # def click_handler(event):
@@ -43,7 +44,16 @@ class edit_service_wrapper():
 
 
   def set_filter(self, filter: dict[FilterOperation, float]):
-    return self.edit_service.filter(json.loads(filter))
+    filter = filter.to_py()
+
+    # parse datetime: https://stackoverflow.com/questions/11893083/convert-normal-date-to-unix-timestamp
+    if filter[FilterOperation.START.value]:
+      filter[FilterOperation.START.value] = datetime.fromtimestamp(filter[FilterOperation.START.value] / 1000)
+      
+    if filter[FilterOperation.END.value]:
+      filter[FilterOperation.END.value] = datetime.fromtimestamp(filter[FilterOperation.END.value] / 1000) 
+
+    return self.edit_service.filter(filter)
 
 
   def change_values(self, index_list, operator, value):
@@ -51,10 +61,18 @@ class edit_service_wrapper():
 
 
   def add_points(self, points):
-    # Parse date fields
+    # points = json.loads(points)
+    points = points.to_py()
     for i, p in enumerate(points):
-      points[i][0] = datetime.strptime(
-        p[0], "%Y-%m-%dT%H:%M:%SZ")
+      # parse datetime from javascript timestamp
+      # points[i][0] = datetime.fromtimestamp(p[0] * 10 ** 6)
+      # print(p[0].to_py())
+      # points[i][0] = p[0].to_py()
+      # points[i][0] = datetime.strptime(
+      #   p[0], "%Y-%m-%dT%H:%M:%SZ")
+      
+      # extract qualifier codes
+      points[i][2] = [q.code for q in p['resultQualifiers']]
 
     return self.edit_service.add_points(points)
 
@@ -96,6 +114,13 @@ class edit_service_wrapper():
   def get_value_column(self):
     values = self.edit_service._df._mgr.arrays[VALUE_COL_INDEX][0]
     return  [float(val) for val in values]
+  
+  
+  def get_qualifier_column(self):
+    values = self.edit_service._df._mgr.arrays[QUALIFIER_COL_INDEX][0]
+    return [val for val in values]
+  
+  
 
 
 # Signal start

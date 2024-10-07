@@ -28,12 +28,16 @@ class TimeUnit(Enum):
 
 
 class FilterOperation(Enum):
+  # Value filters
   LT = 'LT'
   LTE = 'LTE'
   GT = 'GT'
   GTE = 'GTE'
   E = 'E'
 
+  # Datetime range filters
+  START = 'START'
+  END = 'END'
 
 class Operator(Enum):
   MULT = 'MULT'
@@ -56,10 +60,13 @@ class EditService():
     rows = self.data["dataArray"]
     cols = self.data["components"]
 
-    # Parse date fields
     for i, r in enumerate(rows):
+      # parse datetime
       rows[i][0] = datetime.strptime(
         r[0], "%Y-%m-%dT%H:%M:%SZ")
+      
+      # extract qualifier codes
+      rows[i][2] = [q.code for q in rows[i][2]['resultQualifiers']]
     self._df = pd.DataFrame(rows, columns=cols)
 
   def get_dataframe(self):
@@ -72,6 +79,9 @@ class EditService():
 
   def get_value_col(self):
     return self.data["components"][1]
+  
+  def get_qualifier_col(self):
+    return self.data["components"][2]
 
   ###################
   # Filters
@@ -87,6 +97,7 @@ class EditService():
 
     query = []
 
+    # VALUE FILTERS
     if self._has_filter(filter, FilterOperation.LT):
       query.append(
         f'`{self.get_value_col()}` < {filter[FilterOperation.LT.value]}')
@@ -106,6 +117,15 @@ class EditService():
     if self._has_filter(filter, FilterOperation.E):
       query.append(
         f'`{self.get_value_col()}` == {filter[FilterOperation.E.value]}')
+      
+    # DATETIME FILTERS
+    if self._has_filter(filter, FilterOperation.START):
+      query.append(
+        f'`{self.get_date_col()}` >= {filter[FilterOperation.START.value]}')
+      
+    if self._has_filter(filter, FilterOperation.END):
+      query.append(
+        f'`{self.get_date_col()}` <= {filter[FilterOperation.END.value]}')
 
     if len(query):
       self._filtered_df = self._df.query(" | ".join(query))
@@ -159,7 +179,7 @@ class EditService():
 
     # Return the list of points that filled the gaps
     return pd.DataFrame(
-      points, columns=[self.get_date_col(), self.get_value_col()])
+      points, columns=[self.get_date_col(), self.get_value_col(), self.get_qualifier_col()])
 
   ######################################
   # Data point operations
@@ -192,7 +212,7 @@ class EditService():
         df2 = self._df.iloc[idx:, :]
 
         points_df = pd.DataFrame(
-          val, columns=[self.get_date_col(), self.get_value_col()])
+          val, columns=[self.get_date_col(), self.get_value_col(), self.get_qualifier_col()])
         self._df = pd.concat([df1, points_df, df2]).reset_index(drop=True)
 
     else:
@@ -200,7 +220,7 @@ class EditService():
 
       # Create a new dataframe with the points
       points_df = pd.DataFrame(
-        points, columns=[self.get_date_col(), self.get_value_col()])
+        points, columns=[self.get_date_col(), self.get_value_col(), self.get_qualifier_col()])
 
       # Concatenate both dataframes. New rows will be at the end.
       self._df = pd.concat([self._df, points_df])

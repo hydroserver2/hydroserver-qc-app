@@ -11,6 +11,7 @@ import { storeToRefs } from 'pinia'
 import { useEChartsStore } from '@/store/echarts'
 import { useDataVisStore } from '@/store/dataVisualization'
 import {
+  DatasetOption,
   GridOption,
   TooltipOption,
   XAXisOption,
@@ -129,18 +130,6 @@ export function generateYAxisOptions(
         show: false,
       },
       axisLine: { show: true, lineStyle: { color: yAxisConfig.color } },
-    }
-  })
-}
-
-export function generateDatasetOptions(data: GraphSeries[]) {
-  return data.map((gs) => {
-    return {
-      dimensions: ['date', 'value'],
-      source: {
-        date: Array.from(gs.data.dataFrame.get_date_column()),
-        value: Array.from(gs.data.dataFrame.get_value_column()),
-      },
     }
   })
 }
@@ -277,7 +266,7 @@ export function createTooltipConfig(): TooltipComponentOption {
 }
 
 export function addQualifierOptions(
-  series: GraphSeries,
+  dsOption: any,
   echartsOption: EChartsOption,
   yAxisIndex: number,
   gridRightPadding: number,
@@ -317,6 +306,7 @@ export function addQualifierOptions(
             )
               return ''
 
+            // TODO
             const qualifierValue = firstSeriesItem.data[2]
             if (typeof qualifierValue === 'string') {
               if (selectedQualifier.value === 'All') return qualifierValue
@@ -334,17 +324,20 @@ export function addQualifierOptions(
   ;(echartsOption.series! as SeriesOption[]).push({
     type: 'scatter',
     name: 'Qualifiers',
+
     // XAxis data must be the same or the on mouse vertical lines won't sync up
-    // TODO
-    data: series.data.map((dp) => {
+    // TODO: too costly operation
+    data: dsOption.source['value'].map((_val: string, index: number) => {
       return [
-        dp.date.getTime(),
-        typeof dp.qualifierValue === 'string' &&
-        (selectedQualifier.value === 'All' ||
-          dp.qualifierValue.includes(selectedQualifier.value))
+        // datetime
+        new Date(dsOption?.source?.date[index]).getTime(),
+        // qualifier value
+        selectedQualifier.value === 'All' ||
+        dsOption.source?.qualifier[index]?.has(selectedQualifier.value)
           ? 1
           : NaN,
-        dp.qualifierValue,
+        // qualifier codes
+        // dsOption.source?.qualifier[index],
       ]
     }),
 
@@ -360,9 +353,9 @@ export function addQualifierOptions(
   // and on the left if hovering on the right.
   ;(echartsOption.tooltip as TooltipOption).position = (
     pos,
-    params,
-    dom,
-    rect,
+    _params,
+    _dom,
+    _rect,
     size
   ) => {
     const position: { top: number; left?: number; right?: number } = { top: 60 }
@@ -391,8 +384,9 @@ const findSelectedDatastreamIndex = (
   datastream: Datastream
 ) => seriesArray.findIndex((s) => s.id === datastream.id)
 
-const hasStringQualifier = (data: DataPoint[]) =>
-  data.some((dp) => typeof dp.qualifierValue === 'string')
+// TODO
+// const hasStringQualifier = (data: DataPoint[]) =>
+//   data.some((dp) => typeof dp.qualifierValue === 'string')
 
 interface CustomOptions {
   initializeZoomed: boolean
@@ -415,14 +409,6 @@ export const createEChartsOption = (
   }
 
   const yAxisConfigurations = createYAxisConfigurations(seriesArray)
-  const yAxisOptions = generateYAxisOptions(yAxisConfigurations)
-  const seriesOptions = generateSeriesOptions(
-    seriesArray,
-    yAxisConfigurations,
-    selectedSeriesIndex.value
-  )
-  const datasetOptions = generateDatasetOptions(seriesArray)
-
   const leftYAxesCount = Math.ceil(yAxisConfigurations.size / 2)
   const rightYAxesCount = yAxisConfigurations.size - leftYAxesCount
   let gridRightPadding = 20 + rightYAxesCount * 85
@@ -430,7 +416,7 @@ export const createEChartsOption = (
 
   let echartsOption: EChartsOption = {
     // https://echarts.apache.org/en/option.html#dataset.source
-    dataset: datasetOptions,
+    dataset: seriesArray.map((s) => s.data.dataset),
     grid: [
       {
         bottom: '160',
@@ -456,8 +442,12 @@ export const createEChartsOption = (
         },
       },
     ],
-    yAxis: yAxisOptions,
-    series: seriesOptions,
+    yAxis: generateYAxisOptions(yAxisConfigurations),
+    series: generateSeriesOptions(
+      seriesArray,
+      yAxisConfigurations,
+      selectedSeriesIndex.value
+    ),
     dataZoom: generateDataZoomOptions(initializeZoomed),
     legend: createLegendConfig(),
     toolbox: generateToolboxOptions() as {},
@@ -475,11 +465,11 @@ export const createEChartsOption = (
 
   // Add result qualifier options if there's a datastream selected for quality control with qualifiers
   if (
-    selectedSeriesIndex.value !== -1 &&
-    hasStringQualifier(seriesArray[selectedSeriesIndex.value].data)
+    selectedSeriesIndex.value !== -1
+    // && hasStringQualifier(seriesArray[selectedSeriesIndex.value].data.dataFrame)
   ) {
     echartsOption = addQualifierOptions(
-      seriesArray[selectedSeriesIndex.value],
+      seriesArray[selectedSeriesIndex.value].data.dataset,
       echartsOption,
       yAxisConfigurations.size,
       gridRightPadding,

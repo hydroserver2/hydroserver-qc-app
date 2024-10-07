@@ -1,9 +1,10 @@
+import { usePyStore } from '@/store/py'
 import { LineSeriesOption } from 'echarts'
 
 export type DataPoint = {
   date: Date
   value: number
-  qualifierValue: string | number
+  qualifierValue: string[]
 }
 
 export interface PartialQualifier {
@@ -21,17 +22,48 @@ export type Observation = [string, number, Qualifier]
 export type DataArray = Observation[]
 
 export class ObservationRecord {
-  // dataArray: DataArray  // TODO: store in a data frame
+  // A JsProxy of the pandas DataFrame
   dataFrame: any
-  beginTime: string // TODO: redundant
-  endTime: string // TODO: redundant
-  loading: boolean
+  /** The generated dataset to be used in echarts */
+  dataset: { dimensions: string[]; source: { [key: string]: any[] } }
+  isLoading: boolean
 
-  constructor(dataFrame: any) {
-    this.dataFrame = dataFrame
-    this.beginTime = ''
-    this.endTime = ''
-    this.loading = false
+  constructor(data: any) {
+    const { instantiateDataFrame } = usePyStore()
+    const components = ['date', 'value', 'qualifier']
+
+    this.dataFrame = instantiateDataFrame(
+      JSON.stringify({
+        dataArray: data,
+        components: components,
+      })
+    )
+
+    this.dataset = {
+      dimensions: components,
+      source: {
+        date: (Array.from(this.dataFrame.get_date_column()) as number[]) || [],
+        value:
+          (Array.from(this.dataFrame.get_value_column()) as number[]) || [],
+        qualifier: Array.from(
+          this.dataFrame.get_qualifier_column()
+        ) as string[][],
+      },
+    }
+
+    this.isLoading = false
+  }
+
+  get beginTime() {
+    const beginDateTime = this.dataFrame.get_datetime_at(0)
+    return new Date(beginDateTime)
+  }
+
+  get endTime() {
+    const endDateTime = this.dataFrame.get_datetime_at(
+      this.dataFrame.count() - 1
+    )
+    return new Date(endDateTime)
   }
 }
 

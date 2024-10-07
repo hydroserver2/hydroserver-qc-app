@@ -188,13 +188,13 @@ function handleBrushSelected(params: any) {
   previousBrushAreas.value = currentBrush
 
   const seriesData =
-    echartsRef.value.getOption().series[selectedSeriesIndex.value].data
+    graphSeriesArray.value[selectedSeriesIndex.value].data.dataset
 
-  const selectedDataPoints = new Set<[number, number]>()
+  const selectedDataPoints = new Set<[number, number, number]>()
 
-  seriesData.forEach((point: [number, number]) => {
-    const x = point[0]
-    const y = point[1]
+  seriesData.source['date'].forEach((_value: number, index: number) => {
+    const x = seriesData.source['date'][index]
+    const y = seriesData.source['value'][index]
 
     for (const area of selectedAreas) {
       if (area.coordRange) {
@@ -206,12 +206,12 @@ function handleBrushSelected(params: any) {
             y >= rangeY[0] &&
             y <= rangeY[1]
           ) {
-            selectedDataPoints.add(point)
+            selectedDataPoints.add([x, y, index])
             break
           }
         } else if (area.brushType === 'lineY') {
           if (y >= area.coordRange[0] && y <= area.coordRange[1])
-            selectedDataPoints.add(point)
+            selectedDataPoints.add([x, y, index])
         }
       }
     }
@@ -220,6 +220,7 @@ function handleBrushSelected(params: any) {
   selectedData.value = Array.from(selectedDataPoints).map((point) => ({
     date: new Date(point[0]),
     value: point[1],
+    index: point[2],
   }))
 
   brushSelections.value = selectedAreas

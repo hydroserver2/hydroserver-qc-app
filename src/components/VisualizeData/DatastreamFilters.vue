@@ -126,7 +126,6 @@ const {
   selectedThings,
   selectedObservedPropertyNames,
   selectedProcessingLevelNames,
-  selectedData,
 } = storeToRefs(useDataVisStore())
 
 const { graphSeriesArray } = storeToRefs(useEChartsStore())

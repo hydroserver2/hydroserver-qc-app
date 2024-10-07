@@ -7,7 +7,7 @@
     class="bg-navbar"
     theme="dark"
   >
-    <v-container>
+    <!-- <v-container>
       <v-expansion-panels color="primary-darken-2" v-model="panelOpen">
         <v-expansion-panel title="History" elevation="3">
           <v-expansion-panel-text>
@@ -29,11 +29,11 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
-    </v-container>
+    </v-container> -->
 
     <v-divider />
 
-    <v-list :items="filterPoints" density="compact">
+    <v-list density="compact">
       <v-list-subheader>Filter points</v-list-subheader>
 
       <v-list-item
@@ -49,7 +49,21 @@
     </v-list>
 
     <v-divider />
-    <v-list :items="editData" density="compact"> </v-list>
+
+    <v-list :items="editData" density="compact">
+      <v-list-subheader>Edit Data</v-list-subheader>
+
+      <v-list-item
+        v-for="(item, i) in editData"
+        :key="i"
+        @click="item.clickAction"
+      >
+        <template v-slot:prepend>
+          <v-icon :icon="item.props.prependIcon"></v-icon>
+        </template>
+        <v-list-item-title>{{ item.title }}</v-list-item-title>
+      </v-list-item>
+    </v-list>
   </v-navigation-drawer>
 
   <!-- <v-dialog v-model="openVT" max-width="500">
@@ -69,10 +83,12 @@
 // import ValueThresholdsCard from '@/components/FilterPoints/ValueThresholdsCard.vue'
 import RateOfChangeCard from '@/components/FilterPoints/RateOfChangeCard.vue'
 import PersistenceCard from '@/components/FilterPoints/PersistenceCard.vue'
+import { usePyStore } from '@/store/py'
 import { ref, watch } from 'vue'
 
 const selected = ref('action 1')
 const panelOpen = ref([0])
+const py = usePyStore()
 
 watch(selected, (newValue, oldValue) => {
   console.log(`Selected item changed from ${oldValue} to ${newValue}`)
@@ -127,13 +143,13 @@ const filterPoints = [
 ]
 
 const editData = [
-  { type: 'subheader', title: 'Edit data' },
   {
     title: 'Qualifying comments',
     props: {
       prependIcon: 'mdi-flag',
     },
     value: 1,
+    clickAction: () => {},
   },
   {
     title: 'Linear drift correction',
@@ -141,6 +157,7 @@ const editData = [
       prependIcon: 'mdi-chart-sankey',
     },
     value: 2,
+    clickAction: () => {},
   },
   {
     title: 'Interpolate',
@@ -148,6 +165,7 @@ const editData = [
       prependIcon: 'mdi-transit-connection-horizontal',
     },
     value: 3,
+    clickAction: () => {},
   },
   {
     title: 'Change values',
@@ -155,6 +173,9 @@ const editData = [
       prependIcon: 'mdi-pencil',
     },
     value: 4,
+    clickAction: () => {
+      py.changeValues([0])
+    },
   },
   {
     title: 'Delete points',
@@ -162,6 +183,7 @@ const editData = [
       prependIcon: 'mdi-trash-can',
     },
     value: 5,
+    clickAction: () => {},
   },
   {
     title: 'Add points',
@@ -169,6 +191,7 @@ const editData = [
       prependIcon: 'mdi-plus',
     },
     value: 6,
+    clickAction: () => {},
   },
 ]
 </script>

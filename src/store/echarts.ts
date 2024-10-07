@@ -11,7 +11,7 @@ import {
 } from '@/utils/plotting/echarts'
 import { Snackbar } from '@/utils/notifications'
 import { api } from '@/services/api'
-import { preProcessData } from '@/utils/observationsUtils'
+// import { preProcessData } from '@/utils/observationsUtils'
 import { useObservationStore } from '@/store/observations'
 
 export const useEChartsStore = defineStore('ECharts', () => {
@@ -73,14 +73,15 @@ export const useEChartsStore = defineStore('ECharts', () => {
   }
 
   function updateVisualization() {
+    // TODO: update echarts option instead
     echartsOption.value = createEChartsOption(graphSeriesArray.value)
     prevIds.value = graphSeriesArray.value.map((series) => series.id)
   }
 
   const fetchGraphSeriesData = async (
     datastream: Datastream,
-    start: string,
-    end: string
+    start: Date,
+    end: Date
   ): Promise<ObservationRecord | null> => {
     console.log('fetchGraphSeriesData')
     const obsRecord = await fetchObservationsInRange(
@@ -103,8 +104,8 @@ export const useEChartsStore = defineStore('ECharts', () => {
 
   const fetchGraphSeries = async (
     datastream: Datastream,
-    start: string,
-    end: string
+    start: Date,
+    end: Date
   ) => {
     console.log('fetchGraphSeries')
     const observationsPromise = fetchGraphSeriesData(datastream, start, end)
