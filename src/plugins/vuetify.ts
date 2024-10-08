@@ -64,6 +64,7 @@ export default createVuetify({
     VAutocomplete: textFieldAttrs,
     VTextarea: textFieldAttrs,
     VCheckbox: textFieldAttrs,
+    VSelect: textFieldAttrs,
     VTable: {
       density: 'comfortable',
     },

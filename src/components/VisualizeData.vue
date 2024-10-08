@@ -1,6 +1,5 @@
 <template>
-  <FullScreenLoader v-if="loading" />
-  <div v-else-if="currentView === DrawerType.Select">
+  <div v-if="currentView === DrawerType.Select">
     <div class="my-4 mx-4">
       <v-expansion-panels v-model="panels" rounded="xl">
         <v-expansion-panel title="Data visualization" v-if="cardHeight">
@@ -39,16 +38,13 @@
 <script setup lang="ts">
 import DataVisDatasetsTable from '@/components/VisualizeData/DataVisDatasetsTable.vue'
 import DataVisualizationCard from '@/components/VisualizeData/DataVisualizationCard.vue'
-import FullScreenLoader from '@/components/base/FullScreenLoader.vue'
-import { api } from '@/services/api'
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
 import { useUIStore, DrawerType } from '@/store/userInterface'
+import { onUnmounted, ref, watch } from 'vue'
 
 const { resetState } = useDataVisStore()
-const { things, processingLevels, observedProperties, datastreams } =
-  storeToRefs(useDataVisStore())
 
 const { cardHeight, tableHeight, currentView } = storeToRefs(useUIStore())
 
@@ -81,29 +77,6 @@ function handleMouseUp() {
   document.removeEventListener('mousemove', handleMouseMove)
   document.removeEventListener('mouseup', handleMouseUp)
 }
-
-const loading = ref(true)
-
-onMounted(async () => {
-  const [
-    thingsResponse,
-    datastreamsResponse,
-    processingLevelsResponse,
-    observedPropertiesResponse,
-  ] = await Promise.all([
-    api.fetchThings(),
-    api.fetchDatastreams(),
-    api.fetchProcessingLevels(),
-    api.fetchObservedProperties(),
-  ])
-
-  things.value = thingsResponse
-  datastreams.value = datastreamsResponse
-  processingLevels.value = processingLevelsResponse
-  observedProperties.value = observedPropertiesResponse
-
-  loading.value = false
-})
 
 onUnmounted(() => {
   resetState()

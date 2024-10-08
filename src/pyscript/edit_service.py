@@ -40,10 +40,10 @@ class FilterOperation(Enum):
   END = 'END'
 
 class Operator(Enum):
-  MULT = 'MULT'
-  DIV = 'DIV'
   ADD = 'ADD'
   SUB = 'SUB'
+  MULT = 'MULT'
+  DIV = 'DIV'
   ASSIGN = 'ASSIGN'
 
 
@@ -66,13 +66,11 @@ class EditService():
         r[0], "%Y-%m-%dT%H:%M:%SZ")
       
       # extract qualifier codes
-      rows[i][2] = [q.code for q in rows[i][2]['resultQualifiers']]
+      rows[i][2] = [q.code for q in r[2]['resultQualifiers']]
     self._df = pd.DataFrame(rows, columns=cols)
 
   def get_dataframe(self):
-    if self._filtered_df is None:
-      return self._df
-    return self._filtered_df
+    return self._filtered_df or self._df
 
   def get_date_col(self):
     return self.data["components"][0]

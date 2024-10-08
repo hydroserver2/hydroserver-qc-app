@@ -22,7 +22,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
   const dataZoomEnd = ref(100)
 
   const graphSeriesArray = ref<GraphSeries[]>([])
-  const prevIds = ref<string[]>([]) // DatastreamIds that were previously plotted
+  // const prevIds = ref<string[]>([]) // DatastreamIds that were previously plotted
   /** The index of the ECharts series that represents the datastream selected for quality control */
   const selectedSeriesIndex = ref(-1)
 
@@ -68,14 +68,15 @@ export const useEChartsStore = defineStore('ECharts', () => {
 
   const clearChartState = () => {
     graphSeriesArray.value = []
-    prevIds.value = []
+    // prevIds.value = []
     echartsOption.value = undefined
   }
 
   function updateVisualization() {
     // TODO: update echarts option instead
+    console.log('updateVisualization')
     echartsOption.value = createEChartsOption(graphSeriesArray.value)
-    prevIds.value = graphSeriesArray.value.map((series) => series.id)
+    // prevIds.value = graphSeriesArray.value.map((series) => series.id)
   }
 
   const fetchGraphSeriesData = async (
@@ -170,7 +171,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
     echartsOption,
     showLegend,
     showTooltip,
-    prevIds,
+    // prevIds,
     selectedSeriesIndex,
     brushSelections,
     updateVisualization,

@@ -20,7 +20,6 @@ export const useObservationStore = defineStore('observations', () => {
   ): Promise<ObservationRecord> => {
     console.log('fetchObservationsInRange')
     const id = datastream.id
-    const { instantiateDataFrame } = usePyStore()
 
     // If nothing is stored yet, create a new record and fetch the data in range
     if (!observations.value[id]?.dataFrame) {
@@ -33,7 +32,7 @@ export const useObservationStore = defineStore('observations', () => {
 
       observations.value[id] = new ObservationRecord(fetchedData)
 
-      // Return the entire dataframe
+      // Return the dataframe
       return observations.value[id]
     } else {
       const existingRecord = observations.value[id]
@@ -42,8 +41,8 @@ export const useObservationStore = defineStore('observations', () => {
       // const storedBeginTime = new Date(existingRecord.beginTime).getTime()
       // const storedEndTime = new Date(existingRecord.endTime).getTime()
 
-      let beginDataPromise = Promise.resolve([])
-      let endDataPromise = Promise.resolve([])
+      let beginDataPromise: Promise<any[]> = Promise.resolve([])
+      let endDataPromise: Promise<any[]> = Promise.resolve([])
 
       // Check if new data before the stored data is needed
       if (beginTime < existingRecord.beginTime) {
@@ -75,31 +74,18 @@ export const useObservationStore = defineStore('observations', () => {
 
       if (beginData.length > 0) {
         observations.value[id].dataFrame.add_points(beginData)
-        // observations.value[id].dataFrame.add_points(JSON.stringify(beginData))
-        // existingRecord.dataArray = [...beginData, ...existingRecord.dataArray]
-        // existingRecord.beginTime = beginTime
       }
 
       if (endData.length > 0) {
         observations.value[id].dataFrame.add_points(endData)
-        // observations.value[id].dataFrame.add_points(JSON.stringify(endData))
-        // existingRecord.dataArray = [...existingRecord.dataArray, ...endData]
-        // existingRecord.endTime = endTime
       }
 
       existingRecord.isLoading = false
 
       // Return only the data within the requested range
       // TODO: set a data frame date filter using beginTime and endTime
-
       // TODO: add to current filter in store
-
       observations.value[id].dataFrame.set_filter({
-        // TODO: ISO date strings have 3 extra digits before the 'Z'. Pyscript will fail to parse them.
-        // [FilterOperation.START]: beginTime.getTime(),
-        // [FilterOperation.END]: endTime.getTime(),
-
-        // TODO: pass integers instead
         [FilterOperation.START]: beginTime.getTime(),
         [FilterOperation.END]: endTime.getTime(),
       })

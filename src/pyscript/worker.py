@@ -1,25 +1,15 @@
 from edit_service import EditService, FilterOperation
-from pyscript import when, Element
-# from js import someFunction, dataset
-# from js import someFunction
-import json
+from pyscript import Element
 from datetime import datetime
-
+import json
 
 print("==== Worker thread ====")
-
-# Note: when binding events, the HTML component must be rendered in the document
-# edit_service = EditService("test", json.loads(dataset))
 
 services = []
 
 DATETIME_COL_INDEX = 0
 VALUE_COL_INDEX = 1
 QUALIFIER_COL_INDEX = 2
-
-# @when("click", "#my_button")
-# def click_handler(event):
-#   someFunction("Hello from Python!")
 
 class edit_service_wrapper():
   def __init__(self, data) -> None:
@@ -61,7 +51,6 @@ class edit_service_wrapper():
 
 
   def add_points(self, points):
-    # points = json.loads(points)
     points = points.to_py()
     for i, p in enumerate(points):
       # parse datetime from javascript timestamp
@@ -119,8 +108,6 @@ class edit_service_wrapper():
   def get_qualifier_column(self):
     values = self.edit_service._df._mgr.arrays[QUALIFIER_COL_INDEX][0]
     return [val for val in values]
-  
-  
 
 
 # Signal start

@@ -25,7 +25,10 @@ export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   dataFrame: any
   /** The generated dataset to be used in echarts */
-  dataset: { dimensions: string[]; source: { [key: string]: any[] } }
+  dataset: { dimensions: string[]; source: { [key: string]: any[] } } = {
+    dimensions: [],
+    source: {},
+  }
   isLoading: boolean
 
   constructor(data: any) {
@@ -39,6 +42,14 @@ export class ObservationRecord {
       })
     )
 
+    this.generateDataset()
+
+    this.isLoading = false
+  }
+
+  // TODO: this is an expensive operation and should be only executed when necessary
+  generateDataset() {
+    const components = ['date', 'value', 'qualifier']
     this.dataset = {
       dimensions: components,
       source: {
@@ -50,8 +61,6 @@ export class ObservationRecord {
         ) as string[][],
       },
     }
-
-    this.isLoading = false
   }
 
   get beginTime() {

@@ -77,6 +77,10 @@
   <v-dialog v-model="openPersistence" max-width="500">
     <PersistenceCard @close="openPersistence = false" />
   </v-dialog>
+
+  <v-dialog v-model="openChangeValues" max-width="500">
+    <ChangeValues @close="openChangeValues = false" />
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -85,19 +89,18 @@ import RateOfChangeCard from '@/components/FilterPoints/RateOfChangeCard.vue'
 import PersistenceCard from '@/components/FilterPoints/PersistenceCard.vue'
 import { usePyStore } from '@/store/py'
 import { ref, watch } from 'vue'
+import { useDataVisStore } from '@/store/dataVisualization'
+import { storeToRefs } from 'pinia'
+import ChangeValues from '../EditData/ChangeValues.vue'
+const { selectedData } = storeToRefs(useDataVisStore())
 
-const selected = ref('action 1')
 const panelOpen = ref([0])
-const py = usePyStore()
-
-watch(selected, (newValue, oldValue) => {
-  console.log(`Selected item changed from ${oldValue} to ${newValue}`)
-})
 
 // const openVT = ref(false)
 const openRateOfChange = ref(false)
 const openGaps = ref(false)
 const openPersistence = ref(false)
+const openChangeValues = ref(false)
 
 const filterPoints = [
   // {
@@ -171,11 +174,10 @@ const editData = [
     title: 'Change values',
     props: {
       prependIcon: 'mdi-pencil',
+      disabled: true,
     },
     value: 4,
-    clickAction: () => {
-      py.changeValues([0])
-    },
+    clickAction: () => (openChangeValues.value = true),
   },
   {
     title: 'Delete points',

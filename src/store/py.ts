@@ -18,10 +18,10 @@ export enum TimeUnit {
 }
 
 export enum Operator {
-  MULT = 'MULT',
-  DIV = 'DIV',
   ADD = 'ADD',
   SUB = 'SUB',
+  MULT = 'MULT',
+  DIV = 'DIV',
   ASSIGN = 'ASSIGN',
 }
 
@@ -39,14 +39,16 @@ export const usePyStore = defineStore('py', () => {
   const interpreter: Ref<any> = ref(null)
   const $initialized = new Subject<boolean>()
   const startEl = document.getElementById('start') // Used to detect when PyScript has finished initializing
-  const isLoading = ref(false)
-  const operators = [...Object.keys(Operator)]
-  const selectedOperator = ref(operators[2])
-  const operationValue = ref(1)
+  const isLoading = ref(false) // TODO: make use
+  const { graphSeriesArray, selectedSeriesIndex, brushSelections } =
+    storeToRefs(useEChartsStore())
+  const { selectedData } = storeToRefs(useDataVisStore())
   const { updateVisualization } = useEChartsStore()
-  const { graphSeriesArray, selectedSeriesIndex } = storeToRefs(
-    useEChartsStore()
-  )
+
+  // Change Values
+  const operators = [...Object.keys(Operator)]
+  const selectedOperator = ref(operators[0] as Operator)
+  const operationValue = ref(0.1)
 
   // /**
   //  * Delete rows from the DataFrame
@@ -64,8 +66,12 @@ export const usePyStore = defineStore('py', () => {
     return instance
   }
 
+  // ============= EDIT DATA =================
+
   const changeValues = () => {
-    const { selectedData } = storeToRefs(useDataVisStore())
+    if (!selectedData.value.length) {
+      return
+    }
 
     const df = graphSeriesArray.value[selectedSeriesIndex.value].data.dataFrame
 
@@ -75,14 +81,15 @@ export const usePyStore = defineStore('py', () => {
         df.get_index_at(point.index)
     )
     isLoading.value = true
-    console.log(index, Operator[selectedOperator.value], operationValue.value)
+
     setTimeout(() => {
       df.change_values(
         index,
-        // @ts-ignore
         Operator[selectedOperator.value],
         +operationValue.value
       )
+      brushSelections.value = []
+      selectedData.value = []
       updateVisualization()
       isLoading.value = false
     })
@@ -251,5 +258,8 @@ export const usePyStore = defineStore('py', () => {
     instantiateDataFrame,
     // addPoints,
     // count,
+    operators,
+    selectedOperator,
+    operationValue,
   }
 })

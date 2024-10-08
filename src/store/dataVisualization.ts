@@ -12,7 +12,10 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     fetchGraphSeriesData,
   } = useEChartsStore()
 
-  const { graphSeriesArray, prevIds } = storeToRefs(useEChartsStore())
+  const {
+    graphSeriesArray,
+    // prevIds
+  } = storeToRefs(useEChartsStore())
 
   // To only fetch these once per page
   const things = ref<Thing[]>([])

@@ -11,9 +11,9 @@ export const fetchObservationsParallel = async (
   datastream: Datastream,
   startTime?: Date,
   endTime?: Date
-) => {
+): Promise<any[]> => {
   const { id, phenomenonBeginTime, phenomenonEndTime, valueCount } = datastream
-  if (!phenomenonBeginTime || !phenomenonEndTime) return
+  if (!phenomenonBeginTime || !phenomenonEndTime) return []
 
   const pageSize = 50_000
   const endpoints: string[] = []

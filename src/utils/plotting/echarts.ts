@@ -11,7 +11,6 @@ import { storeToRefs } from 'pinia'
 import { useEChartsStore } from '@/store/echarts'
 import { useDataVisStore } from '@/store/dataVisualization'
 import {
-  DatasetOption,
   GridOption,
   TooltipOption,
   XAXisOption,
@@ -109,6 +108,7 @@ export function generateYAxisOptions(
     let offset = index === 0 ? 0 : (index - leftYAxesCount) * 85
     if (position === 'left') offset = -offset
 
+    // TODO: extend range of y-axis to facilitate padding for selection controls
     return {
       name: yAxisConfig.yAxisLabel,
       nameLocation: 'middle',
@@ -195,6 +195,7 @@ export function generateSeriesOptions(
 export function generateToolboxOptions() {
   const { brushSelections } = storeToRefs(useEChartsStore())
   const { updateVisualization } = useEChartsStore()
+  const { selectedData } = storeToRefs(useDataVisStore())
 
   return {
     feature: {
@@ -205,10 +206,12 @@ export function generateToolboxOptions() {
       saveAsImage: { name: 'plot_export' },
       myClearSelected: {
         show: true,
-        title: 'Clear selections',
+        title: 'Clear selections!',
         icon: 'path://M2 2h20v20h-20z M7 7l10 10 M7 17l10-10',
         onclick: function () {
           brushSelections.value = []
+          selectedData.value = []
+          // TODO: just call setOption or applyBrushSelection instead
           updateVisualization() // call updateVisualization to rerender the plot with the empty brushSelections
         },
       },
@@ -396,6 +399,7 @@ export const createEChartsOption = (
   seriesArray: GraphSeries[],
   opts: Partial<CustomOptions> = {}
 ): EChartsOption => {
+  console.log('createEChartsOption')
   const { initializeZoomed = true } = opts
   const { qcDatastream } = storeToRefs(useDataVisStore())
   const { selectedSeriesIndex } = storeToRefs(useEChartsStore())
@@ -411,8 +415,11 @@ export const createEChartsOption = (
   const yAxisConfigurations = createYAxisConfigurations(seriesArray)
   const leftYAxesCount = Math.ceil(yAxisConfigurations.size / 2)
   const rightYAxesCount = yAxisConfigurations.size - leftYAxesCount
-  let gridRightPadding = 20 + rightYAxesCount * 85
-  let gridLeftPadding = leftYAxesCount * 85
+  const gridRightPadding = 20 + rightYAxesCount * 85
+  const gridLeftPadding = leftYAxesCount * 85
+
+  // TODO: this is an expensive operation and should be only executed when necessary
+  seriesArray.forEach((s) => s.data?.generateDataset())
 
   let echartsOption: EChartsOption = {
     // https://echarts.apache.org/en/option.html#dataset.source
