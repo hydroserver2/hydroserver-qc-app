@@ -81,26 +81,26 @@
   <v-dialog v-model="openChangeValues" max-width="500">
     <ChangeValues @close="openChangeValues = false" />
   </v-dialog>
+
+  <v-dialog v-model="openInterpolate" max-width="500">
+    <Interpolate @close="openInterpolate = false" />
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
 // import ValueThresholdsCard from '@/components/FilterPoints/ValueThresholdsCard.vue'
 import RateOfChangeCard from '@/components/FilterPoints/RateOfChangeCard.vue'
 import PersistenceCard from '@/components/FilterPoints/PersistenceCard.vue'
-import { usePyStore } from '@/store/py'
-import { ref, watch } from 'vue'
-import { useDataVisStore } from '@/store/dataVisualization'
-import { storeToRefs } from 'pinia'
-import ChangeValues from '../EditData/ChangeValues.vue'
-const { selectedData } = storeToRefs(useDataVisStore())
-
-const panelOpen = ref([0])
+import { ref } from 'vue'
+import ChangeValues from '@/components/EditData/ChangeValues.vue'
+import Interpolate from '@/components/EditData/Interpolate.vue'
 
 // const openVT = ref(false)
 const openRateOfChange = ref(false)
 const openGaps = ref(false)
 const openPersistence = ref(false)
 const openChangeValues = ref(false)
+const openInterpolate = ref(false)
 
 const filterPoints = [
   // {
@@ -118,7 +118,6 @@ const filterPoints = [
     props: {
       prependIcon: 'mdi-delta',
     },
-    value: 2,
     clickAction: () => {
       openRateOfChange.value = true
     },
@@ -128,7 +127,6 @@ const filterPoints = [
     props: {
       prependIcon: 'mdi-keyboard-space',
     },
-    value: 3,
     clickAction: () => {
       openGaps.value = true
     },
@@ -138,7 +136,6 @@ const filterPoints = [
     props: {
       prependIcon: 'mdi-dots-horizontal',
     },
-    value: 4,
     clickAction: () => {
       openPersistence.value = true
     },
@@ -151,7 +148,6 @@ const editData = [
     props: {
       prependIcon: 'mdi-flag',
     },
-    value: 1,
     clickAction: () => {},
   },
   {
@@ -159,7 +155,6 @@ const editData = [
     props: {
       prependIcon: 'mdi-chart-sankey',
     },
-    value: 2,
     clickAction: () => {},
   },
   {
@@ -167,8 +162,7 @@ const editData = [
     props: {
       prependIcon: 'mdi-transit-connection-horizontal',
     },
-    value: 3,
-    clickAction: () => {},
+    clickAction: () => (openInterpolate.value = true),
   },
   {
     title: 'Change values',
@@ -176,7 +170,6 @@ const editData = [
       prependIcon: 'mdi-pencil',
       disabled: true,
     },
-    value: 4,
     clickAction: () => (openChangeValues.value = true),
   },
   {
@@ -184,7 +177,6 @@ const editData = [
     props: {
       prependIcon: 'mdi-trash-can',
     },
-    value: 5,
     clickAction: () => {},
   },
   {
@@ -192,7 +184,6 @@ const editData = [
     props: {
       prependIcon: 'mdi-plus',
     },
-    value: 6,
     clickAction: () => {},
   },
 ]

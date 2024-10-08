@@ -35,6 +35,10 @@ export enum FilterOperation {
   END = 'END',
 }
 
+export enum InterpolationMethods {
+  LINEAR = 'LINEAR',
+}
+
 export const usePyStore = defineStore('py', () => {
   const interpreter: Ref<any> = ref(null)
   const $initialized = new Subject<boolean>()
@@ -47,8 +51,15 @@ export const usePyStore = defineStore('py', () => {
 
   // Change Values
   const operators = [...Object.keys(Operator)]
-  const selectedOperator = ref(operators[0] as Operator)
+  const selectedOperator = ref(0)
   const operationValue = ref(0.1)
+
+  // GAP ANALYSYS
+  const interpolateValues = ref(false)
+  const selectedInterpolationMethod = ref(0)
+  const gapUnits = [...Object.keys(TimeUnit)]
+  const selectedGapUnit = ref(gapUnits[1])
+  const gapAmount = ref(30)
 
   // /**
   //  * Delete rows from the DataFrame
@@ -85,9 +96,32 @@ export const usePyStore = defineStore('py', () => {
     setTimeout(() => {
       df.change_values(
         index,
-        Operator[selectedOperator.value],
+        Operator[operators[selectedOperator.value] as Operator],
         +operationValue.value
       )
+      brushSelections.value = []
+      selectedData.value = []
+      updateVisualization()
+      isLoading.value = false
+    })
+  }
+
+  const interpolate = () => {
+    if (!selectedData.value.length) {
+      return
+    }
+
+    const df = graphSeriesArray.value[selectedSeriesIndex.value].data.dataFrame
+
+    const index = selectedData.value.map(
+      (point: { date: Date; value: number; index: number }) =>
+        df.get_index_at(point.index)
+    )
+
+    isLoading.value = true
+    setTimeout(() => {
+      // TODO: value error when interpolating values lesser than 1
+      df.interpolate(index)
       brushSelections.value = []
       selectedData.value = []
       updateVisualization()
@@ -250,7 +284,8 @@ export const usePyStore = defineStore('py', () => {
     // getDataFrame,
     // setFilter,
     // shift,
-    // interpolate,
+    interpolate,
+    selectedInterpolationMethod,
     // driftCorrection,
     // getValueAt,
     // getDatetimeAt,

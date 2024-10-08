@@ -4,13 +4,12 @@
       <v-progress-linear color="primary" :active="isActive" indeterminate />
     </template>
 
-    <v-card-subtitle class="text-center">
-      {{ selectedData.length }} Data Point{{
-        selectedData.length === 1 ? '' : 's'
-      }}
-      selected
-    </v-card-subtitle>
-
+    <div class="text-center">
+      <v-chip color="primary" variant="outlined">
+        <b class="mr-2">{{ selectedData.length }}</b>
+        Data Point{{ selectedData.length === 1 ? '' : 's' }} selected
+      </v-chip>
+    </div>
     <v-card-text v-if="option && isDataAvailable">
       <v-chart
         ref="echartsRef"
