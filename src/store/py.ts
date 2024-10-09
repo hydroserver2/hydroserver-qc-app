@@ -39,6 +39,10 @@ export enum InterpolationMethods {
   LINEAR = 'LINEAR',
 }
 
+export enum DriftCorrectionMethods {
+  LINEAR = 'LINEAR',
+}
+
 export const usePyStore = defineStore('py', () => {
   const interpreter: Ref<any> = ref(null)
   const $initialized = new Subject<boolean>()
@@ -60,6 +64,10 @@ export const usePyStore = defineStore('py', () => {
   const gapUnits = [...Object.keys(TimeUnit)]
   const selectedGapUnit = ref(gapUnits[1])
   const gapAmount = ref(30)
+
+  // DRIFT CORRECTION
+  const selectedDriftCorrectionMethod = ref(0)
+  const driftGapWidth = ref(1)
 
   // /**
   //  * Delete rows from the DataFrame
@@ -150,6 +158,48 @@ export const usePyStore = defineStore('py', () => {
       updateVisualization()
       isLoading.value = false
     })
+  }
+
+  const driftCorrection = () => {
+    if (!selectedData.value.length) {
+      return
+    }
+
+    const df = graphSeriesArray.value[selectedSeriesIndex.value].data.dataFrame
+
+    const index = selectedData.value.map(
+      (point: { date: Date; value: number; index: number }) =>
+        df.get_index_at(point.index)
+    )
+    isLoading.value = true
+
+    setTimeout(() => {
+      const groups: number[][] = [[]]
+      const sorted = index.sort((a, b) => a - b)
+
+      sorted.reduce((acc: number[][], curr: number) => {
+        const target: number[] = acc[acc.length - 1]
+
+        if (!target.length || curr == target[target.length - 1] + 1) {
+          target.push(curr)
+        } else {
+          acc.push([curr])
+        }
+
+        return acc
+      }, groups)
+
+      groups.forEach((g) => {
+        const start = g[0]
+        const end = g[g.length - 1]
+        df.drift_correction(start, end, +driftGapWidth.value)
+      })
+
+      brushSelections.value = []
+      selectedData.value = []
+      updateVisualization()
+      isLoading.value = false
+    }, 0)
   }
 
   // /**
@@ -309,7 +359,9 @@ export const usePyStore = defineStore('py', () => {
     // shift,
     interpolate,
     selectedInterpolationMethod,
-    // driftCorrection,
+    driftCorrection,
+    driftGapWidth,
+    selectedDriftCorrectionMethod,
     // getValueAt,
     // getDatetimeAt,
     // getIndexAt,

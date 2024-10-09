@@ -89,6 +89,10 @@
   <v-dialog v-model="openDeletePoints" max-width="500">
     <DeletePoints @close="openDeletePoints = false" />
   </v-dialog>
+
+  <v-dialog v-model="openDriftCorrection" max-width="500">
+    <DriftCorrection @close="openDriftCorrection = false" />
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -99,6 +103,7 @@ import { ref } from 'vue'
 import ChangeValues from '@/components/EditData/ChangeValues.vue'
 import Interpolate from '@/components/EditData/Interpolate.vue'
 import DeletePoints from '@/components/EditData/DeletePoints.vue'
+import DriftCorrection from '@/components/EditData/DriftCorrection.vue'
 
 // const openVT = ref(false)
 const openRateOfChange = ref(false)
@@ -107,6 +112,7 @@ const openPersistence = ref(false)
 const openChangeValues = ref(false)
 const openInterpolate = ref(false)
 const openDeletePoints = ref(false)
+const openDriftCorrection = ref(false)
 
 const filterPoints = [
   // {
@@ -157,11 +163,13 @@ const editData = [
     clickAction: () => {},
   },
   {
-    title: 'Linear drift correction',
+    title: 'Drift correction',
     props: {
       prependIcon: 'mdi-chart-sankey',
     },
-    clickAction: () => {},
+    clickAction: () => {
+      openDriftCorrection.value = true
+    },
   },
   {
     title: 'Interpolate',
