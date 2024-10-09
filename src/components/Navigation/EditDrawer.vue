@@ -85,6 +85,10 @@
   <v-dialog v-model="openInterpolate" max-width="500">
     <Interpolate @close="openInterpolate = false" />
   </v-dialog>
+
+  <v-dialog v-model="openDeletePoints" max-width="500">
+    <DeletePoints @close="openDeletePoints = false" />
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -94,6 +98,7 @@ import PersistenceCard from '@/components/FilterPoints/PersistenceCard.vue'
 import { ref } from 'vue'
 import ChangeValues from '@/components/EditData/ChangeValues.vue'
 import Interpolate from '@/components/EditData/Interpolate.vue'
+import DeletePoints from '@/components/EditData/DeletePoints.vue'
 
 // const openVT = ref(false)
 const openRateOfChange = ref(false)
@@ -101,6 +106,7 @@ const openGaps = ref(false)
 const openPersistence = ref(false)
 const openChangeValues = ref(false)
 const openInterpolate = ref(false)
+const openDeletePoints = ref(false)
 
 const filterPoints = [
   // {
@@ -177,7 +183,9 @@ const editData = [
     props: {
       prependIcon: 'mdi-trash-can',
     },
-    clickAction: () => {},
+    clickAction: () => {
+      openDeletePoints.value = true
+    },
   },
   {
     title: 'Add points',

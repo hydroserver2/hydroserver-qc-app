@@ -206,7 +206,7 @@ export function generateToolboxOptions() {
       saveAsImage: { name: 'plot_export' },
       myClearSelected: {
         show: true,
-        title: 'Clear selections!',
+        title: 'Clear selections',
         icon: 'path://M2 2h20v20h-20z M7 7l10 10 M7 17l10-10',
         onclick: function () {
           brushSelections.value = []

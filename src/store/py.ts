@@ -129,6 +129,29 @@ export const usePyStore = defineStore('py', () => {
     })
   }
 
+  const deleteDataPoints = () => {
+    if (!selectedData.value.length) {
+      return
+    }
+
+    const df = graphSeriesArray.value[selectedSeriesIndex.value].data.dataFrame
+
+    // TODO
+    const index = selectedData.value.map(
+      (point: { date: Date; value: number; index: number }) =>
+        df.get_index_at(point.index)
+    )
+    isLoading.value = true
+
+    setTimeout(() => {
+      df.delete_data_points(index)
+      brushSelections.value = []
+      selectedData.value = []
+      updateVisualization()
+      isLoading.value = false
+    })
+  }
+
   // /**
   //  * Find gaps in the data
   //  * @param value The time value
@@ -277,7 +300,7 @@ export const usePyStore = defineStore('py', () => {
     $initialized,
 
     // Actions
-    // deleteDataPoints,
+    deleteDataPoints,
     // findGaps,
     // fillGaps,
     changeValues,
