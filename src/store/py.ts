@@ -214,8 +214,27 @@ export const usePyStore = defineStore('py', () => {
 
     const df = graphSeriesArray.value[selectedSeriesIndex.value].data.dataFrame
 
+    // Convert input localized datetimes to UTC
+    const transformedDataPoints = dataPoints.map((point) => {
+      const matches = point[0].match(
+        /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/
+      )
+      if (matches) {
+        const year = parseInt(matches[1])
+        const month = parseInt(matches[2]) - 1
+        const day = parseInt(matches[3])
+        const hour = parseInt(matches[4])
+        const minute = parseInt(matches[5])
+        const second = parseInt(matches[6])
+        const date = new Date(year, month, day, hour, minute, second)
+        return [date.toISOString().substring(0, 19) + 'Z', point[1], point[2]]
+      } else {
+        throw new Error('Invalid date format.')
+      }
+    })
+
     setTimeout(() => {
-      df.add_points(dataPoints)
+      df.add_points(transformedDataPoints)
       brushSelections.value = []
       selectedData.value = []
       updateVisualization()

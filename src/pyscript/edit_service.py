@@ -46,6 +46,8 @@ class Operator(Enum):
   DIV = 'DIV'
   ASSIGN = 'ASSIGN'
 
+ISO_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
 
 class EditService():
   def __init__(self, data) -> None:
@@ -63,7 +65,7 @@ class EditService():
     for i, r in enumerate(rows):
       # parse datetime
       rows[i][0] = datetime.strptime(
-        r[0], "%Y-%m-%dT%H:%M:%SZ")
+        r[0], ISO_FORMAT)
       
       # extract qualifier codes
       rows[i][2] = [q.code for q in r[2]['resultQualifiers']]

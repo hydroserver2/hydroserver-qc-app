@@ -1,4 +1,4 @@
-from edit_service import EditService, FilterOperation
+from edit_service import EditService, FilterOperation, ISO_FORMAT
 from pyscript import Element
 from datetime import datetime
 import json
@@ -54,7 +54,7 @@ class edit_service_wrapper():
     points = points.to_py()
     for i, p in enumerate(points):
       points[i][0] = datetime.strptime(
-        p[0], "%Y-%m-%d %H:%M:%S")
+        p[0], ISO_FORMAT)
       
       # extract qualifier codes
       points[i][2] = [q.code for q in p[2]['resultQualifiers']]

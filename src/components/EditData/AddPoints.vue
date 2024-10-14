@@ -30,7 +30,7 @@
                 v-model="point[0]"
                 :rules="[...required, ...dateTimeFormat]"
                 clearable
-              ></v-text-field>
+              />
             </v-col>
             <v-col
               ><v-text-field
@@ -48,8 +48,8 @@
                 rounded
                 title="Remove"
                 @click="dataPoints.splice(index, 1)"
-              ></v-btn
-            ></v-col>
+              />
+            </v-col>
           </v-row>
         </div>
       </v-card-text>
@@ -73,9 +73,7 @@
 
 <script setup lang="ts">
 import { usePyStore } from '@/store/py'
-import { storeToRefs } from 'pinia'
-import { useDataVisStore } from '@/store/dataVisualization'
-import { computed, onMounted, reactive, Ref } from 'vue'
+import { onMounted, reactive, Ref } from 'vue'
 import type { MaskInputOptions } from 'maska'
 
 const { addDataPoints } = usePyStore()
@@ -92,14 +90,14 @@ const dataPoints: Ref<
     value: number,
     qualifier: Partial<{ resultQualifiers: string[] }>
   ][]
-> = ref([['2024-11-24 12:30:45', 0, { resultQualifiers: [] }]])
+> = ref([['', 0, { resultQualifiers: [] }]])
 const options = reactive<MaskInputOptions>({
   mask: '####-##-## ##:##:##',
   eager: true,
 })
 
 const addRow = () => {
-  dataPoints.value.push(['2024-11-24 12:30:45', 0, { resultQualifiers: [] }])
+  dataPoints.value.push(['', 0, { resultQualifiers: [] }])
   form.value?.validate()
 }
 
