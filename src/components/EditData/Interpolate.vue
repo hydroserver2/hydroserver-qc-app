@@ -19,7 +19,10 @@
           color="primary"
           v-model="selectedInterpolationMethod"
         >
-          <v-radio label="Linear Interpolation" :value="0"></v-radio>
+          <v-radio
+            label="Linear Interpolation"
+            :value="InterpolationMethods.LINEAR"
+          ></v-radio>
         </v-radio-group>
       </div>
     </v-card-text>
@@ -35,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePyStore } from '@/store/py'
+import { InterpolationMethods, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 const { selectedData } = storeToRefs(useDataVisStore())

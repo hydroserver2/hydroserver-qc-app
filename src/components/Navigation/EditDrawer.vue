@@ -93,17 +93,22 @@
   <v-dialog v-model="openDriftCorrection" max-width="500">
     <DriftCorrection @close="openDriftCorrection = false" />
   </v-dialog>
+
+  <v-dialog v-model="openAddPoints" max-width="700">
+    <AddPoints @close="openAddPoints = false" />
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
 // import ValueThresholdsCard from '@/components/FilterPoints/ValueThresholdsCard.vue'
+import { ref } from 'vue'
 import RateOfChangeCard from '@/components/FilterPoints/RateOfChangeCard.vue'
 import PersistenceCard from '@/components/FilterPoints/PersistenceCard.vue'
-import { ref } from 'vue'
 import ChangeValues from '@/components/EditData/ChangeValues.vue'
 import Interpolate from '@/components/EditData/Interpolate.vue'
 import DeletePoints from '@/components/EditData/DeletePoints.vue'
 import DriftCorrection from '@/components/EditData/DriftCorrection.vue'
+import AddPoints from '../EditData/AddPoints.vue'
 
 // const openVT = ref(false)
 const openRateOfChange = ref(false)
@@ -113,6 +118,7 @@ const openChangeValues = ref(false)
 const openInterpolate = ref(false)
 const openDeletePoints = ref(false)
 const openDriftCorrection = ref(false)
+const openAddPoints = ref(false)
 
 const filterPoints = [
   // {
@@ -200,7 +206,9 @@ const editData = [
     props: {
       prependIcon: 'mdi-plus',
     },
-    clickAction: () => {},
+    clickAction: () => {
+      openAddPoints.value = true
+    },
   },
 ]
 </script>

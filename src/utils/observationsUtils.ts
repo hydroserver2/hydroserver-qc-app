@@ -46,7 +46,6 @@ export const fetchObservationsParallel = async (
     // TODO: format qualifier
     // qualifiers.resultQualifiers.map((q) => q.code),
 
-    // TODO: extract qualifier
     return results.map((r) => r.value[0]?.dataArray || []).flat()
   } catch (error) {
     console.error('Error fetching data:', error)

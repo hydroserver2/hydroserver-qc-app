@@ -18,7 +18,10 @@
         color="primary"
         v-model="selectedDriftCorrectionMethod"
       >
-        <v-radio label="Linear Drift Correction" :value="0"></v-radio>
+        <v-radio
+          label="Linear Drift Correction"
+          :value="DriftCorrectionMethods.LINEAR"
+        ></v-radio>
       </v-radio-group>
 
       <v-text-field
@@ -42,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePyStore } from '@/store/py'
+import { DriftCorrectionMethods, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 

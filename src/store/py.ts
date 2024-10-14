@@ -60,13 +60,13 @@ export const usePyStore = defineStore('py', () => {
 
   // GAP ANALYSYS
   const interpolateValues = ref(false)
-  const selectedInterpolationMethod = ref(0)
+  const selectedInterpolationMethod = ref(InterpolationMethods.LINEAR)
   const gapUnits = [...Object.keys(TimeUnit)]
   const selectedGapUnit = ref(gapUnits[1])
   const gapAmount = ref(30)
 
   // DRIFT CORRECTION
-  const selectedDriftCorrectionMethod = ref(0)
+  const selectedDriftCorrectionMethod = ref(DriftCorrectionMethods.LINEAR)
   const driftGapWidth = ref(1)
 
   // /**
@@ -144,7 +144,6 @@ export const usePyStore = defineStore('py', () => {
 
     const df = graphSeriesArray.value[selectedSeriesIndex.value].data.dataFrame
 
-    // TODO
     const index = selectedData.value.map(
       (point: { date: Date; value: number; index: number }) =>
         df.get_index_at(point.index)
@@ -200,6 +199,28 @@ export const usePyStore = defineStore('py', () => {
       updateVisualization()
       isLoading.value = false
     }, 0)
+  }
+
+  const addDataPoints = (
+    dataPoints: [
+      datetime: string,
+      value: number,
+      qualifier: Partial<{ resultQualifiers: string[] }>
+    ][]
+  ) => {
+    if (!dataPoints || !dataPoints.length) {
+      return
+    }
+
+    const df = graphSeriesArray.value[selectedSeriesIndex.value].data.dataFrame
+
+    setTimeout(() => {
+      df.add_points(dataPoints)
+      brushSelections.value = []
+      selectedData.value = []
+      updateVisualization()
+      isLoading.value = false
+    })
   }
 
   // /**
@@ -366,7 +387,7 @@ export const usePyStore = defineStore('py', () => {
     // getDatetimeAt,
     // getIndexAt,
     instantiateDataFrame,
-    // addPoints,
+    addDataPoints,
     // count,
     operators,
     selectedOperator,

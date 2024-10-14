@@ -162,7 +162,7 @@ class EditService():
 
       # Annotate the points that will fill this gap
       while start < end:
-        points.append([start, -9999])
+        points.append([start, -9999, []])
         index.append(gap_start_index)
         start = start + timegap
 

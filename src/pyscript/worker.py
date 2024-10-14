@@ -53,15 +53,11 @@ class edit_service_wrapper():
   def add_points(self, points):
     points = points.to_py()
     for i, p in enumerate(points):
-      # parse datetime from javascript timestamp
-      # points[i][0] = datetime.fromtimestamp(p[0] * 10 ** 6)
-      # print(p[0].to_py())
-      # points[i][0] = p[0].to_py()
-      # points[i][0] = datetime.strptime(
-      #   p[0], "%Y-%m-%dT%H:%M:%SZ")
+      points[i][0] = datetime.strptime(
+        p[0], "%Y-%m-%d %H:%M:%S")
       
       # extract qualifier codes
-      points[i][2] = [q.code for q in p['resultQualifiers']]
+      points[i][2] = [q.code for q in p[2]['resultQualifiers']]
 
     return self.edit_service.add_points(points)
 
