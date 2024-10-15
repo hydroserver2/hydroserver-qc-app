@@ -82,6 +82,10 @@
     <ChangeValues @close="openChangeValues = false" />
   </v-dialog>
 
+  <v-dialog v-model="openShiftDatetimes" max-width="500">
+    <ShiftDatetimes @close="openShiftDatetimes = false" />
+  </v-dialog>
+
   <v-dialog v-model="openInterpolate" max-width="500">
     <Interpolate @close="openInterpolate = false" />
   </v-dialog>
@@ -109,12 +113,14 @@ import Interpolate from '@/components/EditData/Interpolate.vue'
 import DeletePoints from '@/components/EditData/DeletePoints.vue'
 import DriftCorrection from '@/components/EditData/DriftCorrection.vue'
 import AddPoints from '../EditData/AddPoints.vue'
+import ShiftDatetimes from '@/components/EditData/ShiftDatetimes.vue'
 
 // const openVT = ref(false)
 const openRateOfChange = ref(false)
 const openGaps = ref(false)
 const openPersistence = ref(false)
 const openChangeValues = ref(false)
+const openShiftDatetimes = ref(false)
 const openInterpolate = ref(false)
 const openDeletePoints = ref(false)
 const openDriftCorrection = ref(false)
@@ -188,9 +194,15 @@ const editData = [
     title: 'Change values',
     props: {
       prependIcon: 'mdi-pencil',
-      disabled: true,
     },
     clickAction: () => (openChangeValues.value = true),
+  },
+  {
+    title: 'Shift Datetimes',
+    props: {
+      prependIcon: 'mdi-calendar',
+    },
+    clickAction: () => (openShiftDatetimes.value = true),
   },
   {
     title: 'Delete points',

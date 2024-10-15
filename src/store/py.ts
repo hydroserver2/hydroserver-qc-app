@@ -69,6 +69,11 @@ export const usePyStore = defineStore('py', () => {
   const selectedDriftCorrectionMethod = ref(DriftCorrectionMethods.LINEAR)
   const driftGapWidth = ref(1)
 
+  // SHIFT VALUES
+  const shiftUnits = [...Object.keys(TimeUnit)]
+  const selectedShiftUnit = ref(shiftUnits[1])
+  const shiftAmount = ref(15)
+
   // /**
   //  * Delete rows from the DataFrame
   //  * @param index An array containing the list of index of values to perform the operations on.
@@ -130,6 +135,33 @@ export const usePyStore = defineStore('py', () => {
     setTimeout(() => {
       // TODO: value error when interpolating values lesser than 1
       df.interpolate(index)
+      brushSelections.value = []
+      selectedData.value = []
+      updateVisualization()
+      isLoading.value = false
+    })
+  }
+
+  const shift = () => {
+    if (!selectedData.value.length) {
+      return
+    }
+
+    const df = graphSeriesArray.value[selectedSeriesIndex.value].data.dataFrame
+
+    const index = selectedData.value.map(
+      (point: { date: Date; value: number; index: number }) =>
+        df.get_index_at(point.index)
+    )
+    isLoading.value = true
+
+    setTimeout(() => {
+      df.shift_points(
+        index,
+        shiftAmount.value,
+        // @ts-ignore
+        TimeUnit[selectedShiftUnit.value]
+      )
       brushSelections.value = []
       selectedData.value = []
       updateVisualization()
@@ -396,7 +428,10 @@ export const usePyStore = defineStore('py', () => {
     changeValues,
     // getDataFrame,
     // setFilter,
-    // shift,
+    shift,
+    shiftUnits,
+    selectedShiftUnit,
+    shiftAmount,
     interpolate,
     selectedInterpolationMethod,
     driftCorrection,
