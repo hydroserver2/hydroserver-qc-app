@@ -72,15 +72,22 @@
 </template>
 
 <script setup lang="ts">
-import { usePyStore } from '@/store/py'
 import { onMounted, reactive, Ref } from 'vue'
 import type { MaskInputOptions } from 'maska'
 
-const { addDataPoints } = usePyStore()
+import { useEChartsStore } from '@/store/echarts'
+const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+const { updateVisualization } = useEChartsStore()
+
+const { selectedData } = storeToRefs(useDataVisStore())
+
 import { vMaska } from 'maska/vue'
 import { ref } from 'vue'
 import { dateTimeFormat, required, requiredNumber } from '@/utils/rules'
 import { VForm } from 'vuetify/lib/components/index.mjs'
+import { storeToRefs } from 'pinia'
+import { useDataVisStore } from '@/store/dataVisualization'
+import { EnumEditOperations } from '@/types'
 
 const form = ref<InstanceType<typeof VForm>>()
 
@@ -104,7 +111,45 @@ const addRow = () => {
 const emit = defineEmits(['close'])
 
 const onAddDataPoints = () => {
-  addDataPoints(dataPoints.value)
+  if (!dataPoints.value || !dataPoints.value.length) {
+    return
+  }
+
+  // Convert input localized datetimes to UTC
+  const transformedDataPoints: [
+    string,
+    number,
+    Partial<{
+      resultQualifiers: string[]
+    }>
+  ][] = dataPoints.value.map((point) => {
+    const matches = point[0].match(
+      /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/
+    )
+    if (matches) {
+      const year = parseInt(matches[1])
+      const month = parseInt(matches[2]) - 1
+      const day = parseInt(matches[3])
+      const hour = parseInt(matches[4])
+      const minute = parseInt(matches[5])
+      const second = parseInt(matches[6])
+      const date = new Date(year, month, day, hour, minute, second)
+      return [date.toISOString().substring(0, 19) + 'Z', point[1], point[2]]
+    } else {
+      throw new Error('Invalid date format.')
+    }
+  })
+
+  setTimeout(() => {
+    selectedSeries.value.data.dispatch(
+      EnumEditOperations.ADD_POINTS,
+      transformedDataPoints
+    )
+    brushSelections.value = []
+    selectedData.value = []
+    updateVisualization()
+  })
+
   emit('close')
 }
 

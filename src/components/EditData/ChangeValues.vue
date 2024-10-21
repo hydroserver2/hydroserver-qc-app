@@ -70,18 +70,44 @@
 </template>
 
 <script setup lang="ts">
-import { usePyStore } from '@/store/py'
+import { Operator, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-const { selectedData } = storeToRefs(useDataVisStore())
+import { useEChartsStore } from '@/store/echarts'
+import { EnumEditOperations } from '@/types'
 
-const { changeValues, operators } = usePyStore()
+const { updateVisualization } = useEChartsStore()
+const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+const { selectedData } = storeToRefs(useDataVisStore())
+const { operators } = usePyStore()
 const { selectedOperator, operationValue } = storeToRefs(usePyStore())
 
 const emit = defineEmits(['close'])
 
 const onChangeValues = () => {
-  changeValues()
+  if (!selectedData.value.length) {
+    return
+  }
+
+  const operator = Operator[operators[selectedOperator.value] as Operator]
+
+  const index = selectedData.value.map(
+    (point: { date: Date; value: number; index: number }) =>
+      selectedSeries.value.data.dataFrame.get_index_at(point.index)
+  )
+
+  setTimeout(() => {
+    selectedSeries.value.data.dispatch(
+      EnumEditOperations.CHANGE_VALUES,
+      index,
+      operator,
+      operationValue.value
+    )
+    brushSelections.value = []
+    selectedData.value = []
+    updateVisualization()
+  })
+
   emit('close')
 }
 </script>

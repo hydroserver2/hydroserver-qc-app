@@ -30,17 +30,34 @@
 </template>
 
 <script setup lang="ts">
-import { usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
+import { useEChartsStore } from '@/store/echarts'
+import { EnumEditOperations } from '@/types'
+const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+const { updateVisualization } = useEChartsStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
-const { deleteDataPoints } = usePyStore()
 
 const emit = defineEmits(['close'])
 
 const onDeleteDataPoints = () => {
-  deleteDataPoints()
+  if (!selectedData.value.length) {
+    return
+  }
+
+  const index = selectedData.value.map(
+    (point: { date: Date; value: number; index: number }) =>
+      selectedSeries.value.data.dataFrame.get_index_at(point.index)
+  )
+
+  setTimeout(() => {
+    selectedSeries.value.data.dispatch(EnumEditOperations.DELETE_POINTS, index)
+    brushSelections.value = []
+    selectedData.value = []
+    updateVisualization()
+  })
+
   emit('close')
 }
 </script>

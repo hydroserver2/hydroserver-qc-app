@@ -41,15 +41,41 @@
 import { usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-const { selectedData } = storeToRefs(useDataVisStore())
+import { EnumEditOperations } from '@/types'
 
-const { shift, shiftUnits } = usePyStore()
+import { useEChartsStore } from '@/store/echarts'
+const { selectedData } = storeToRefs(useDataVisStore())
+const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+const { updateVisualization } = useEChartsStore()
+
+const { shiftUnits } = usePyStore()
 const { selectedShiftUnit, shiftAmount } = storeToRefs(usePyStore())
 
 const emit = defineEmits(['close'])
 
 const onShiftDatetimes = () => {
-  shift()
+  if (!selectedData.value.length) {
+    return
+  }
+
+  const index = selectedData.value.map(
+    (point: { date: Date; value: number; index: number }) =>
+      selectedSeries.value.data.dataFrame.get_index_at(point.index)
+  )
+
+  setTimeout(() => {
+    selectedSeries.value.data.dispatch(
+      EnumEditOperations.SHIFT_DATETIMES,
+      index,
+      shiftAmount.value,
+      // @ts-ignore
+      TimeUnit[selectedShiftUnit.value]
+    )
+    brushSelections.value = []
+    selectedData.value = []
+    updateVisualization()
+  })
+
   emit('close')
 }
 </script>

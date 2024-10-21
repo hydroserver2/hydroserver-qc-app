@@ -1,6 +1,11 @@
-import { Datastream, GraphSeries, ObservationRecord } from '@/types'
+import {
+  Datastream,
+  EnumEditOperations,
+  GraphSeries,
+  ObservationRecord,
+} from '@/types'
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { computed, ComputedRef, Ref, ref, watch } from 'vue'
 import { EChartsOption, LineSeriesOption } from 'echarts'
 import { EChartsColors } from '@/utils/materialColors'
 import {
@@ -25,6 +30,14 @@ export const useEChartsStore = defineStore('ECharts', () => {
   // const prevIds = ref<string[]>([]) // DatastreamIds that were previously plotted
   /** The index of the ECharts series that represents the datastream selected for quality control */
   const selectedSeriesIndex = ref(-1)
+  /** The edit history for the currently selected series */
+  const editHistory: Ref<{ method: EnumEditOperations; args?: any[] }[]> = ref(
+    []
+  )
+
+  const selectedSeries: ComputedRef<GraphSeries> = computed(() => {
+    return graphSeriesArray.value[selectedSeriesIndex.value]
+  })
 
   const echartsOption = ref<EChartsOption | undefined>()
   const dataZoomStart = ref(0)
@@ -173,6 +186,8 @@ export const useEChartsStore = defineStore('ECharts', () => {
     showTooltip,
     // prevIds,
     selectedSeriesIndex,
+    selectedSeries,
+    editHistory,
     brushSelections,
     updateVisualization,
     clearChartState,

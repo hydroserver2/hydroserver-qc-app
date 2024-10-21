@@ -26,18 +26,24 @@
       </div>
     </div>
   </div>
-  <div v-else-if="currentView === DrawerType.Edit">
-    <div class="my-4 mx-4">
-      <v-card class="pa-2">
-        <DataVisualizationCard :cardHeight="94" />
+  <v-row v-else-if="currentView === DrawerType.Edit" class="pa-4">
+    <v-col>
+      <v-card>
+        <v-card-text>
+          <DataVisualizationCard :cardHeight="94" />
+        </v-card-text>
       </v-card>
-    </div>
-  </div>
+    </v-col>
+    <v-col cols="4">
+      <EditHistory />
+    </v-col>
+  </v-row>
 </template>
 
 <script setup lang="ts">
 import DataVisDatasetsTable from '@/components/VisualizeData/DataVisDatasetsTable.vue'
 import DataVisualizationCard from '@/components/VisualizeData/DataVisualizationCard.vue'
+import EditHistory from '@/components/EditData/EditHistory.vue'
 
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'

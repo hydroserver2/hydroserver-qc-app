@@ -41,15 +41,34 @@
 import { InterpolationMethods, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-const { selectedData } = storeToRefs(useDataVisStore())
 
-const { interpolate } = usePyStore()
+import { useEChartsStore } from '@/store/echarts'
+import { EnumEditOperations } from '@/types'
+const { selectedData } = storeToRefs(useDataVisStore())
+const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+const { updateVisualization } = useEChartsStore()
+
 const { selectedInterpolationMethod } = storeToRefs(usePyStore())
 
 const emit = defineEmits(['close'])
 
 const onInterpolate = () => {
-  interpolate()
+  if (!selectedData.value.length) {
+    return
+  }
+
+  const index = selectedData.value.map(
+    (point: { date: Date; value: number; index: number }) =>
+      selectedSeries.value.data.dataFrame.get_index_at(point.index)
+  )
+
+  setTimeout(() => {
+    // TODO: value error when interpolating values lesser than 1
+    selectedSeries.value.data.dispatch(EnumEditOperations.INTERPOLATE, index)
+    brushSelections.value = []
+    selectedData.value = []
+    updateVisualization()
+  })
   emit('close')
 }
 </script>

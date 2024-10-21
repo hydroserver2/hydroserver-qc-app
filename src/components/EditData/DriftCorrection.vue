@@ -49,15 +49,61 @@ import { DriftCorrectionMethods, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 
-const { selectedData } = storeToRefs(useDataVisStore())
 const { driftGapWidth, selectedDriftCorrectionMethod } = storeToRefs(
   usePyStore()
 )
-const { driftCorrection } = usePyStore()
+
+import { EnumEditOperations } from '@/types'
+import { useEChartsStore } from '@/store/echarts'
+const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+const { updateVisualization } = useEChartsStore()
+
+const { selectedData } = storeToRefs(useDataVisStore())
 const emit = defineEmits(['close'])
 
 const onDriftCorrection = () => {
-  driftCorrection()
+  if (!selectedData.value.length) {
+    return
+  }
+
+  const index = selectedData.value.map(
+    (point: { date: Date; value: number; index: number }) =>
+      selectedSeries.value.data.dataFrame.get_index_at(point.index)
+  )
+
+  setTimeout(() => {
+    let groups: number[][] = [[]]
+    const sorted = index.sort((a, b) => a - b)
+
+    sorted.reduce((acc: number[][], curr: number) => {
+      const target: number[] = acc[acc.length - 1]
+
+      if (!target.length || curr == target[target.length - 1] + 1) {
+        target.push(curr)
+      } else {
+        acc.push([curr])
+      }
+
+      return acc
+    }, groups)
+
+    groups = groups.filter((g) => g.length > 1)
+
+    groups.forEach((g) => {
+      const start = g[0]
+      const end = g[g.length - 1]
+      selectedSeries.value.data.dispatch(
+        EnumEditOperations.DRIFT_CORRECTION,
+        start,
+        end,
+        +driftGapWidth.value
+      )
+    })
+
+    brushSelections.value = []
+    selectedData.value = []
+    updateVisualization()
+  }, 0)
   emit('close')
 }
 </script>

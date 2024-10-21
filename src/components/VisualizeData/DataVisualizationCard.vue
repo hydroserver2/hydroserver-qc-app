@@ -114,6 +114,7 @@ const {
   echartsOption: option,
   selectedSeriesIndex,
   brushSelections,
+  selectedSeries,
 } = storeToRefs(useEChartsStore())
 
 const echartsRef = ref<typeof VChart | null>(null)
@@ -193,8 +194,7 @@ function handleBrushSelected(params: any) {
 
   previousBrushAreas.value = currentBrush
 
-  const seriesData =
-    graphSeriesArray.value[selectedSeriesIndex.value].data.dataset
+  const seriesData = selectedSeries.value.data.dataset
 
   const selectedDataPoints = new Set<[number, number, number]>()
 

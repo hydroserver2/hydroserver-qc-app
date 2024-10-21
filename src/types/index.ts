@@ -1,5 +1,13 @@
-import { usePyStore } from '@/store/py'
+import { useDataVisStore } from '@/store/dataVisualization'
+import { useEChartsStore } from '@/store/echarts'
+import { Operator, TimeUnit, usePyStore } from '@/store/py'
+import { fetchObservationsParallel } from '@/utils/observationsUtils'
 import { LineSeriesOption } from 'echarts'
+import { storeToRefs } from 'pinia'
+
+export type EnumDictionary<T extends string | symbol | number, U> = {
+  [K in T]: U
+}
 
 export type DataPoint = {
   date: Date
@@ -21,6 +29,15 @@ export type Observation = [string, number, Qualifier]
 
 export type DataArray = Observation[]
 
+export enum EnumEditOperations {
+  ADD_POINTS = 'ADD_POINTS',
+  CHANGE_VALUES = 'CHANGE_VALUES',
+  DELETE_POINTS = 'DELETE_POINTS',
+  DRIFT_CORRECTION = 'DRIFT_CORRECTION',
+  INTERPOLATE = 'INTERPOLATE',
+  SHIFT_DATETIMES = 'SHIFT_DATETIMES',
+}
+
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   dataFrame: any
@@ -29,11 +46,15 @@ export class ObservationRecord {
     dimensions: [],
     source: {},
   }
+  history: { method: EnumEditOperations; args?: any[] }[]
   isLoading: boolean
+  ds: Datastream
 
-  constructor(data: any) {
+  constructor(data: any, ds: Datastream) {
     const { instantiateDataFrame } = usePyStore()
     const components = ['date', 'value', 'qualifier']
+    this.history = []
+    this.ds = ds
 
     this.dataFrame = instantiateDataFrame(
       JSON.stringify({
@@ -47,7 +68,30 @@ export class ObservationRecord {
     this.isLoading = false
   }
 
-  // TODO: this is an expensive operation and should be only executed when necessary
+  async reload() {
+    const { instantiateDataFrame } = usePyStore()
+    const { editHistory } = storeToRefs(useEChartsStore())
+    const { beginDate, endDate } = storeToRefs(useDataVisStore())
+
+    const fetchedData = await fetchObservationsParallel(
+      this.ds,
+      beginDate.value,
+      endDate.value
+    )
+    const components = ['date', 'value', 'qualifier']
+
+    this.dataFrame = instantiateDataFrame(
+      JSON.stringify({
+        dataArray: fetchedData,
+        components: components,
+      })
+    )
+    this.history = []
+    editHistory.value = [...this.history]
+    this.generateDataset()
+  }
+
+  /** This is an expensive operation and should be only executed when necessary */
   generateDataset() {
     const components = ['date', 'value', 'qualifier']
     this.dataset = {
@@ -73,6 +117,89 @@ export class ObservationRecord {
       this.dataFrame.count() - 1
     )
     return new Date(endDateTime)
+  }
+
+  /** Dispatch an operation and log its signature in hisotry */
+  dispatch(action: EnumEditOperations, ...args: any) {
+    const { editHistory } = storeToRefs(useEChartsStore())
+    const actions: EnumDictionary<EnumEditOperations, Function> = {
+      [EnumEditOperations.ADD_POINTS]: this._addDataPoints,
+      [EnumEditOperations.CHANGE_VALUES]: this._changeValues,
+      [EnumEditOperations.DELETE_POINTS]: this._deleteDataPoints,
+      [EnumEditOperations.DRIFT_CORRECTION]: this._driftCorrection,
+      [EnumEditOperations.INTERPOLATE]: this._interpolate,
+      [EnumEditOperations.SHIFT_DATETIMES]: this._shift,
+    }
+
+    try {
+      actions[action].apply(this, args)
+      this.history.push({ method: action, args })
+      editHistory.value = [...this.history]
+    } catch (e) {
+      console.log(
+        `Failed to execute operation: ${action} with arguments: `,
+        args
+      )
+      console.log(e)
+    }
+  }
+
+  /**
+   * @param index An array containing the list of index of values to perform the operations on.
+   * @param operator The operator that will be applied
+   * @param value The value to use in the operation
+   * @returns The modified DataFrame
+   */
+  _changeValues(index: number[], operator: Operator, value: number) {
+    this.dataFrame.change_values(index, operator, value)
+  }
+
+  _interpolate(index: number[]) {
+    this.dataFrame.interpolate(index)
+  }
+
+  /**
+   * Shifts the selected indexes by a constant
+   * @param index The index list of entries to shift
+   * @param amount Number of {@link TimeUnit}
+   * @param unit {@link TimeUnit}
+   * @returns
+   */
+  _shift(index: number[], amount: number, unit: TimeUnit) {
+    this.dataFrame.shift_points(index, amount, unit)
+  }
+
+  /**
+   *
+   * @param index The index list of entries to shift
+   */
+  _deleteDataPoints(index: number[]) {
+    this.dataFrame.delete_data_points(index)
+  }
+
+  /**
+   *
+   * @param start The start index
+   * @param end The end index
+   * @param value The drift amount
+   */
+  _driftCorrection(start: number, end: number, value: number) {
+    this.dataFrame.drift_correction(start, end, value)
+  }
+
+  /**
+   * @param dataPoints
+   */
+  _addDataPoints(
+    dataPoints: [
+      string,
+      number,
+      Partial<{
+        resultQualifiers: string[]
+      }>
+    ][]
+  ) {
+    this.dataFrame.add_points(dataPoints)
   }
 }
 

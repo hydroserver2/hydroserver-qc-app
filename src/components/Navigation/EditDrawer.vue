@@ -1,7 +1,7 @@
 <template>
   <v-navigation-drawer
     permanent
-    :width="350"
+    :width="250"
     rounded="e-xl"
     elevation="3"
     class="bg-navbar"
@@ -66,17 +66,25 @@
     </v-list>
   </v-navigation-drawer>
 
-  <!-- <v-dialog v-model="openVT" max-width="500">
-    <ValueThresholdsCard @close="openVT = false" />
-  </v-dialog> -->
+  <!-- FILTER POINTS -->
+
+  <v-dialog v-model="openValueThreshold" max-width="500">
+    <ValueThreshold @close="openValueThreshold = false" />
+  </v-dialog>
+
+  <v-dialog v-model="openGaps" max-width="500">
+    <Gaps @close="openGaps = false" />
+  </v-dialog>
 
   <v-dialog v-model="openRateOfChange" max-width="500">
-    <RateOfChangeCard @close="openRateOfChange = false" />
+    <RateOfChange @close="openRateOfChange = false" />
   </v-dialog>
 
   <v-dialog v-model="openPersistence" max-width="500">
-    <PersistenceCard @close="openPersistence = false" />
+    <Persistence @close="openPersistence = false" />
   </v-dialog>
+
+  <!-- EDIT DATA -->
 
   <v-dialog v-model="openChangeValues" max-width="500">
     <ChangeValues @close="openChangeValues = false" />
@@ -104,21 +112,27 @@
 </template>
 
 <script setup lang="ts">
-// import ValueThresholdsCard from '@/components/FilterPoints/ValueThresholdsCard.vue'
 import { ref } from 'vue'
-import RateOfChangeCard from '@/components/FilterPoints/RateOfChangeCard.vue'
-import PersistenceCard from '@/components/FilterPoints/PersistenceCard.vue'
+
+import ValueThreshold from '@/components/FilterPoints/ValueThreshold.vue'
+import RateOfChange from '@/components/FilterPoints/RateOfChange.vue'
+import Persistence from '@/components/FilterPoints/Persistence.vue'
+import Gaps from '@/components/FilterPoints/Gaps.vue'
+
 import ChangeValues from '@/components/EditData/ChangeValues.vue'
 import Interpolate from '@/components/EditData/Interpolate.vue'
 import DeletePoints from '@/components/EditData/DeletePoints.vue'
 import DriftCorrection from '@/components/EditData/DriftCorrection.vue'
-import AddPoints from '../EditData/AddPoints.vue'
+import AddPoints from '@/components/EditData/AddPoints.vue'
 import ShiftDatetimes from '@/components/EditData/ShiftDatetimes.vue'
 
-// const openVT = ref(false)
+// FILTER POINTS
+const openValueThreshold = ref(false)
 const openRateOfChange = ref(false)
 const openGaps = ref(false)
 const openPersistence = ref(false)
+
+// EDIT DATA
 const openChangeValues = ref(false)
 const openShiftDatetimes = ref(false)
 const openInterpolate = ref(false)
@@ -127,16 +141,16 @@ const openDriftCorrection = ref(false)
 const openAddPoints = ref(false)
 
 const filterPoints = [
-  // {
-  //   title: 'Value thresholds',
-  //   props: {
-  //     prependIcon: 'mdi-align-vertical-center',
-  //   },
-  //   value: 1,
-  //   clickAction: () => {
-  //     openVT.value = true
-  //   },
-  // },
+  {
+    title: 'Value thresholds',
+    props: {
+      prependIcon: 'mdi-align-vertical-center',
+    },
+    value: 1,
+    clickAction: () => {
+      openValueThreshold.value = true
+    },
+  },
   {
     title: 'Rate of change',
     props: {

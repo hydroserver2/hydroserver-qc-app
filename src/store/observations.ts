@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Datastream, ObservationRecord } from '@/types'
 import { fetchObservationsParallel } from '@/utils/observationsUtils'
-import { FilterOperation, usePyStore } from '@/store/py'
+import { FilterOperation } from '@/store/py'
 
 export const useObservationStore = defineStore('observations', () => {
   const observations = ref<Record<string, ObservationRecord>>({})
@@ -30,17 +30,12 @@ export const useObservationStore = defineStore('observations', () => {
         endTime
       )
 
-      observations.value[id] = new ObservationRecord(fetchedData)
+      observations.value[id] = new ObservationRecord(fetchedData, datastream)
 
       // Return the dataframe
       return observations.value[id]
     } else {
       const existingRecord = observations.value[id]
-      // const newBeginTime = new Date(beginTime).getTime()
-      // const newEndTime = new Date(endTime).getTime()
-      // const storedBeginTime = new Date(existingRecord.beginTime).getTime()
-      // const storedEndTime = new Date(existingRecord.endTime).getTime()
-
       let beginDataPromise: Promise<any[]> = Promise.resolve([])
       let endDataPromise: Promise<any[]> = Promise.resolve([])
 

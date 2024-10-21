@@ -1,6 +1,4 @@
 <template>
-  <DataVisualizationControls />
-  <v-btn @click="deletePoints">Test Delete Points</v-btn>
   <div class="d-flex justify-end mb-4 mx-2">
     <v-btn
       color="primary-lighten-2"
@@ -111,7 +109,6 @@ import { computed, ref, watch } from 'vue'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
 import { useEChartsStore } from '@/store/echarts'
-import DataVisualizationControls from '@/components/VisualizeData/DataVisualizationControls.vue'
 
 const {
   matchesSelectedObservedProperty,
@@ -127,9 +124,6 @@ const {
   selectedObservedPropertyNames,
   selectedProcessingLevelNames,
 } = storeToRefs(useDataVisStore())
-
-const { graphSeriesArray } = storeToRefs(useEChartsStore())
-const { updateVisualization } = useEChartsStore()
 
 const searchThing = ref('')
 const searchObservedProperty = ref('')
@@ -223,12 +217,6 @@ const clearFilters = () => {
 }
 
 const panels = ref([0, 1, 2])
-
-// TODO: testing
-const deletePoints = () => {
-  graphSeriesArray.value[0].data.dataFrame.delete_data_points([0])
-  updateVisualization()
-}
 </script>
 
 <style scoped>

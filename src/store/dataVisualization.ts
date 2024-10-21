@@ -346,5 +346,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     setDateRange,
     onDateBtnClick,
     resetState,
+    updateOrFetchGraphSeries,
   }
 })
