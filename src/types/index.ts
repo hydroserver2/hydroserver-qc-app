@@ -46,7 +46,7 @@ export class ObservationRecord {
     dimensions: [],
     source: {},
   }
-  history: { method: EnumEditOperations; args?: any[] }[]
+  history: { method: EnumEditOperations; args?: any[]; icon: string }[]
   isLoading: boolean
   ds: Datastream
 
@@ -63,14 +63,11 @@ export class ObservationRecord {
       })
     )
 
-    this.generateDataset()
-
     this.isLoading = false
   }
 
   async reload() {
     const { instantiateDataFrame } = usePyStore()
-    const { editHistory } = storeToRefs(useEChartsStore())
     const { beginDate, endDate } = storeToRefs(useDataVisStore())
 
     const fetchedData = await fetchObservationsParallel(
@@ -86,13 +83,32 @@ export class ObservationRecord {
         components: components,
       })
     )
+  }
+
+  resetHistory() {
+    const { editHistory } = storeToRefs(useEChartsStore())
     this.history = []
     editHistory.value = [...this.history]
-    this.generateDataset()
+  }
+
+  async reloadHistory(index: number) {
+    let newHistory = this.history.slice(0, index + 1)
+
+    await this.reload()
+
+    this.resetHistory()
+
+    for (let i = 0; i < newHistory.length; i++) {
+      // TODO: this is not an async call
+      await this.dispatch(newHistory[i].method, newHistory[i].args)
+    }
+
+    return
   }
 
   /** This is an expensive operation and should be only executed when necessary */
   generateDataset() {
+    console.log('generateDataset')
     const components = ['date', 'value', 'qualifier']
     this.dataset = {
       dimensions: components,
@@ -120,7 +136,10 @@ export class ObservationRecord {
   }
 
   /** Dispatch an operation and log its signature in hisotry */
-  dispatch(action: EnumEditOperations, ...args: any) {
+  async dispatch(
+    action: EnumEditOperations | [EnumEditOperations, ...any][],
+    ...args: any
+  ) {
     const { editHistory } = storeToRefs(useEChartsStore())
     const actions: EnumDictionary<EnumEditOperations, Function> = {
       [EnumEditOperations.ADD_POINTS]: this._addDataPoints,
@@ -131,10 +150,30 @@ export class ObservationRecord {
       [EnumEditOperations.SHIFT_DATETIMES]: this._shift,
     }
 
+    // TODO: consolidate with icons in EditDrawer component
+    const editIcons: EnumDictionary<EnumEditOperations, string> = {
+      [EnumEditOperations.ADD_POINTS]: 'mdi-plus',
+      [EnumEditOperations.CHANGE_VALUES]: 'mdi-pencil',
+      [EnumEditOperations.DELETE_POINTS]: 'mdi-trash-can',
+      [EnumEditOperations.DRIFT_CORRECTION]: 'mdi-chart-sankey',
+      [EnumEditOperations.INTERPOLATE]: 'mdi-transit-connection-horizontal',
+      [EnumEditOperations.SHIFT_DATETIMES]: 'mdi-calendar',
+    }
+
     try {
-      actions[action].apply(this, args)
-      this.history.push({ method: action, args })
-      editHistory.value = [...this.history]
+      if (Array.isArray(action)) {
+        for (let i = 0; i < action.length; i++) {
+          const method = action[i][0]
+          const args = action[i].slice(1, action[i].length)
+          await actions[method].apply(this, args)
+          this.history.push({ method, args, icon: editIcons[method] })
+        }
+        editHistory.value = [...this.history]
+      } else {
+        await actions[action].apply(this, args)
+        this.history.push({ method: action, args, icon: editIcons[action] })
+        editHistory.value = [...this.history]
+      }
     } catch (e) {
       console.log(
         `Failed to execute operation: ${action} with arguments: `,
@@ -142,6 +181,8 @@ export class ObservationRecord {
       )
       console.log(e)
     }
+
+    this.generateDataset()
   }
 
   /**

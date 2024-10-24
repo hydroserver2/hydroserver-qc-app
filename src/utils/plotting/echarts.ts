@@ -419,7 +419,7 @@ export const createEChartsOption = (
   const gridLeftPadding = leftYAxesCount * 85
 
   // TODO: this is an expensive operation and should be only executed when necessary
-  seriesArray.forEach((s) => s.data?.generateDataset())
+  // seriesArray.forEach((s) => s.data?.generateDataset())
 
   let echartsOption: EChartsOption = {
     // https://echarts.apache.org/en/option.html#dataset.source

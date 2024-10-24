@@ -41,7 +41,7 @@ const { selectedData } = storeToRefs(useDataVisStore())
 
 const emit = defineEmits(['close'])
 
-const onDeleteDataPoints = () => {
+const onDeleteDataPoints = async () => {
   if (!selectedData.value.length) {
     return
   }
@@ -51,12 +51,13 @@ const onDeleteDataPoints = () => {
       selectedSeries.value.data.dataFrame.get_index_at(point.index)
   )
 
-  setTimeout(() => {
-    selectedSeries.value.data.dispatch(EnumEditOperations.DELETE_POINTS, index)
-    brushSelections.value = []
-    selectedData.value = []
-    updateVisualization()
-  })
+  await selectedSeries.value.data.dispatch(
+    EnumEditOperations.DELETE_POINTS,
+    index
+  )
+  brushSelections.value = []
+  selectedData.value = []
+  updateVisualization()
 
   emit('close')
 }

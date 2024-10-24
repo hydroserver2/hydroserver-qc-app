@@ -61,7 +61,7 @@ const { updateVisualization } = useEChartsStore()
 const { selectedData } = storeToRefs(useDataVisStore())
 const emit = defineEmits(['close'])
 
-const onDriftCorrection = () => {
+const onDriftCorrection = async () => {
   if (!selectedData.value.length) {
     return
   }
@@ -71,39 +71,37 @@ const onDriftCorrection = () => {
       selectedSeries.value.data.dataFrame.get_index_at(point.index)
   )
 
-  setTimeout(() => {
-    let groups: number[][] = [[]]
-    const sorted = index.sort((a, b) => a - b)
+  let groups: number[][] = [[]]
+  const sorted = index.sort((a, b) => a - b)
 
-    sorted.reduce((acc: number[][], curr: number) => {
-      const target: number[] = acc[acc.length - 1]
+  sorted.reduce((acc: number[][], curr: number) => {
+    const target: number[] = acc[acc.length - 1]
 
-      if (!target.length || curr == target[target.length - 1] + 1) {
-        target.push(curr)
-      } else {
-        acc.push([curr])
-      }
+    if (!target.length || curr == target[target.length - 1] + 1) {
+      target.push(curr)
+    } else {
+      acc.push([curr])
+    }
 
-      return acc
-    }, groups)
+    return acc
+  }, groups)
 
-    groups = groups.filter((g) => g.length > 1)
+  groups = groups.filter((g) => g.length > 1)
 
-    groups.forEach((g) => {
-      const start = g[0]
-      const end = g[g.length - 1]
-      selectedSeries.value.data.dispatch(
-        EnumEditOperations.DRIFT_CORRECTION,
-        start,
-        end,
-        +driftGapWidth.value
-      )
-    })
+  groups.forEach(async (g) => {
+    const start = g[0]
+    const end = g[g.length - 1]
+    await selectedSeries.value.data.dispatch(
+      EnumEditOperations.DRIFT_CORRECTION,
+      start,
+      end,
+      +driftGapWidth.value
+    )
+  })
 
-    brushSelections.value = []
-    selectedData.value = []
-    updateVisualization()
-  }, 0)
+  brushSelections.value = []
+  selectedData.value = []
+  updateVisualization()
   emit('close')
 }
 </script>

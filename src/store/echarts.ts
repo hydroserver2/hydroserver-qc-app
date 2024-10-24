@@ -31,9 +31,9 @@ export const useEChartsStore = defineStore('ECharts', () => {
   /** The index of the ECharts series that represents the datastream selected for quality control */
   const selectedSeriesIndex = ref(-1)
   /** The edit history for the currently selected series */
-  const editHistory: Ref<{ method: EnumEditOperations; args?: any[] }[]> = ref(
-    []
-  )
+  const editHistory: Ref<
+    { method: EnumEditOperations; args?: any[]; icon: string }[]
+  > = ref([])
 
   const selectedSeries: ComputedRef<GraphSeries> = computed(() => {
     return graphSeriesArray.value[selectedSeriesIndex.value]

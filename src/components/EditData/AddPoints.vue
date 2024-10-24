@@ -110,7 +110,7 @@ const addRow = () => {
 
 const emit = defineEmits(['close'])
 
-const onAddDataPoints = () => {
+const onAddDataPoints = async () => {
   if (!dataPoints.value || !dataPoints.value.length) {
     return
   }
@@ -140,15 +140,13 @@ const onAddDataPoints = () => {
     }
   })
 
-  setTimeout(() => {
-    selectedSeries.value.data.dispatch(
-      EnumEditOperations.ADD_POINTS,
-      transformedDataPoints
-    )
-    brushSelections.value = []
-    selectedData.value = []
-    updateVisualization()
-  })
+  await selectedSeries.value.data.dispatch(
+    EnumEditOperations.ADD_POINTS,
+    transformedDataPoints
+  )
+  brushSelections.value = []
+  selectedData.value = []
+  updateVisualization()
 
   emit('close')
 }

@@ -84,7 +84,7 @@ const { selectedOperator, operationValue } = storeToRefs(usePyStore())
 
 const emit = defineEmits(['close'])
 
-const onChangeValues = () => {
+const onChangeValues = async () => {
   if (!selectedData.value.length) {
     return
   }
@@ -96,17 +96,15 @@ const onChangeValues = () => {
       selectedSeries.value.data.dataFrame.get_index_at(point.index)
   )
 
-  setTimeout(() => {
-    selectedSeries.value.data.dispatch(
-      EnumEditOperations.CHANGE_VALUES,
-      index,
-      operator,
-      operationValue.value
-    )
-    brushSelections.value = []
-    selectedData.value = []
-    updateVisualization()
-  })
+  await selectedSeries.value.data.dispatch(
+    EnumEditOperations.CHANGE_VALUES,
+    index,
+    operator,
+    operationValue.value
+  )
+  brushSelections.value = []
+  selectedData.value = []
+  updateVisualization()
 
   emit('close')
 }

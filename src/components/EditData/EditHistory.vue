@@ -12,11 +12,13 @@
     <v-divider></v-divider>
 
     <v-card-text>
-      <v-timeline align="center" side="end" hide-opposite>
+      <v-timeline side="end" hide-opposite>
         <v-timeline-item
           dot-color="blue"
-          size="x-small"
-          v-for="entry of editHistory"
+          size="small"
+          v-for="(entry, index) of editHistory"
+          :icon="entry.icon"
+          fill-dot
         >
           <div class="d-flex align-center">
             <v-expansion-panels>
@@ -41,6 +43,7 @@
                 color="blue"
                 variant="plain"
                 title="Reload at this stage"
+                @click="onReloadHistory(index)"
               ></v-btn>
               <v-btn
                 icon="mdi-close"
@@ -72,7 +75,17 @@ const { updateVisualization } = useEChartsStore()
 
 const onReload = async () => {
   await selectedSeries.value.data.reload()
+  selectedSeries.value.data.generateDataset()
+  selectedSeries.value.data.resetHistory()
   updateVisualization()
+}
+
+const onReloadHistory = async (index: number) => {
+  await selectedSeries.value.data.reloadHistory(index)
+  setTimeout(() => {
+    selectedSeries.value.data.generateDataset()
+    updateVisualization()
+  })
 }
 </script>
 

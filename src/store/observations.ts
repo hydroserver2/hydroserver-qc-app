@@ -31,6 +31,7 @@ export const useObservationStore = defineStore('observations', () => {
       )
 
       observations.value[id] = new ObservationRecord(fetchedData, datastream)
+      observations.value[id].generateDataset()
 
       // Return the dataframe
       return observations.value[id]
@@ -73,6 +74,11 @@ export const useObservationStore = defineStore('observations', () => {
 
       if (endData.length > 0) {
         observations.value[id].dataFrame.add_points(endData)
+      }
+
+      // If the data has changed, renegerate the echarts dataset
+      if (beginData.length > 0 || endData.length > 0) {
+        existingRecord.generateDataset()
       }
 
       existingRecord.isLoading = false

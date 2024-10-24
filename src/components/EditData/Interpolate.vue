@@ -52,7 +52,7 @@ const { selectedInterpolationMethod } = storeToRefs(usePyStore())
 
 const emit = defineEmits(['close'])
 
-const onInterpolate = () => {
+const onInterpolate = async () => {
   if (!selectedData.value.length) {
     return
   }
@@ -62,13 +62,15 @@ const onInterpolate = () => {
       selectedSeries.value.data.dataFrame.get_index_at(point.index)
   )
 
-  setTimeout(() => {
-    // TODO: value error when interpolating values lesser than 1
-    selectedSeries.value.data.dispatch(EnumEditOperations.INTERPOLATE, index)
-    brushSelections.value = []
-    selectedData.value = []
-    updateVisualization()
-  })
+  // TODO: value error when interpolating values lesser than 1
+  await selectedSeries.value.data.dispatch(
+    EnumEditOperations.INTERPOLATE,
+    index
+  )
+
+  brushSelections.value = []
+  selectedData.value = []
+  updateVisualization()
   emit('close')
 }
 </script>
