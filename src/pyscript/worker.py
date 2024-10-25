@@ -25,8 +25,8 @@ class edit_service_wrapper():
     return self.edit_service.find_gaps(time_value, time_unit)
 
 
-  def fill_gaps(self, gap, fill, interpolate_values):
-    return self.edit_service.fill_gap(gap, fill, interpolate_values)
+  def fill_gaps(self, gap, fill, interpolate_values, range):
+    return self.edit_service.fill_gaps(gap.to_py(), fill.to_py(), interpolate_values, range.to_py())
 
 
   def delete_data_points(self, index):

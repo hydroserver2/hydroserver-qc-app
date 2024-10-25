@@ -136,17 +136,25 @@ class EditService():
   # Gap Analysis
   ###################
 
-  def find_gaps(self, time_value, time_unit: str):
+  def find_gaps(self, time_value, time_unit: str, range = None):
     """
     :return Pandas DataFrame:
     """
-    return self.get_dataframe()[self._df[self.get_date_col()].diff() > np.timedelta64(time_value, time_unit)]
 
-  def fill_gap(self, gap, fill, interpolate_values):
+    df = None
+    if range:
+      df = self.get_dataframe().iloc[range[0]:range[1] + 1]
+    else:
+      df = self.get_dataframe()
+
+    # DataFrame.diff calculates the difference of datetime compared with the element in previous row.
+    return df.loc[self._df[self.get_date_col()].diff() > np.timedelta64(time_value, time_unit)]
+
+  def fill_gaps(self, gap, fill, interpolate_values, range = None):
     """
     :return Pandas DataFrame:
     """
-    gaps_df = self.find_gaps(gap[0], gap[1])
+    gaps_df = self.find_gaps(gap[0], gap[1], range)
     timegap = np.timedelta64(fill[0], fill[1])
     points = []
     index = []
@@ -154,16 +162,18 @@ class EditService():
 
     for gap_row in gaps_df.iterrows():
       gap_end_index = gap_row[0]
-      gap_start_index = gap_end_index - 1
+      gap_start_index = gap_row[0] - 1
+
+      if gap_start_index < range[0]:
+        continue
 
       gap_start_date = self._df.iloc[gap_start_index][self.get_date_col()]
       gap_end_date = self._df.iloc[gap_end_index][self.get_date_col()]
 
       start = gap_start_date + timegap
-      end = gap_end_date
 
       # Annotate the points that will fill this gap
-      while start < end:
+      while start < gap_end_date:
         points.append([start, -9999, []])
         index.append(gap_start_index)
         start = start + timegap

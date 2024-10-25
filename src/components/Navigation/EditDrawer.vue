@@ -109,6 +109,10 @@
   <v-dialog v-model="openAddPoints" max-width="700">
     <AddPoints @close="openAddPoints = false" />
   </v-dialog>
+
+  <v-dialog v-model="openFillGaps" max-width="700">
+    <FillGaps @close="openFillGaps = false" />
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -125,6 +129,7 @@ import DeletePoints from '@/components/EditData/DeletePoints.vue'
 import DriftCorrection from '@/components/EditData/DriftCorrection.vue'
 import AddPoints from '@/components/EditData/AddPoints.vue'
 import ShiftDatetimes from '@/components/EditData/ShiftDatetimes.vue'
+import FillGaps from '@/components/EditData/FillGaps.vue'
 
 // FILTER POINTS
 const openValueThreshold = ref(false)
@@ -139,6 +144,7 @@ const openInterpolate = ref(false)
 const openDeletePoints = ref(false)
 const openDriftCorrection = ref(false)
 const openAddPoints = ref(false)
+const openFillGaps = ref(false)
 
 const filterPoints = [
   {
@@ -234,6 +240,15 @@ const editData = [
     },
     clickAction: () => {
       openAddPoints.value = true
+    },
+  },
+  {
+    title: 'Fill Gaps',
+    props: {
+      prependIcon: 'mdi-keyboard-space',
+    },
+    clickAction: () => {
+      openFillGaps.value = true
     },
   },
 ]

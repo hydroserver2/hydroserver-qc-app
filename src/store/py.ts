@@ -56,7 +56,12 @@ export const usePyStore = defineStore('py', () => {
   const selectedInterpolationMethod = ref(InterpolationMethods.LINEAR)
   const gapUnits = [...Object.keys(TimeUnit)]
   const selectedGapUnit = ref(gapUnits[1])
-  const gapAmount = ref(30)
+  const gapAmount = ref(15)
+
+  // FILL
+  const fillUnits = [...Object.keys(TimeUnit)]
+  const selectedFillUnit = ref(fillUnits[1])
+  const fillAmount = ref(15)
 
   // DRIFT CORRECTION
   const selectedDriftCorrectionMethod = ref(DriftCorrectionMethods.LINEAR)
@@ -151,5 +156,12 @@ export const usePyStore = defineStore('py', () => {
     operators,
     selectedOperator,
     operationValue,
+    interpolateValues,
+    selectedGapUnit,
+    gapAmount,
+    gapUnits,
+    selectedFillUnit,
+    fillAmount,
+    fillUnits,
   }
 })

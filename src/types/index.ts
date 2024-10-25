@@ -36,6 +36,8 @@ export enum EnumEditOperations {
   DRIFT_CORRECTION = 'DRIFT_CORRECTION',
   INTERPOLATE = 'INTERPOLATE',
   SHIFT_DATETIMES = 'SHIFT_DATETIMES',
+  FIND_GAPS = 'FIND_GAPS',
+  FILL_GAPS = 'FILL_GAPS',
 }
 
 export class ObservationRecord {
@@ -148,6 +150,8 @@ export class ObservationRecord {
       [EnumEditOperations.DRIFT_CORRECTION]: this._driftCorrection,
       [EnumEditOperations.INTERPOLATE]: this._interpolate,
       [EnumEditOperations.SHIFT_DATETIMES]: this._shift,
+      [EnumEditOperations.FIND_GAPS]: this._findGaps,
+      [EnumEditOperations.FILL_GAPS]: this._fillGaps,
     }
 
     // TODO: consolidate with icons in EditDrawer component
@@ -158,6 +162,8 @@ export class ObservationRecord {
       [EnumEditOperations.DRIFT_CORRECTION]: 'mdi-chart-sankey',
       [EnumEditOperations.INTERPOLATE]: 'mdi-transit-connection-horizontal',
       [EnumEditOperations.SHIFT_DATETIMES]: 'mdi-calendar',
+      [EnumEditOperations.FILL_GAPS]: 'mdi-keyboard-space',
+      [EnumEditOperations.FIND_GAPS]: 'mdi-keyboard-space',
     }
 
     try {
@@ -208,6 +214,33 @@ export class ObservationRecord {
    */
   _shift(index: number[], amount: number, unit: TimeUnit) {
     this.dataFrame.shift_points(index, amount, unit)
+  }
+
+  /**
+   * Find gaps in the data
+   * @param value The time value
+   * @param unit The time unit (TimeUnit)
+   * @returns
+   */
+
+  _findGaps(value: number, unit: TimeUnit) {
+    return this.dataFrame.find_gaps(value, unit)
+  }
+
+  /**
+   * Find gaps and fill them with placeholder value
+   * @param gap Intervals to detect as gaps
+   * @param fill Interval used to fill the detected gaps
+   * @param interpolateValues If true, the new values will be linearly interpolated
+   * @returns
+   */
+  _fillGaps(
+    gap: [number, TimeUnit],
+    fill: [number, TimeUnit],
+    interpolateValues: boolean,
+    range?: [number, number]
+  ) {
+    return this.dataFrame.fill_gaps(gap, fill, interpolateValues, range)
   }
 
   /**

@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePyStore } from '@/store/py'
+import { TimeUnit, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/types'
@@ -53,7 +53,7 @@ const { selectedShiftUnit, shiftAmount } = storeToRefs(usePyStore())
 
 const emit = defineEmits(['close'])
 
-const onShiftDatetimes = () => {
+const onShiftDatetimes = async () => {
   if (!selectedData.value.length) {
     return
   }
@@ -63,18 +63,16 @@ const onShiftDatetimes = () => {
       selectedSeries.value.data.dataFrame.get_index_at(point.index)
   )
 
-  setTimeout(() => {
-    selectedSeries.value.data.dispatch(
-      EnumEditOperations.SHIFT_DATETIMES,
-      index,
-      shiftAmount.value,
-      // @ts-ignore
-      TimeUnit[selectedShiftUnit.value]
-    )
-    brushSelections.value = []
-    selectedData.value = []
-    updateVisualization()
-  })
+  await selectedSeries.value.data.dispatch(
+    EnumEditOperations.SHIFT_DATETIMES,
+    index,
+    shiftAmount.value,
+    // @ts-ignore
+    TimeUnit[selectedShiftUnit.value]
+  )
+  brushSelections.value = []
+  selectedData.value = []
+  updateVisualization()
 
   emit('close')
 }
