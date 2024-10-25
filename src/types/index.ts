@@ -103,6 +103,18 @@ export class ObservationRecord {
     return
   }
 
+  /**
+   * Remove a history item
+   * @param index
+   */
+  async removeHistoryItem(index: number) {
+    const newHistory = [...this.history]
+    newHistory.splice(index, 1)
+    await this.reload()
+    await this.dispatch(newHistory.map((h) => [h.method, ...(h.args || [])]))
+    return
+  }
+
   /** This is an expensive operation and should be only executed when necessary */
   generateDataset() {
     console.log('generateDataset')

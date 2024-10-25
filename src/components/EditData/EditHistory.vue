@@ -69,6 +69,7 @@
                 color="red"
                 variant="plain"
                 title="Undo"
+                @click="onRemoveHistoryItem(index)"
               ></v-btn>
             </div>
           </div>
@@ -97,6 +98,11 @@ const onReloadHistory = async (index: number) => {
     await selectedSeries.value.data.reloadHistory(index)
     updateVisualization()
   }
+}
+
+const onRemoveHistoryItem = async (index: number) => {
+  await selectedSeries.value.data.removeHistoryItem(index)
+  updateVisualization()
 }
 </script>
 
