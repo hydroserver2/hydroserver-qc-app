@@ -128,16 +128,19 @@ const selectedGroups = computed(() => {
 })
 
 const onDriftCorrection = async () => {
+  const actions: [EnumEditOperations, ...any][] = []
   selectedGroups.value.forEach(async (g) => {
     const start = g[0]
     const end = g[g.length - 1]
-    await selectedSeries.value.data.dispatch(
+    actions.push([
       EnumEditOperations.DRIFT_CORRECTION,
       start,
       end,
-      +driftGapWidth.value
-    )
+      +driftGapWidth.value,
+    ])
   })
+
+  await selectedSeries.value.data.dispatch(actions)
 
   brushSelections.value = []
   selectedData.value = []
