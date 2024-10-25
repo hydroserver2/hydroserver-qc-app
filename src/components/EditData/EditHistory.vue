@@ -17,8 +17,8 @@
         text="Edit your data and manage your checkpoints here."
         title="Edit History"
       />
-      <v-timeline v-else side="end" hide-opposite>
-        <v-timeline-item dot-color="blue">
+      <v-timeline v-else side="end" hide-opposite density="compact">
+        <v-timeline-item dot-color="green" fill-dot size="small">
           <div class="d-flex align-center">
             <span class="text-body-1 mr-2">Start</span>
             <v-btn
@@ -31,11 +31,12 @@
           </div>
         </v-timeline-item>
         <v-timeline-item
-          dot-color="blue"
-          size="small"
           v-for="(entry, index) of editHistory"
+          :size="index < editHistory.length - 1 ? 'small' : 'large'"
           :icon="entry.icon"
-          fill-dot
+          :fill-dot="index < editHistory.length - 1"
+          dot-color="blue"
+          elevation="4"
         >
           <div class="d-flex align-center">
             <v-expansion-panels>
@@ -54,8 +55,9 @@
               </v-expansion-panel>
             </v-expansion-panels>
 
-            <div class="d-flex ml-2">
+            <div class="d-flex ml-2 justify-end" style="min-width: 5rem">
               <v-btn
+                v-if="index < editHistory.length - 1"
                 icon="mdi-reload"
                 color="blue"
                 variant="plain"
@@ -91,8 +93,10 @@ const onReload = async () => {
 }
 
 const onReloadHistory = async (index: number) => {
-  await selectedSeries.value.data.reloadHistory(index)
-  updateVisualization()
+  if (index < editHistory.value.length - 1) {
+    await selectedSeries.value.data.reloadHistory(index)
+    updateVisualization()
+  }
 }
 </script>
 

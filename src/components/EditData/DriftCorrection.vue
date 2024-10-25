@@ -1,18 +1,59 @@
 <template>
   <v-card>
     <v-card-title>Drift Correction</v-card-title>
-    <v-card-subtitle class="mb-4">
-      <div>
-        {{ selectedData.length }} Data Point{{
-          selectedData.length === 1 ? '' : 's'
-        }}
-        selected
-      </div>
-    </v-card-subtitle>
 
     <v-divider></v-divider>
 
     <v-card-text>
+      <v-alert
+        v-if="selectedGroups.length == 0"
+        type="warning"
+        density="compact"
+        variant="outlined"
+        class="text-body-2 mb-2"
+      >
+        You have not selected any groups of consecutive points.
+      </v-alert>
+      <v-alert
+        v-if="selectedGroups.length > 1"
+        type="info"
+        density="compact"
+        variant="outlined"
+        class="text-body-2 mb-2"
+      >
+        You have selected <b>{{ selectedGroups.length }}</b> groups of
+        consecutive points. Drift correction will be applied to each group.
+      </v-alert>
+
+      <v-card class="timeline-container my-6" variant="outlined" border="thin">
+        <v-card-text>
+          <v-timeline direction="horizontal" align="center" side="end">
+            <v-timeline-item
+              v-for="group of selectedGroups"
+              dot-color="green"
+              size="x-small"
+              fill-dot
+            >
+              <template v-slot:icon>
+                <v-icon v-tooltip="getDotTooltip(group)"
+                  >mdi-dots-horizontal</v-icon
+                >
+              </template>
+              <v-label>{{ group.length }} Points</v-label>
+            </v-timeline-item>
+          </v-timeline>
+        </v-card-text>
+      </v-card>
+
+      <v-text-field
+        label="Drift"
+        type="number"
+        class="mt-2"
+        step="0.1"
+        v-model="driftGapWidth"
+      >
+      </v-text-field>
+
       <v-radio-group
         hide-details
         color="primary"
@@ -23,21 +64,16 @@
           :value="DriftCorrectionMethods.LINEAR"
         ></v-radio>
       </v-radio-group>
-
-      <v-text-field
-        label="Drift"
-        type="number"
-        class="mt-2"
-        step="0.1"
-        v-model="driftGapWidth"
-      >
-      </v-text-field>
     </v-card-text>
 
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded="xl" variant="outlined" @click="onDriftCorrection"
+      <v-btn
+        :disabled="selectedGroups.length == 0"
+        rounded="xl"
+        variant="outlined"
+        @click="onDriftCorrection"
         >Apply Drift Correction</v-btn
       >
     </v-card-actions>
@@ -55,15 +91,17 @@ const { driftGapWidth, selectedDriftCorrectionMethod } = storeToRefs(
 
 import { EnumEditOperations } from '@/types'
 import { useEChartsStore } from '@/store/echarts'
+import { computed } from 'vue'
+import { formatDate } from '@/utils/formatDate'
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
 const { updateVisualization } = useEChartsStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 const emit = defineEmits(['close'])
 
-const onDriftCorrection = async () => {
+const selectedGroups = computed(() => {
   if (!selectedData.value.length) {
-    return
+    return []
   }
 
   const index = selectedData.value.map(
@@ -86,9 +124,11 @@ const onDriftCorrection = async () => {
     return acc
   }, groups)
 
-  groups = groups.filter((g) => g.length > 1)
+  return groups.filter((g) => g.length > 1)
+})
 
-  groups.forEach(async (g) => {
+const onDriftCorrection = async () => {
+  selectedGroups.value.forEach(async (g) => {
     const start = g[0]
     const end = g[g.length - 1]
     await selectedSeries.value.data.dispatch(
@@ -104,4 +144,18 @@ const onDriftCorrection = async () => {
   updateVisualization()
   emit('close')
 }
+
+const getDotTooltip = (group: number[]) => {
+  const start = formatDate(
+    new Date(selectedSeries.value.data.dataFrame.get_datetime_at(group[0]))
+  )
+  return `${group.length} Points starting at ${start}`
+}
 </script>
+
+<style scoped lang="scss">
+.timeline-container {
+  max-width: 100%;
+  overflow-x: auto;
+}
+</style>

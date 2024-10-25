@@ -102,7 +102,7 @@
     <DeletePoints @close="openDeletePoints = false" />
   </v-dialog>
 
-  <v-dialog v-model="openDriftCorrection" max-width="500">
+  <v-dialog v-model="openDriftCorrection" max-width="700">
     <DriftCorrection @close="openDriftCorrection = false" />
   </v-dialog>
 

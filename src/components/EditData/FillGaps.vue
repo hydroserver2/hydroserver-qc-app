@@ -91,6 +91,7 @@ const {
 import { EnumEditOperations } from '@/types'
 import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
+import { formatDate } from '@/utils/formatDate'
 
 const { updateVisualization } = useEChartsStore()
 const { selectedSeries } = storeToRefs(useEChartsStore())
@@ -135,16 +136,4 @@ const endDateString = computed(() => {
 
   return formatDate(endDate)
 })
-
-const formatDate = (date: Date) => {
-  return date.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    hour12: false,
-    minute: '2-digit',
-    second: '2-digit',
-  })
-}
 </script>
