@@ -94,7 +94,7 @@ import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
-const { updateVisualization } = useEChartsStore()
+const { updateVisualizationData } = useEChartsStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 const emit = defineEmits(['close'])
@@ -144,7 +144,7 @@ const onDriftCorrection = async () => {
 
   brushSelections.value = []
   selectedData.value = []
-  updateVisualization()
+  updateVisualizationData()
   emit('close')
 }
 

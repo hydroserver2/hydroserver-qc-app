@@ -93,7 +93,7 @@ import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
 
-const { updateVisualization } = useEChartsStore()
+const { updateVisualizationData } = useEChartsStore()
 const { selectedSeries } = storeToRefs(useEChartsStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 
@@ -117,7 +117,7 @@ const onFillGaps = async () => {
     range
   )
 
-  updateVisualization()
+  updateVisualizationData()
   emit('close')
 }
 

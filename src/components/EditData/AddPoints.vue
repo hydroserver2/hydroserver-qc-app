@@ -77,7 +77,7 @@ import type { MaskInputOptions } from 'maska'
 
 import { useEChartsStore } from '@/store/echarts'
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
-const { updateVisualization } = useEChartsStore()
+const { updateVisualizationData } = useEChartsStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 
@@ -146,7 +146,7 @@ const onAddDataPoints = async () => {
   )
   brushSelections.value = []
   selectedData.value = []
-  updateVisualization()
+  updateVisualizationData()
 
   emit('close')
 }

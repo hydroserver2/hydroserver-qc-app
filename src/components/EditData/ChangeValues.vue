@@ -76,7 +76,7 @@ import { useDataVisStore } from '@/store/dataVisualization'
 import { useEChartsStore } from '@/store/echarts'
 import { EnumEditOperations } from '@/types'
 
-const { updateVisualization } = useEChartsStore()
+const { updateVisualizationData } = useEChartsStore()
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 const { operators } = usePyStore()
@@ -104,7 +104,7 @@ const onChangeValues = async () => {
   )
   brushSelections.value = []
   selectedData.value = []
-  updateVisualization()
+  updateVisualizationData()
 
   emit('close')
 }

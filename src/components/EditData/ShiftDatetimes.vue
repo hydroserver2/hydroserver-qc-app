@@ -46,7 +46,7 @@ import { EnumEditOperations } from '@/types'
 import { useEChartsStore } from '@/store/echarts'
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
-const { updateVisualization } = useEChartsStore()
+const { updateVisualizationData } = useEChartsStore()
 
 const { shiftUnits } = usePyStore()
 const { selectedShiftUnit, shiftAmount } = storeToRefs(usePyStore())
@@ -72,7 +72,7 @@ const onShiftDatetimes = async () => {
   )
   brushSelections.value = []
   selectedData.value = []
-  updateVisualization()
+  updateVisualizationData()
 
   emit('close')
 }

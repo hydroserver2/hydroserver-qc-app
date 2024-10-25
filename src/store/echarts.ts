@@ -27,7 +27,6 @@ export const useEChartsStore = defineStore('ECharts', () => {
   const dataZoomEnd = ref(100)
 
   const graphSeriesArray = ref<GraphSeries[]>([])
-  // const prevIds = ref<string[]>([]) // DatastreamIds that were previously plotted
   /** The index of the ECharts series that represents the datastream selected for quality control */
   const selectedSeriesIndex = ref(-1)
   /** The edit history for the currently selected series */
@@ -81,15 +80,25 @@ export const useEChartsStore = defineStore('ECharts', () => {
 
   const clearChartState = () => {
     graphSeriesArray.value = []
-    // prevIds.value = []
     echartsOption.value = undefined
   }
 
-  function updateVisualization() {
-    // TODO: update echarts option instead
-    console.log('updateVisualization')
+  /**
+   * This won't trigger EChart's setOption because the reference changes.
+   * @see https://echarts.apache.org/en/api.html#echartsInstance.setOption
+   */
+  function createVisualization() {
+    console.log('createVisualization')
     echartsOption.value = createEChartsOption(graphSeriesArray.value)
-    // prevIds.value = graphSeriesArray.value.map((series) => series.id)
+  }
+
+  function updateVisualizationData() {
+    console.log('updateVisualizationData')
+    if (echartsOption.value) {
+      echartsOption.value.dataset = graphSeriesArray.value.map(
+        (s) => s.data.dataset
+      )
+    }
   }
 
   const fetchGraphSeriesData = async (
@@ -184,12 +193,12 @@ export const useEChartsStore = defineStore('ECharts', () => {
     echartsOption,
     showLegend,
     showTooltip,
-    // prevIds,
     selectedSeriesIndex,
     selectedSeries,
     editHistory,
     brushSelections,
-    updateVisualization,
+    createVisualization,
+    updateVisualizationData,
     clearChartState,
     resetChartZoom,
     fetchGraphSeries,

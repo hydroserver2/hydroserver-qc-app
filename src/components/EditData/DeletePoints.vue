@@ -35,7 +35,7 @@ import { useDataVisStore } from '@/store/dataVisualization'
 import { useEChartsStore } from '@/store/echarts'
 import { EnumEditOperations } from '@/types'
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
-const { updateVisualization } = useEChartsStore()
+const { updateVisualizationData } = useEChartsStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 
@@ -57,7 +57,7 @@ const onDeleteDataPoints = async () => {
   )
   brushSelections.value = []
   selectedData.value = []
-  updateVisualization()
+  updateVisualizationData()
 
   emit('close')
 }

@@ -84,25 +84,25 @@ import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
 
 const { editHistory, selectedSeries } = storeToRefs(useEChartsStore())
-const { updateVisualization } = useEChartsStore()
+const { updateVisualizationData } = useEChartsStore()
 
 const onReload = async () => {
   await selectedSeries.value.data.reload()
   selectedSeries.value.data.generateDataset()
   editHistory.value = []
-  updateVisualization()
+  updateVisualizationData()
 }
 
 const onReloadHistory = async (index: number) => {
   if (index < editHistory.value.length - 1) {
     await selectedSeries.value.data.reloadHistory(index)
-    updateVisualization()
+    updateVisualizationData()
   }
 }
 
 const onRemoveHistoryItem = async (index: number) => {
   await selectedSeries.value.data.removeHistoryItem(index)
-  updateVisualization()
+  updateVisualizationData()
 }
 </script>
 

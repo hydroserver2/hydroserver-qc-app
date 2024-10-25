@@ -6,16 +6,13 @@ import { useEChartsStore } from './echarts'
 export const useDataVisStore = defineStore('dataVisualization', () => {
   const {
     resetChartZoom,
-    updateVisualization,
+    createVisualization,
     clearChartState,
     fetchGraphSeries,
     fetchGraphSeriesData,
   } = useEChartsStore()
 
-  const {
-    graphSeriesArray,
-    // prevIds
-  } = storeToRefs(useEChartsStore())
+  const { graphSeriesArray } = storeToRefs(useEChartsStore())
 
   // To only fetch these once per page
   const things = ref<Thing[]>([])
@@ -206,7 +203,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       }
 
       // TODO: when updating use setOption https://echarts.apache.org/en/api.html#echartsInstance.setOption
-      updateVisualization()
+      createVisualization()
     } catch (error) {
       console.error(
         `Failed to fetch or update dataset for ${datastream.id}:`,

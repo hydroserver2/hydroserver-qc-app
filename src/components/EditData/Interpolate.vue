@@ -46,7 +46,7 @@ import { useEChartsStore } from '@/store/echarts'
 import { EnumEditOperations } from '@/types'
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
-const { updateVisualization } = useEChartsStore()
+const { updateVisualizationData } = useEChartsStore()
 
 const { selectedInterpolationMethod } = storeToRefs(usePyStore())
 
@@ -70,7 +70,7 @@ const onInterpolate = async () => {
 
   brushSelections.value = []
   selectedData.value = []
-  updateVisualization()
+  updateVisualizationData()
   emit('close')
 }
 </script>

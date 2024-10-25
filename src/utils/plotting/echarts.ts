@@ -4,9 +4,8 @@ import {
   SeriesOption,
   LegendComponentOption,
   TooltipComponentOption,
-  // registerTransform,
 } from 'echarts'
-import { DataPoint, Datastream, GraphSeries } from '@/types'
+import { Datastream, GraphSeries } from '@/types'
 import { storeToRefs } from 'pinia'
 import { useEChartsStore } from '@/store/echarts'
 import { useDataVisStore } from '@/store/dataVisualization'
@@ -21,25 +20,6 @@ type yAxisConfigurationMap = Map<
   string,
   { index: number; yAxisLabel: string; color: string }
 >
-
-// registerTransform({
-//   type: 'hydroserver:pandas-df-map',
-//   transform: function (params) {
-//     // const rawData = params.upstream.cloneRawData() // TODO: too expensive
-//     // TODO: why does this run 3 times?
-//     // @ts-ignore
-//     // const data = rawData.map((o, index) => ({
-//     //   ...o,
-//     // }))
-//     console.log('transform')
-//     const count = params.upstream.count()
-//     return [
-//       {
-//         data: [],
-//       },
-//     ]
-//   },
-// })
 
 /**
 Function that processes an array of GraphSeries and returns a map for Y-Axis configurations in order 
@@ -76,27 +56,6 @@ export function createYAxisConfigurations(
 
   return yAxisConfigurations
 }
-
-// export function generateDataset(seriesArray: GraphSeries[]) {
-//   console.log(seriesArray)
-//   return [
-//     {
-//       source: [],
-//     },
-//     ...seriesArray.map((gs) => {
-//       return {
-//         transform: {
-//           // Reference the registered external transform.
-//           type: 'hydroserver:pandas-df-map',
-//           config: {
-//             // Parameters needed by the external transform.
-//             // someParam: 'someValue',
-//           },
-//         },
-//       }
-//     }),
-//   ]
-// }
 
 export function generateYAxisOptions(
   yAxisConfigurations: yAxisConfigurationMap
@@ -194,7 +153,7 @@ export function generateSeriesOptions(
 
 export function generateToolboxOptions() {
   const { brushSelections } = storeToRefs(useEChartsStore())
-  const { updateVisualization } = useEChartsStore()
+  const { createVisualization } = useEChartsStore()
   const { selectedData } = storeToRefs(useDataVisStore())
 
   return {
@@ -212,7 +171,7 @@ export function generateToolboxOptions() {
           brushSelections.value = []
           selectedData.value = []
           // TODO: just call setOption or applyBrushSelection instead
-          updateVisualization() // call updateVisualization to rerender the plot with the empty brushSelections
+          // createVisualization() // call createVisualization to rerender the plot with the empty brushSelections
         },
       },
     },
@@ -417,9 +376,6 @@ export const createEChartsOption = (
   const rightYAxesCount = yAxisConfigurations.size - leftYAxesCount
   const gridRightPadding = 20 + rightYAxesCount * 85
   const gridLeftPadding = leftYAxesCount * 85
-
-  // TODO: this is an expensive operation and should be only executed when necessary
-  // seriesArray.forEach((s) => s.data?.generateDataset())
 
   let echartsOption: EChartsOption = {
     // https://echarts.apache.org/en/option.html#dataset.source

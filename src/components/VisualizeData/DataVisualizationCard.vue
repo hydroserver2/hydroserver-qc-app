@@ -14,9 +14,11 @@
       <v-chart
         ref="echartsRef"
         :option="option"
-        @datazoom="handleDataZoom"
-        autoresize
         :style="{ height: `${cardHeight}vh` }"
+        autoresize
+        @datazoom="handleDataZoom"
+        @legendSelectChanged="handleLegendSelected"
+        @brushSelected="handleBrushSelected"
       />
     </v-card-text>
 
@@ -128,6 +130,7 @@ const isDataAvailable = computed(() =>
 )
 
 function handleDataZoom(event: any) {
+  console.log('handleDataZoom')
   let start, end
 
   if (event.batch && event.batch.length) {
@@ -146,19 +149,20 @@ function handleDataZoom(event: any) {
   dataZoomEnd.value = end
 }
 
-watch([() => props.cardHeight], ([newHeight], [oldHeight]) => {
-  if (Math.abs(newHeight - oldHeight) < 0.2) return
-  nextTick(() => {
-    if (echartsRef.value) echartsRef.value.resize()
-  })
-})
+// watch([() => props.cardHeight], ([newHeight], [oldHeight]) => {
+//   if (Math.abs(newHeight - oldHeight) < 0.2) return
+//   nextTick(() => {
+//     if (echartsRef.value) echartsRef.value.resize()
+//   })
+// })
 
 // TODO: Is there a better place to put this watcher?
-watch(selectedQualifier, () => {
-  option.value = createEChartsOption(graphSeriesArray.value)
-})
+// watch(selectedQualifier, () => {
+//   option.value = createEChartsOption(graphSeriesArray.value)
+// })
 
 function handleLegendSelected(params: any) {
+  console.log('handleLegendSelected')
   if (!params.name || !params.selected?.hasOwnProperty(params.name)) return
   const matchingDatastream = plottedDatastreams.value.find(
     (d) => d.name === params.name
@@ -182,7 +186,9 @@ interface BrushArea {
  * alive if they're outside of the view window.
  */
 function handleBrushSelected(params: any) {
-  if (!echartsRef.value || selectedSeriesIndex.value === -1) return
+  if (selectedSeriesIndex.value === -1) return
+
+  console.log('handleBrushSelected')
 
   const selectedAreas = params.batch[0].areas
   if (selectedAreas.length <= 0) return
@@ -233,37 +239,30 @@ function handleBrushSelected(params: any) {
 }
 
 function applyBrushSelection() {
-  if (!echartsRef.value) {
-    console.warn('echartsRef is not ready')
-    return
-  }
+  console.log('applyBrushSelection')
 
-  // Guarantee echartsRef has an option since dispatchAction won't work without one
-  echartsRef.value.setOption(option.value)
-
-  if (brushSelections.value.length === 0) return
-  echartsRef.value.chart.dispatchAction({
+  echartsRef.value?.chart.dispatchAction({
     type: 'brush',
     areas: brushSelections.value,
   })
 }
 
-let areListenersCreated = false
-watch(echartsRef, (newValue) => {
-  if (newValue && !areListenersCreated) {
-    areListenersCreated = true
-    const echartsInstance = newValue.chart
-    echartsInstance.on('legendSelectChanged', handleLegendSelected)
-    echartsInstance.on('brushSelected', handleBrushSelected)
-    echartsInstance.on('finished', applyBrushSelection())
-  }
-})
+// let areListenersCreated = false
+// watch(echartsRef, (newValue) => {
+//   if (newValue && !areListenersCreated) {
+//     areListenersCreated = true
+//     const echartsInstance = newValue.chart
+//     echartsInstance.on('legendSelectChanged', handleLegendSelected)
+//     echartsInstance.on('brushSelected', handleBrushSelected)
+//     echartsInstance.on('finished', applyBrushSelection())
+//   }
+// })
 
 // TODO: I think ECharts uses a different reactivity system than Vue so the plot isn't always ready when
 // option changes. setTimeout is the only way I could figure getting the selections to reliably repopulate
 // but probably there's a way to do this without setTimeout.
 watch(
-  () => option.value,
+  () => brushSelections.value,
   (newOption) => {
     setTimeout(() => {
       if (echartsRef.value && newOption) {
