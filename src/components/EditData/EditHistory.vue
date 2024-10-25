@@ -5,14 +5,31 @@
     <v-divider></v-divider>
 
     <v-card-actions>
-      <v-btn variant="plain" @click="onReload">Reload Series</v-btn>
       <v-btn variant="plain">Save Changes</v-btn>
     </v-card-actions>
 
     <v-divider></v-divider>
 
     <v-card-text>
-      <v-timeline side="end" hide-opposite>
+      <v-empty-state
+        v-if="editHistory.length === 0"
+        icon="mdi-clock"
+        text="Edit your data and manage your checkpoints here."
+        title="Edit History"
+      />
+      <v-timeline v-else side="end" hide-opposite>
+        <v-timeline-item dot-color="blue">
+          <div class="d-flex align-center">
+            <span class="text-body-1 mr-2">Start</span>
+            <v-btn
+              icon="mdi-reload"
+              color="blue"
+              variant="plain"
+              title="Reload at this stage"
+              @click="onReload"
+            ></v-btn>
+          </div>
+        </v-timeline-item>
         <v-timeline-item
           dot-color="blue"
           size="small"
@@ -37,7 +54,7 @@
               </v-expansion-panel>
             </v-expansion-panels>
 
-            <div class="d-flex ml-1">
+            <div class="d-flex ml-2">
               <v-btn
                 icon="mdi-reload"
                 color="blue"
@@ -55,13 +72,6 @@
           </div>
         </v-timeline-item>
       </v-timeline>
-
-      <v-empty-state
-        v-if="editHistory.length === 0"
-        icon="mdi-clock"
-        text="Edit your data and manage your checkpoints here."
-        title="Edit History"
-      ></v-empty-state>
     </v-card-text>
   </v-card>
 </template>
@@ -76,16 +86,13 @@ const { updateVisualization } = useEChartsStore()
 const onReload = async () => {
   await selectedSeries.value.data.reload()
   selectedSeries.value.data.generateDataset()
-  selectedSeries.value.data.resetHistory()
+  editHistory.value = []
   updateVisualization()
 }
 
 const onReloadHistory = async (index: number) => {
   await selectedSeries.value.data.reloadHistory(index)
-  setTimeout(() => {
-    selectedSeries.value.data.generateDataset()
-    updateVisualization()
-  })
+  updateVisualization()
 }
 </script>
 

@@ -26,7 +26,7 @@ class edit_service_wrapper():
 
 
   def fill_gaps(self, gap, fill, interpolate_values, range):
-    return self.edit_service.fill_gaps(gap.to_py(), fill.to_py(), interpolate_values, range.to_py())
+    return self.edit_service.fill_gaps(gap, fill, interpolate_values, range)
 
 
   def delete_data_points(self, index):
@@ -47,7 +47,7 @@ class edit_service_wrapper():
 
 
   def change_values(self, index_list, operator, value):
-    self.edit_service.change_values(index_list.to_py(), operator, value)
+    self.edit_service.change_values(index_list.to_py(), operator, float(value))
 
 
   def add_points(self, points):

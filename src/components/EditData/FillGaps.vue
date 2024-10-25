@@ -80,7 +80,6 @@ import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 
 const { fillUnits, gapUnits } = usePyStore()
-
 const {
   interpolateValues,
   gapAmount,
@@ -92,21 +91,20 @@ const {
 import { EnumEditOperations } from '@/types'
 import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
-const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+
 const { updateVisualization } = useEChartsStore()
-
+const { selectedSeries } = storeToRefs(useEChartsStore())
 const { selectedData } = storeToRefs(useDataVisStore())
+
 const emit = defineEmits(['close'])
-
 const onFillGaps = async () => {
-  if (!selectedData.value.length) {
-    return
-  }
-
   const index = selectedData.value.map(
     (point: { date: Date; value: number; index: number }) =>
       selectedSeries.value.data.dataFrame.get_index_at(point.index)
   )
+
+  const range =
+    index.length > 1 ? [index[0], index[index.length - 1]] : undefined
 
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.FILL_GAPS,
@@ -115,38 +113,31 @@ const onFillGaps = async () => {
     // @ts-ignore
     [+fillAmount.value, TimeUnit[selectedFillUnit.value]],
     interpolateValues.value,
-    [index[0], index[index.length - 1]]
+    range
   )
 
-  // brushSelections.value = []
-  // selectedData.value = []
   updateVisualization()
   emit('close')
 }
 
 const startDateString = computed(() => {
-  if (!selectedData.value[0]) {
-    return ''
-  }
-  return new Date(selectedData.value[0].date).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    hour12: false,
-    minute: '2-digit',
-    second: '2-digit',
-  })
+  const startDate = selectedData.value[0]
+    ? new Date(selectedData.value[0].date)
+    : selectedSeries.value.data.beginTime
+
+  return formatDate(startDate)
 })
 
 const endDateString = computed(() => {
-  if (selectedData.value.length < 1) {
-    return ''
-  }
+  const endDate = selectedData.value[selectedData.value.length - 1]
+    ? new Date(selectedData.value[selectedData.value.length - 1].date)
+    : selectedSeries.value.data.endTime
 
-  return new Date(
-    selectedData.value[selectedData.value.length - 1].date
-  ).toLocaleString(undefined, {
+  return formatDate(endDate)
+})
+
+const formatDate = (date: Date) => {
+  return date.toLocaleString(undefined, {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
@@ -155,5 +146,5 @@ const endDateString = computed(() => {
     minute: '2-digit',
     second: '2-digit',
   })
-})
+}
 </script>

@@ -164,7 +164,7 @@ class EditService():
       gap_end_index = gap_row[0]
       gap_start_index = gap_row[0] - 1
 
-      if gap_start_index < range[0]:
+      if range and gap_start_index < range[0]:
         continue
 
       gap_start_date = self._df.iloc[gap_start_index][self.get_date_col()]

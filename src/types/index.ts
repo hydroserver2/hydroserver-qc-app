@@ -68,6 +68,9 @@ export class ObservationRecord {
     this.isLoading = false
   }
 
+  /**
+   * Reloads the DataFrame
+   */
   async reload() {
     const { instantiateDataFrame } = usePyStore()
     const { beginDate, endDate } = storeToRefs(useDataVisStore())
@@ -85,26 +88,18 @@ export class ObservationRecord {
         components: components,
       })
     )
-  }
-
-  resetHistory() {
-    const { editHistory } = storeToRefs(useEChartsStore())
     this.history = []
-    editHistory.value = [...this.history]
   }
 
+  /**
+   * @param index
+   * @returns
+   */
   async reloadHistory(index: number) {
-    let newHistory = this.history.slice(0, index + 1)
-
+    const newHistory = this.history.slice(0, index + 1)
     await this.reload()
 
-    this.resetHistory()
-
-    for (let i = 0; i < newHistory.length; i++) {
-      // TODO: this is not an async call
-      await this.dispatch(newHistory[i].method, newHistory[i].args)
-    }
-
+    await this.dispatch(newHistory.map((h) => [h.method, ...(h.args || [])]))
     return
   }
 
