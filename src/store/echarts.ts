@@ -4,7 +4,7 @@ import {
   GraphSeries,
   ObservationRecord,
 } from '@/types'
-import { defineStore } from 'pinia'
+import { defineStore, storeToRefs } from 'pinia'
 import { computed, ComputedRef, Ref, ref, watch } from 'vue'
 import { EChartsOption, LineSeriesOption } from 'echarts'
 import { EChartsColors } from '@/utils/materialColors'
@@ -12,12 +12,15 @@ import {
   createEChartsOption,
   createLegendConfig,
   createTooltipConfig,
+  createYAxisConfigurations,
   generateDataZoomOptions,
+  generateSeriesOptions,
 } from '@/utils/plotting/echarts'
 import { Snackbar } from '@/utils/notifications'
 import { api } from '@/services/api'
 // import { preProcessData } from '@/utils/observationsUtils'
 import { useObservationStore } from '@/store/observations'
+import { useDataVisStore } from './dataVisualization'
 
 export const useEChartsStore = defineStore('ECharts', () => {
   const { fetchObservationsInRange } = useObservationStore()
@@ -28,7 +31,15 @@ export const useEChartsStore = defineStore('ECharts', () => {
 
   const graphSeriesArray = ref<GraphSeries[]>([])
   /** The index of the ECharts series that represents the datastream selected for quality control */
-  const selectedSeriesIndex = ref(-1)
+  const selectedSeriesIndex = computed(() => {
+    const { qcDatastream } = storeToRefs(useDataVisStore())
+    if (qcDatastream.value?.id) {
+      return graphSeriesArray.value.findIndex(
+        (s) => s.id === qcDatastream.value?.id
+      )
+    }
+    return -1
+  })
   /** The edit history for the currently selected series */
   const editHistory: Ref<
     { method: EnumEditOperations; args?: any[]; icon: string }[]
@@ -85,6 +96,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
 
   /**
    * This won't trigger EChart's setOption because the reference changes.
+   * Builds the chart from scratch.
    * @see https://echarts.apache.org/en/api.html#echartsInstance.setOption
    */
   function createVisualization() {
@@ -92,11 +104,31 @@ export const useEChartsStore = defineStore('ECharts', () => {
     echartsOption.value = createEChartsOption(graphSeriesArray.value)
   }
 
+  /**
+   * Use this function to update the Echart's dataset option only without
+   * recreating the entire chart
+   */
   function updateVisualizationData() {
     console.log('updateVisualizationData')
     if (echartsOption.value) {
       echartsOption.value.dataset = graphSeriesArray.value.map(
         (s) => s.data.dataset
+      )
+    }
+  }
+
+  /** Use this function when the data is already plotted, but we still want to
+   * draw the scatter plot for the selected dataset */
+  function drawScatterPlot() {
+    if (echartsOption.value) {
+      const yAxisConfigurations = createYAxisConfigurations(
+        graphSeriesArray.value
+      )
+
+      echartsOption.value.series = generateSeriesOptions(
+        graphSeriesArray.value,
+        yAxisConfigurations,
+        selectedSeriesIndex.value
       )
     }
   }
@@ -203,5 +235,6 @@ export const useEChartsStore = defineStore('ECharts', () => {
     resetChartZoom,
     fetchGraphSeries,
     fetchGraphSeriesData,
+    drawScatterPlot,
   }
 })

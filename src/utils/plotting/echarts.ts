@@ -144,7 +144,7 @@ export function generateSeriesOptions(
         tooltip: { show: false },
       }
 
-      return [scatterSeries, lineSeries]
+      return [lineSeries, scatterSeries]
     }
 
     return [baseSeries]
@@ -153,7 +153,6 @@ export function generateSeriesOptions(
 
 export function generateToolboxOptions() {
   const { brushSelections } = storeToRefs(useEChartsStore())
-  const { createVisualization } = useEChartsStore()
   const { selectedData } = storeToRefs(useDataVisStore())
 
   return {
@@ -170,8 +169,6 @@ export function generateToolboxOptions() {
         onclick: function () {
           brushSelections.value = []
           selectedData.value = []
-          // TODO: just call setOption or applyBrushSelection instead
-          // createVisualization() // call createVisualization to rerender the plot with the empty brushSelections
         },
       },
     },
@@ -340,12 +337,6 @@ export function addQualifierOptions(
   return echartsOption
 }
 
-// Function to find the index of the selected datastream in the series array
-const findSelectedDatastreamIndex = (
-  seriesArray: GraphSeries[],
-  datastream: Datastream
-) => seriesArray.findIndex((s) => s.id === datastream.id)
-
 // TODO
 // const hasStringQualifier = (data: DataPoint[]) =>
 //   data.some((dp) => typeof dp.qualifierValue === 'string')
@@ -360,17 +351,7 @@ export const createEChartsOption = (
 ): EChartsOption => {
   console.log('createEChartsOption')
   const { initializeZoomed = true } = opts
-  const { qcDatastream } = storeToRefs(useDataVisStore())
   const { selectedSeriesIndex } = storeToRefs(useEChartsStore())
-
-  selectedSeriesIndex.value = -1
-  if (qcDatastream.value?.id) {
-    selectedSeriesIndex.value = findSelectedDatastreamIndex(
-      seriesArray,
-      qcDatastream.value
-    )
-  }
-
   const yAxisConfigurations = createYAxisConfigurations(seriesArray)
   const leftYAxesCount = Math.ceil(yAxisConfigurations.size / 2)
   const rightYAxesCount = yAxisConfigurations.size - leftYAxesCount

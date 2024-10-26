@@ -141,7 +141,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     custom?: boolean
   }
 
-  const setDateRange = ({
+  const setDateRange = async ({
     begin,
     end,
     update = true,
@@ -158,7 +158,10 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       endDate.value &&
       plottedDatastreams.value.length
     ) {
-      refreshGraphSeriesArray(plottedDatastreams.value)
+      const { updateVisualizationData } = useEChartsStore()
+      await refreshGraphSeriesArray(plottedDatastreams.value)
+      // TODO: regenerate echart datasets
+      updateVisualizationData()
     }
   }
 
@@ -203,7 +206,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       }
 
       // TODO: when updating use setOption https://echarts.apache.org/en/api.html#echartsInstance.setOption
-      createVisualization()
+      // createVisualization()
     } catch (error) {
       console.error(
         `Failed to fetch or update dataset for ${datastream.id}:`,
@@ -223,10 +226,12 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       currentIds.has(s.id)
     )
 
-    datastreams.forEach((ds) => {
+    const updateOrFetchPromises = datastreams.map(async (ds) => {
       loadingStates.value.set(ds.id, true)
-      updateOrFetchGraphSeries(ds, beginDate.value, endDate.value)
+      return updateOrFetchGraphSeries(ds, beginDate.value, endDate.value)
     })
+
+    return Promise.all(updateOrFetchPromises)
   }
 
   // If currently selected datastreams are no longer in filteredDatastreams, deselect them
@@ -244,9 +249,10 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   // update the time range to the most recent phenomenon endTime
   let prevDatastreamIds = ''
   let prevSelectedDatastreamId = ''
+
   watch(
     () => plottedDatastreams.value,
-    (newDs) => {
+    async (newDs) => {
       const newDatastreamIds = JSON.stringify(newDs.map((ds) => ds.id).sort())
 
       if (!newDs.length || !beginDate.value || !endDate.value) {
@@ -274,7 +280,10 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
           beginDate.value = new Date(endDate.value.getTime() - timeDifference)
         }
 
-        refreshGraphSeriesArray(newDs)
+        if (newDatastreamIds !== prevDatastreamIds) {
+          await refreshGraphSeriesArray(newDs)
+          createVisualization()
+        }
       }
       prevDatastreamIds = newDatastreamIds
       prevSelectedDatastreamId = qcDatastream.value?.id || ''
@@ -343,6 +352,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     setDateRange,
     onDateBtnClick,
     resetState,
-    updateOrFetchGraphSeries,
+    // updateOrFetchGraphSeries,
   }
 })
