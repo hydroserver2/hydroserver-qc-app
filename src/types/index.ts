@@ -118,16 +118,20 @@ export class ObservationRecord {
   /** This is an expensive operation and should be only executed when necessary */
   generateDataset() {
     console.log('generateDataset')
-    const components = ['date', 'value', 'qualifier']
+    const components = [
+      'date',
+      'value',
+      //  'qualifier'
+    ]
     this.dataset = {
       dimensions: components,
       source: {
         date: (Array.from(this.dataFrame.get_date_column()) as number[]) || [],
         value:
           (Array.from(this.dataFrame.get_value_column()) as number[]) || [],
-        qualifier: Array.from(
-          this.dataFrame.get_qualifier_column()
-        ) as string[][],
+        // qualifier: Array.from(
+        //   this.dataFrame.get_qualifier_column()
+        // ) as string[][],
       },
     }
   }
@@ -173,17 +177,20 @@ export class ObservationRecord {
       [EnumEditOperations.FIND_GAPS]: 'mdi-keyboard-space',
     }
 
+    let response = []
+
     try {
       if (Array.isArray(action)) {
         for (let i = 0; i < action.length; i++) {
           const method = action[i][0]
           const args = action[i].slice(1, action[i].length)
-          await actions[method].apply(this, args)
+          const res = await actions[method].apply(this, args)
+          response.push(res)
           this.history.push({ method, args, icon: editIcons[method] })
         }
         editHistory.value = [...this.history]
       } else {
-        await actions[action].apply(this, args)
+        response = await actions[action].apply(this, args)
         this.history.push({ method: action, args, icon: editIcons[action] })
         editHistory.value = [...this.history]
       }
@@ -196,6 +203,7 @@ export class ObservationRecord {
     }
 
     this.generateDataset()
+    return response
   }
 
   /**
