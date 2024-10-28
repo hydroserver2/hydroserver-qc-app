@@ -130,6 +130,17 @@ export const useEChartsStore = defineStore('ECharts', () => {
         yAxisConfigurations,
         selectedSeriesIndex.value
       )
+
+      echartsOption.value.brush = {
+        toolbox: ['rect', 'keep', 'lineY'],
+        xAxisIndex: [0],
+        seriesIndex: selectedSeriesIndex.value,
+        throttleType: 'debounce',
+        throttleDelay: 100,
+        outOfBrush: {
+          colorAlpha: 0.1, // dims the points outside the brushed area
+        },
+      }
     }
   }
 

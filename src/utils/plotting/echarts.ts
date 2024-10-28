@@ -144,7 +144,7 @@ export function generateSeriesOptions(
         tooltip: { show: false },
       }
 
-      return [lineSeries, scatterSeries]
+      return [scatterSeries, lineSeries]
     }
 
     return [baseSeries]
