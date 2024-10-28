@@ -72,11 +72,19 @@ const { selectedData } = storeToRefs(useDataVisStore())
 
 const emit = defineEmits(['close'])
 const onFindGaps = async () => {
+  const index = selectedData.value.map(
+    (point: { date: Date; value: number; index: number }) =>
+      selectedSeries.value.data.dataFrame.get_index_at(point.index)
+  )
+
+  const range =
+    index.length > 1 ? [index[0], index[index.length - 1]] : undefined
   const selection = await selectedSeries.value.data.dispatch(
     EnumEditOperations.FIND_GAPS,
     +gapAmount.value,
     // @ts-ignore
-    TimeUnit[selectedGapUnit.value]
+    TimeUnit[selectedGapUnit.value],
+    range
   )
 
   // TODO: select individual datapoints using this selection

@@ -21,9 +21,9 @@ class edit_service_wrapper():
     return self.edit_service.get_dataframe()
 
 
-  def find_gaps(self, time_value, time_unit):
+  def find_gaps(self, time_value, time_unit, range):
     # Return index column
-    return self.edit_service.find_gaps(time_value, time_unit).index
+    return self.edit_service.find_gaps(time_value, time_unit, range).index
 
 
   def fill_gaps(self, gap, fill, interpolate_values, range):

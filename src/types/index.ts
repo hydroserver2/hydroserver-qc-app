@@ -238,8 +238,8 @@ export class ObservationRecord {
    * @returns
    */
 
-  _findGaps(value: number, unit: TimeUnit) {
-    return this.dataFrame.find_gaps(value, unit)
+  _findGaps(value: number, unit: TimeUnit, range?: [number, number]) {
+    return this.dataFrame.find_gaps(value, unit, range)
   }
 
   /**

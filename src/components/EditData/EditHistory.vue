@@ -104,6 +104,8 @@ const onRemoveHistoryItem = async (index: number) => {
   await selectedSeries.value.data.removeHistoryItem(index)
   updateVisualizationData()
 }
+
+// TODO: ADD CONFIRMATION DIALOGS TO HISTORY OPERATIONS
 </script>
 
 <style lang="scss" scoped>
