@@ -429,7 +429,8 @@ const fillGaps = () => {
     [+gapAmount.value, TimeUnit[selectedGapUnit.value]],
     // @ts-ignore
     [+fillAmount.value, TimeUnit[selectedFillUnit.value]],
-    interpolateValues.value
+    interpolateValues.value,
+    undefined
   )
   const end = performance.now()
   console.log(gaps)

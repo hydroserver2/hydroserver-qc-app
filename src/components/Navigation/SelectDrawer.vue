@@ -7,6 +7,7 @@
     class="bg-navbar"
     theme="dark"
   >
+    <!-- <DataVisualizationControls /> -->
     <v-list class="pb-2" density="compact">
       <v-list-subheader> View </v-list-subheader>
       <v-list-item
@@ -57,6 +58,7 @@ import { useDataVisStore } from '@/store/dataVisualization'
 import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
 import { computed, watch } from 'vue'
+import DataVisualizationControls from '../VisualizeData/DataVisualizationControls.vue'
 
 const { showLegend, showTooltip } = storeToRefs(useEChartsStore())
 const { qualifierSet, selectedQualifier } = storeToRefs(useDataVisStore())
