@@ -19,6 +19,7 @@
         @datazoom="handleDataZoom"
         @legendSelectChanged="handleLegendSelected"
         @brushSelected="handleBrushSelected"
+        @click="handleClick"
       />
     </v-card-text>
 
@@ -240,11 +241,27 @@ function handleBrushSelected(params: any) {
 
 function applyBrushSelection() {
   console.log('applyBrushSelection')
-
   echartsRef.value?.chart.dispatchAction({
     type: 'brush',
     areas: brushSelections.value,
   })
+}
+
+function handleClick(params: any) {
+  const index = selectedData.value.findIndex(
+    (d) => d.index === params.dataIndex
+  )
+  const { createVisualization } = useEChartsStore()
+  if (index == -1) {
+    selectedData.value.push({
+      date: new Date(params.data[0]),
+      value: params.data[1],
+      index: params.dataIndex,
+    })
+  } else {
+    selectedData.value.splice(index, 1)
+  }
+  createVisualization()
 }
 
 // let areListenersCreated = false
@@ -263,12 +280,8 @@ function applyBrushSelection() {
 // but probably there's a way to do this without setTimeout.
 watch(
   () => brushSelections.value,
-  (newOption) => {
-    setTimeout(() => {
-      if (echartsRef.value && newOption) {
-        applyBrushSelection()
-      }
-    }, 100)
+  (_newOption) => {
+    setTimeout(applyBrushSelection, 100)
   },
   { deep: true }
 )

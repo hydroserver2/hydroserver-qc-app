@@ -4,6 +4,7 @@ import {
   SeriesOption,
   LegendComponentOption,
   TooltipComponentOption,
+  ToolboxComponentOption,
 } from 'echarts'
 import { Datastream, GraphSeries } from '@/types'
 import { storeToRefs } from 'pinia'
@@ -14,6 +15,7 @@ import {
   TooltipOption,
   XAXisOption,
   YAXisOption,
+  ZRColor,
 } from 'echarts/types/dist/shared'
 
 type yAxisConfigurationMap = Map<
@@ -108,7 +110,14 @@ export function generateSeriesOptions(
       xAxisIndex: 0,
       yAxisIndex: yAxisConfigurations.get(series.yAxisLabel)?.index,
       itemStyle: {
-        color: series.seriesOption.itemStyle?.color,
+        color: (params) => {
+          const { selectedData } = storeToRefs(useDataVisStore())
+          return (
+            selectedData.value.some((d) => d.index == params.dataIndex)
+              ? 'red'
+              : series.seriesOption.itemStyle?.color
+          ) as ZRColor
+        },
       },
       lineStyle: {
         width: 1,
@@ -117,7 +126,7 @@ export function generateSeriesOptions(
       emphasis: {
         focus: 'series',
       },
-      sampling: 'lttb',
+      // sampling: 'lttb',
       symbol: series.seriesOption.symbol,
       showSymbol: !!series.seriesOption.symbol,
       // dimensions: ['date', 'value'],
@@ -133,6 +142,7 @@ export function generateSeriesOptions(
         ...baseSeries,
         type: 'scatter',
         large: true, // Makes the series render more efficiently
+        zlevel: 1,
       }
 
       const lineSeries: SeriesOption = {
@@ -166,6 +176,9 @@ export function generateToolboxOptions() {
         show: true,
         title: 'Clear selections',
         icon: 'path://M2 2h20v20h-20z M7 7l10 10 M7 17l10-10',
+        iconStyle: {
+          borderColor: 'red',
+        },
         onclick: function () {
           brushSelections.value = []
           selectedData.value = []
@@ -280,33 +293,33 @@ export function addQualifierOptions(
   })
 
   // Add series
-  ;(echartsOption.series! as SeriesOption[]).push({
-    type: 'scatter',
-    name: 'Qualifiers',
+  // ;(echartsOption.series! as SeriesOption[]).push({
+  //   type: 'scatter',
+  //   name: 'Qualifiers',
 
-    // XAxis data must be the same or the on mouse vertical lines won't sync up
-    // TODO: too costly operation
-    data: dsOption.source['value'].map((_val: string, index: number) => {
-      return [
-        // datetime
-        new Date(dsOption?.source?.date[index]).getTime(),
-        // qualifier value
-        selectedQualifier.value === 'All' ||
-        dsOption.source?.qualifier[index]?.has(selectedQualifier.value)
-          ? 1
-          : NaN,
-        // qualifier codes
-        // dsOption.source?.qualifier[index],
-      ]
-    }),
+  //   // XAxis data must be the same or the on mouse vertical lines won't sync up
+  //   // TODO: too costly operation
+  //   data: dsOption.source['value'].map((_val: string, index: number) => {
+  //     return [
+  //       // datetime
+  //       new Date(dsOption?.source?.date[index]).getTime(),
+  //       // qualifier value
+  //       // selectedQualifier.value === 'All' ||
+  //       // dsOption.source?.qualifier[index]?.has(selectedQualifier.value)
+  //       //   ? 1
+  //       //   : NaN,
+  //       // qualifier codes
+  //       // dsOption.source?.qualifier[index],
+  //     ]
+  //   }),
 
-    xAxisIndex: 1,
-    yAxisIndex: yAxisIndex,
-    symbolSize: 7,
-    itemStyle: {
-      color: '#F44336',
-    },
-  })
+  //   xAxisIndex: 1,
+  //   yAxisIndex: yAxisIndex,
+  //   symbolSize: 7,
+  //   itemStyle: {
+  //     color: '#F44336',
+  //   },
+  // })
 
   // tooltip will be fixed on the right if mouse hovering on the left,
   // and on the left if hovering on the right.
@@ -396,30 +409,33 @@ export const createEChartsOption = (
     legend: createLegendConfig(),
     toolbox: generateToolboxOptions() as {},
     brush: {
-      toolbox: ['rect', 'keep', 'lineY'],
+      toolbox: ['rect', 'keep', 'lineY', 'lineX'],
       xAxisIndex: [0],
       seriesIndex: selectedSeriesIndex.value,
       throttleType: 'debounce',
       throttleDelay: 100,
-      outOfBrush: {
-        colorAlpha: 0.1, // dims the points outside the brushed area
+      // outOfBrush: {
+      //   colorAlpha: 0.1, // dims the points outside the brushed area
+      // },
+      inBrush: {
+        color: 'red',
       },
     },
   }
 
   // Add result qualifier options if there's a datastream selected for quality control with qualifiers
-  if (
-    selectedSeriesIndex.value !== -1
-    // && hasStringQualifier(seriesArray[selectedSeriesIndex.value].data.dataFrame)
-  ) {
-    echartsOption = addQualifierOptions(
-      seriesArray[selectedSeriesIndex.value].data.dataset,
-      echartsOption,
-      yAxisConfigurations.size,
-      gridRightPadding,
-      gridLeftPadding
-    )
-  }
+  // if (
+  //   selectedSeriesIndex.value !== -1
+  //   // && hasStringQualifier(seriesArray[selectedSeriesIndex.value].data.dataFrame)
+  // ) {
+  //   echartsOption = addQualifierOptions(
+  //     seriesArray[selectedSeriesIndex.value].data.dataset,
+  //     echartsOption,
+  //     yAxisConfigurations.size,
+  //     gridRightPadding,
+  //     gridLeftPadding
+  //   )
+  // }
 
   return echartsOption
 }

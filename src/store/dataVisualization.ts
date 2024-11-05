@@ -34,6 +34,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const qualifierSet = ref<Set<string>>(new Set())
   const selectedQualifier = ref('')
   const selectedData = ref<{ date: Date; value: number; index: number }[]>([])
+  // const selectedData = ref<number[]>([])
 
   /** Track the loading status of each datastream to be plotted.
    * Set to true when we get a response from the API. Keyed by datastream id. */

@@ -113,7 +113,7 @@ import { useUIStore } from '@/store/userInterface'
 import { useEChartsStore } from '@/store/echarts'
 
 const { tableHeight } = storeToRefs(useUIStore())
-const { drawScatterPlot } = useEChartsStore()
+const { createVisualization } = useEChartsStore()
 const {
   things,
   filteredDatastreams,
@@ -272,7 +272,7 @@ function updateSelectedDatastream(datastream: Datastream) {
     qcDatastream.value = datastream
     removeDatastreamFromPlotted(datastream)
     addDatastreamToPlotted(datastream)
-    drawScatterPlot()
+    createVisualization()
     return
   }
 
@@ -292,7 +292,7 @@ function updateSelectedDatastream(datastream: Datastream) {
     qcDatastream.value = null
     removeDatastreamFromPlotted(datastream)
     addDatastreamToPlotted(datastream)
-    drawScatterPlot()
+    createVisualization()
     return
   }
 
@@ -300,6 +300,6 @@ function updateSelectedDatastream(datastream: Datastream) {
   qcDatastream.value = datastream
   removeDatastreamFromPlotted(datastream)
   addDatastreamToPlotted(datastream)
-  drawScatterPlot()
+  createVisualization()
 }
 </script>

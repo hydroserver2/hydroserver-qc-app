@@ -119,30 +119,33 @@ export const useEChartsStore = defineStore('ECharts', () => {
 
   /** Use this function when the data is already plotted, but we still want to
    * draw the scatter plot for the selected dataset */
-  function drawScatterPlot() {
-    if (echartsOption.value) {
-      const yAxisConfigurations = createYAxisConfigurations(
-        graphSeriesArray.value
-      )
+  // function drawScatterPlot() {
+  //   if (echartsOption.value) {
+  //     const yAxisConfigurations = createYAxisConfigurations(
+  //       graphSeriesArray.value
+  //     )
 
-      echartsOption.value.series = generateSeriesOptions(
-        graphSeriesArray.value,
-        yAxisConfigurations,
-        selectedSeriesIndex.value
-      )
+  //     echartsOption.value.series = generateSeriesOptions(
+  //       graphSeriesArray.value,
+  //       yAxisConfigurations,
+  //       selectedSeriesIndex.value
+  //     )
 
-      echartsOption.value.brush = {
-        toolbox: ['rect', 'keep', 'lineY'],
-        xAxisIndex: [0],
-        seriesIndex: selectedSeriesIndex.value,
-        throttleType: 'debounce',
-        throttleDelay: 100,
-        outOfBrush: {
-          colorAlpha: 0.1, // dims the points outside the brushed area
-        },
-      }
-    }
-  }
+  //     echartsOption.value.brush = {
+  //       toolbox: ['rect', 'keep', 'lineY'],
+  //       xAxisIndex: [0],
+  //       seriesIndex: selectedSeriesIndex.value,
+  //       throttleType: 'debounce',
+  //       throttleDelay: 100,
+  //       outOfBrush: {
+  //         // colorAlpha: 0.1, // dims the points outside the brushed area
+  //       },
+  //       inBrush: {
+  //         color: 'red',
+  //       },
+  //     }
+  //   }
+  // }
 
   const fetchGraphSeriesData = async (
     datastream: Datastream,
@@ -246,6 +249,6 @@ export const useEChartsStore = defineStore('ECharts', () => {
     resetChartZoom,
     fetchGraphSeries,
     fetchGraphSeriesData,
-    drawScatterPlot,
+    // drawScatterPlot,
   }
 })
