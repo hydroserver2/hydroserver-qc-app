@@ -55,7 +55,6 @@ ISO_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 class EditService():
   def __init__(self, data) -> None:
     self.data = data
-    self._filtered_df = None
 
     print("[EditService]: Initializing...")
     self._populate_series()
@@ -75,7 +74,7 @@ class EditService():
     self._df = pd.DataFrame(rows, columns=cols)
 
   def get_dataframe(self):
-    return self._filtered_df or self._df
+    return self._df
 
   def get_date_col(self):
     return self.data["components"][DATETIME_COL_INDEX]
@@ -122,18 +121,18 @@ class EditService():
         f'`{self.get_value_col()}` == {filter[FilterOperation.E.value]}')
       
     # DATETIME FILTERS
-    if self._has_filter(filter, FilterOperation.START):
-      query.append(
-        f'`{self.get_date_col()}` >= {filter[FilterOperation.START.value]}')
+    # if self._has_filter(filter, FilterOperation.START):
+    #   query.append(
+    #     f'`{self.get_date_col()}` >= {filter[FilterOperation.START.value]}')
       
-    if self._has_filter(filter, FilterOperation.END):
-      query.append(
-        f'`{self.get_date_col()}` <= {filter[FilterOperation.END.value]}')
+    # if self._has_filter(filter, FilterOperation.END):
+    #   query.append(
+    #     f'`{self.get_date_col()}` <= {filter[FilterOperation.END.value]}')
 
     if len(query):
-      self._filtered_df = self._df.query(" | ".join(query))
+      return self._df.query(" | ".join(query))
     else:
-      self._filtered_df = None
+      return None
 
   ###################
   # Gap Analysis

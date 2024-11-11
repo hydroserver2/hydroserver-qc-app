@@ -42,13 +42,13 @@ class edit_service_wrapper():
     filter = filter.to_py()
 
     # parse datetime: https://stackoverflow.com/questions/11893083/convert-normal-date-to-unix-timestamp
-    if filter[FilterOperation.START.value]:
-      filter[FilterOperation.START.value] = datetime.fromtimestamp(filter[FilterOperation.START.value] / 1000)
+    # if filter[FilterOperation.START.value]:
+    #   filter[FilterOperation.START.value] = datetime.fromtimestamp(filter[FilterOperation.START.value] / 1000)
       
-    if filter[FilterOperation.END.value]:
-      filter[FilterOperation.END.value] = datetime.fromtimestamp(filter[FilterOperation.END.value] / 1000) 
+    # if filter[FilterOperation.END.value]:
+    #   filter[FilterOperation.END.value] = datetime.fromtimestamp(filter[FilterOperation.END.value] / 1000) 
 
-    return self.edit_service.filter(filter)
+    return self.edit_service.filter(filter).index
 
 
   def change_values(self, index_list, operator, value):

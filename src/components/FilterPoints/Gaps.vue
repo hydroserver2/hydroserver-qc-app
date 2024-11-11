@@ -68,13 +68,13 @@ const { gapUnits } = usePyStore()
 const { gapAmount, selectedGapUnit } = storeToRefs(usePyStore())
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
 const { selectedData } = storeToRefs(useDataVisStore())
-const { selectedIndex, selectedRange } = useDataSelection()
+const { selectedIndex, selectedRange, applySelection } = useDataSelection()
 const { updateVisualizationData } = useEChartsStore()
 
 const emit = defineEmits(['close'])
 const onFindGaps = async () => {
   // TODO: this only returns the last point of each gap
-  let selection = await selectedSeries.value.data.dispatchFilter(
+  const selection = await selectedSeries.value.data.dispatchFilter(
     EnumFilterOperations.FIND_GAPS,
     +gapAmount.value,
     // @ts-ignore
@@ -82,18 +82,7 @@ const onFindGaps = async () => {
     selectedRange.value
   )
 
-  selection = Array.from(selection)
-  selectedData.value = {}
-  selection.forEach((index: number) => {
-    selectedData.value[index] = {
-      index: index,
-      date: selectedSeries.value.data.dataFrame.get_datetime_at(index),
-      value: selectedSeries.value.data.dataFrame.get_value_at(index),
-    }
-  })
-
-  brushSelections.value = []
-  updateVisualizationData()
+  applySelection(selection)
 
   emit('close')
 }

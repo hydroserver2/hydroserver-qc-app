@@ -43,6 +43,7 @@ export enum EnumEditOperations {
 export enum EnumFilterOperations {
   FIND_GAPS = 'FIND_GAPS',
   PERSISTENCE = 'PERSISTENCE',
+  FILTER = 'FILTER',
 }
 
 export class ObservationRecord {
@@ -210,6 +211,7 @@ export class ObservationRecord {
     const filters: EnumDictionary<EnumFilterOperations, Function> = {
       [EnumFilterOperations.FIND_GAPS]: this._findGaps,
       [EnumFilterOperations.PERSISTENCE]: this._persistence,
+      [EnumFilterOperations.FILTER]: this._filter,
     }
     let response = []
 
@@ -271,7 +273,7 @@ export class ObservationRecord {
   }
 
   /**
-   * Find points where the values are the same x times in a row
+   * Find points where the values are the same at least x times in a row
    * @param times The number of times in a row that points can be equal
    * @param range If specified, the points will be found only within the range
    * @returns
@@ -294,6 +296,16 @@ export class ObservationRecord {
     range?: [number, number]
   ) {
     return this.dataFrame.fill_gaps(gap, fill, interpolateValues, range)
+  }
+
+  /**
+   * Find points where the values are the same at least x times in a row
+   * @param times The number of times in a row that points can be equal
+   * @param range If specified, the points will be found only within the range
+   * @returns
+   */
+  _filter(appliedFilters: { [key: string]: number }) {
+    return this.dataFrame.set_filter(appliedFilters)
   }
 
   /**

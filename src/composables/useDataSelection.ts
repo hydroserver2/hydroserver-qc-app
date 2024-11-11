@@ -4,7 +4,8 @@ import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 
 const { selectedData } = storeToRefs(useDataVisStore())
-const { selectedSeries } = storeToRefs(useEChartsStore())
+const { updateVisualizationData } = useEChartsStore()
+const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
 
 export function useDataSelection() {
   const selectedIndex = computed(() => {
@@ -22,8 +23,23 @@ export function useDataSelection() {
       : undefined
   })
 
+  const applySelection = (iterable: any) => {
+    const selection = Array.from(iterable)
+    selectedData.value = {}
+    brushSelections.value = []
+    selection.forEach((index) => {
+      selectedData.value[index as number] = {
+        index: index as number,
+        date: selectedSeries.value.data.dataFrame.get_datetime_at(index),
+        value: selectedSeries.value.data.dataFrame.get_value_at(index),
+      }
+    })
+    updateVisualizationData()
+  }
+
   return {
     selectedIndex,
     selectedRange,
+    applySelection,
   }
 }

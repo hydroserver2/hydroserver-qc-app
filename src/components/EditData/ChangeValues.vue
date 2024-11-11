@@ -95,7 +95,7 @@ const onChangeValues = async () => {
 
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.CHANGE_VALUES,
-    selectedIndex,
+    selectedIndex.value,
     operator,
     operationValue.value
   )

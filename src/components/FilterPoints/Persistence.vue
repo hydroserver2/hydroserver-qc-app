@@ -26,13 +26,15 @@
         </v-timeline-item>
       </v-timeline>
 
-      Select points where the values are the same x times in a row
+      Select points where the values are the same at least:
 
       <v-text-field
         class="mt-2"
         v-model.number="valueThreshold"
-        label="x"
         type="number"
+        max-width="15rem"
+        suffix="times in a row"
+        min="1"
       />
     </v-card-text>
 
@@ -72,11 +74,8 @@ const onPersistence = async () => {
     selectedRange.value
   )
 
-  selection = Array.from(selection)
-
-  console.log(selection)
-
   selectedData.value = {}
+  selection = Array.from(selection)
   selection.forEach((index: number) => {
     selectedData.value[index] = {
       index: index,
@@ -87,7 +86,6 @@ const onPersistence = async () => {
 
   brushSelections.value = []
   updateVisualizationData()
-
   emit('close')
 }
 
