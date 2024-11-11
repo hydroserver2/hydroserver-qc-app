@@ -152,6 +152,29 @@ class EditService():
 
     # DataFrame.diff calculates the difference of datetime compared with the element in previous row.
     return df.loc[self._df[self.get_date_col()].diff() > np.timedelta64(time_value, time_unit)]
+  
+  def persistence(self, times, range = None):
+    """
+    :return Pandas DataFrame:
+    """
+
+    df = None
+    if range:
+      df = self.get_dataframe().iloc[range[0]:range[1] + 1]
+    else:
+      df = self.get_dataframe()
+
+    # Create a boolean mask for rows part of a consecutive group of at least x 
+    def mark_consecutive_groups(df, x): 
+      df['group'] = (df['value'] != df['value'].shift()).cumsum() 
+      group_counts = df.groupby('group')['value'].transform('count') 
+      df['consecutive'] = (group_counts >= x) 
+      return df
+
+    # Apply the function and filter the DataFrame
+    df_marked = mark_consecutive_groups(df, times) 
+    return df[df_marked['consecutive']].drop(columns=['group', 'consecutive'])
+
 
   def fill_gaps(self, gap, fill, interpolate_values, range = None):
     """

@@ -1,36 +1,111 @@
 <template>
-  <v-card rounded="xl">
-    <v-container>
-      <v-card-title> Filter by persistent values </v-card-title>
+  <v-card>
+    <v-card-title>Filter by persistent values</v-card-title>
 
-      <v-form ref="myForm" validate-on="blur">
-        <v-card-text>
-          Select points where the values are the same x times in a row
+    <v-divider></v-divider>
 
-          <v-text-field
-            class="mt-2"
-            v-model.number="valueThreshold"
-            label="x"
-            type="number"
-            clearable
-          />
-        </v-card-text>
+    <v-card-text>
+      <v-timeline
+        direction="horizontal"
+        align="center"
+        side="start"
+        hide-opposite
+      >
+        <v-timeline-item dot-color="green" size="small">
+          <div class="text-center">
+            <div class="text-caption">From:</div>
+            <strong>{{ startDateString }}</strong>
+          </div>
+        </v-timeline-item>
 
-        <v-card-actions>
-          <v-spacer />
-          <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-          <v-btn rounded="xl" variant="outlined" type="submit">Filter</v-btn>
-        </v-card-actions>
-      </v-form>
-    </v-container>
+        <v-timeline-item dot-color="green" size="small">
+          <div class="text-center">
+            <div class="text-caption">To:</div>
+            <strong>{{ endDateString }}</strong>
+          </div>
+        </v-timeline-item>
+      </v-timeline>
+
+      Select points where the values are the same x times in a row
+
+      <v-text-field
+        class="mt-2"
+        v-model.number="valueThreshold"
+        label="x"
+        type="number"
+      />
+    </v-card-text>
+
+    <v-card-actions>
+      <v-spacer />
+      <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
+      <v-btn rounded="xl" variant="outlined" @click="onPersistence"
+        >Filter</v-btn
+      >
+    </v-card-actions>
   </v-card>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { VForm } from 'vuetify/components'
 
-const valueThreshold = ref<number | null>(null)
+const valueThreshold = ref(2)
 
-const emit = defineEmits(['filter', 'close'])
+import { storeToRefs } from 'pinia'
+import { useDataVisStore } from '@/store/dataVisualization'
+import { EnumFilterOperations } from '@/types'
+import { useEChartsStore } from '@/store/echarts'
+import { computed } from 'vue'
+import { formatDate } from '@/utils/formatDate'
+import { useDataSelection } from '@/composables/useDataSelection'
+
+const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+const { selectedData } = storeToRefs(useDataVisStore())
+const { selectedIndex, selectedRange } = useDataSelection()
+const { updateVisualizationData } = useEChartsStore()
+
+const emit = defineEmits(['close'])
+const onPersistence = async () => {
+  let selection = await selectedSeries.value.data.dispatchFilter(
+    EnumFilterOperations.PERSISTENCE,
+    valueThreshold.value,
+    selectedRange.value
+  )
+
+  selection = Array.from(selection)
+
+  console.log(selection)
+
+  selectedData.value = {}
+  selection.forEach((index: number) => {
+    selectedData.value[index] = {
+      index: index,
+      date: selectedSeries.value.data.dataFrame.get_datetime_at(index),
+      value: selectedSeries.value.data.dataFrame.get_value_at(index),
+    }
+  })
+
+  brushSelections.value = []
+  updateVisualizationData()
+
+  emit('close')
+}
+
+const startDateString = computed(() => {
+  const startIndex = selectedIndex.value[0]
+  const startDate = selectedData.value[startIndex]
+    ? new Date(selectedData.value[startIndex].date)
+    : selectedSeries.value.data.beginTime
+
+  return formatDate(startDate)
+})
+
+const endDateString = computed(() => {
+  const endIndex = selectedIndex.value[selectedIndex.value.length - 1]
+  const endDate = selectedData.value[endIndex]
+    ? new Date(selectedData.value[endIndex].date)
+    : selectedSeries.value.data.endTime
+
+  return formatDate(endDate)
+})
 </script>

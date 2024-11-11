@@ -19,6 +19,10 @@ class edit_service_wrapper():
     # https://www.jhanley.com/blog/pyscript-javascript-and-python-interoperability/
     # https://pyodide.org/en/stable/usage/api/python-api/ffi.html#
     return self.edit_service.get_dataframe()
+  
+
+  def persistence(self, times, range):
+    return self.edit_service.persistence(times, range).index
 
 
   def find_gaps(self, time_value, time_unit, range):

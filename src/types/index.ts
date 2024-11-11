@@ -42,6 +42,7 @@ export enum EnumEditOperations {
 
 export enum EnumFilterOperations {
   FIND_GAPS = 'FIND_GAPS',
+  PERSISTENCE = 'PERSISTENCE',
 }
 
 export class ObservationRecord {
@@ -208,6 +209,7 @@ export class ObservationRecord {
   ) {
     const filters: EnumDictionary<EnumFilterOperations, Function> = {
       [EnumFilterOperations.FIND_GAPS]: this._findGaps,
+      [EnumFilterOperations.PERSISTENCE]: this._persistence,
     }
     let response = []
 
@@ -261,11 +263,21 @@ export class ObservationRecord {
    * Find gaps in the data
    * @param value The time value
    * @param unit The time unit (TimeUnit)
+   * @param range If specified, the gaps will be found only within the range
    * @returns
    */
-
   _findGaps(value: number, unit: TimeUnit, range?: [number, number]) {
     return this.dataFrame.find_gaps(value, unit, range)
+  }
+
+  /**
+   * Find points where the values are the same x times in a row
+   * @param times The number of times in a row that points can be equal
+   * @param range If specified, the points will be found only within the range
+   * @returns
+   */
+  _persistence(times: number, range?: [number, number]) {
+    return this.dataFrame.persistence(times, range)
   }
 
   /**

@@ -61,7 +61,7 @@ const onInterpolate = async () => {
   // TODO: value error when interpolating values lesser than 1
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.INTERPOLATE,
-    selectedIndex
+    selectedIndex.value
   )
 
   brushSelections.value = []

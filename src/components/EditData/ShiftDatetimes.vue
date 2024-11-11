@@ -62,7 +62,7 @@ const onShiftDatetimes = async () => {
 
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.SHIFT_DATETIMES,
-    selectedIndex,
+    selectedIndex.value,
     shiftAmount.value,
     // @ts-ignore
     TimeUnit[selectedShiftUnit.value]

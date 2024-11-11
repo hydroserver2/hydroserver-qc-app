@@ -52,7 +52,7 @@ const onDeleteDataPoints = async () => {
 
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.DELETE_POINTS,
-    selectedIndex
+    selectedIndex.value
   )
   brushSelections.value = []
   selectedData.value = {}

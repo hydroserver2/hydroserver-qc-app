@@ -73,6 +73,7 @@ const { updateVisualizationData } = useEChartsStore()
 
 const emit = defineEmits(['close'])
 const onFindGaps = async () => {
+  // TODO: this only returns the last point of each gap
   let selection = await selectedSeries.value.data.dispatchFilter(
     EnumFilterOperations.FIND_GAPS,
     +gapAmount.value,
