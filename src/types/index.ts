@@ -40,6 +40,10 @@ export enum EnumEditOperations {
   FILL_GAPS = 'FILL_GAPS',
 }
 
+export enum EnumFilterOperations {
+  FIND_GAPS = 'FIND_GAPS',
+}
+
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   dataFrame: any
@@ -52,18 +56,13 @@ export class ObservationRecord {
   isLoading: boolean
   ds: Datastream
 
-  constructor(data: any, ds: Datastream) {
+  constructor(dataArray: any[], ds: Datastream) {
     const { instantiateDataFrame } = usePyStore()
     const components = ['date', 'value', 'qualifier']
     this.history = []
     this.ds = ds
 
-    this.dataFrame = instantiateDataFrame(
-      JSON.stringify({
-        dataArray: data,
-        components: components,
-      })
-    )
+    this.dataFrame = instantiateDataFrame(dataArray, components)
 
     this.isLoading = false
   }
@@ -80,14 +79,10 @@ export class ObservationRecord {
       beginDate.value,
       endDate.value
     )
+
     const components = ['date', 'value', 'qualifier']
 
-    this.dataFrame = instantiateDataFrame(
-      JSON.stringify({
-        dataArray: fetchedData,
-        components: components,
-      })
-    )
+    this.dataFrame = instantiateDataFrame(fetchedData, components)
     this.history = []
   }
 
@@ -203,6 +198,37 @@ export class ObservationRecord {
     }
 
     this.generateDataset()
+    return response
+  }
+
+  /** Filter operations do not transform the data */
+  async dispatchFilter(
+    action: EnumFilterOperations | [EnumFilterOperations, ...any][],
+    ...args: any
+  ) {
+    const filters: EnumDictionary<EnumFilterOperations, Function> = {
+      [EnumFilterOperations.FIND_GAPS]: this._findGaps,
+    }
+    let response = []
+
+    try {
+      if (Array.isArray(action)) {
+        for (let i = 0; i < action.length; i++) {
+          const method = action[i][0]
+          const args = action[i].slice(1, action[i].length)
+          const res = await filters[method].apply(this, args)
+          response.push(res)
+        }
+      } else {
+        response = await filters[action].apply(this, args)
+      }
+    } catch (e) {
+      console.log(
+        `Failed to execute filter operation: ${action} with arguments: `,
+        args
+      )
+      console.log(e)
+    }
     return response
   }
 

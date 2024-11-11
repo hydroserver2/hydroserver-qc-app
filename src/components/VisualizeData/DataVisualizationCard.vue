@@ -6,9 +6,10 @@
 
     <v-card-text v-if="option && isDataAvailable">
       <div class="text-center">
-        <v-chip color="primary" variant="outlined">
-          <b class="mr-2">{{ selectedData.length }}</b>
-          Data Point{{ selectedData.length === 1 ? '' : 's' }} selected
+        <v-chip color="grey-lighten-4" elevation="2" variant="elevated">
+          <b class="mr-2 text-red">{{ selectedIndex.length }}</b>
+          Data Point{{ selectedIndex.length === 1 ? '' : 's' }}
+          selected
         </v-chip>
       </div>
       <v-chart
@@ -100,10 +101,13 @@ import { createEChartsOption } from '@/utils/plotting/echarts'
 import SeriesStyleCard from '@/components/VisualizeData/SeriesStyleCard.vue'
 import { LineSeriesOption } from 'echarts'
 import { Datastream } from '@/types'
+import { useDataSelection } from '@/composables/useDataSelection'
 
 const props = defineProps({
   cardHeight: { type: Number, required: true },
 })
+
+const { selectedIndex } = useDataSelection()
 
 const { loadingStates, plottedDatastreams } = storeToRefs(useDataVisStore())
 const { selectedQualifier, selectedData } = storeToRefs(useDataVisStore())
@@ -203,7 +207,7 @@ function handleBrushSelected(params: any) {
 
   const seriesData = selectedSeries.value.data.dataset
 
-  const selectedDataPoints = new Set<[number, number, number]>()
+  selectedData.value = {}
 
   seriesData.source['date'].forEach((_value: number, index: number) => {
     const x = seriesData.source['date'][index]
@@ -219,22 +223,24 @@ function handleBrushSelected(params: any) {
             y >= rangeY[0] &&
             y <= rangeY[1]
           ) {
-            selectedDataPoints.add([x, y, index])
+            selectedData.value[index] = {
+              date: new Date(x),
+              value: y,
+              index,
+            }
             break
           }
         } else if (area.brushType === 'lineY') {
           if (y >= area.coordRange[0] && y <= area.coordRange[1])
-            selectedDataPoints.add([x, y, index])
+            selectedData.value[index] = {
+              date: new Date(x),
+              value: y,
+              index,
+            }
         }
       }
     }
   })
-
-  selectedData.value = Array.from(selectedDataPoints).map((point) => ({
-    date: new Date(point[0]),
-    value: point[1],
-    index: point[2],
-  }))
 
   brushSelections.value = selectedAreas
 }
@@ -248,18 +254,15 @@ function applyBrushSelection() {
 }
 
 function handleClick(params: any) {
-  const index = selectedData.value.findIndex(
-    (d) => d.index === params.dataIndex
-  )
   const { createVisualization } = useEChartsStore()
-  if (index == -1) {
-    selectedData.value.push({
+  if (!selectedData.value[params.dataIndex]) {
+    selectedData.value[params.dataIndex] = {
       date: new Date(params.data[0]),
       value: params.data[1],
       index: params.dataIndex,
-    })
+    }
   } else {
-    selectedData.value.splice(index, 1)
+    delete selectedData.value[params.dataIndex]
   }
   createVisualization()
 }

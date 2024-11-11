@@ -1,4 +1,3 @@
-import sys
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -16,6 +15,10 @@ from enum import Enum
 # Automation
 # [x] Gap filling
 
+
+DATETIME_COL_INDEX = 0
+VALUE_COL_INDEX = 1
+QUALIFIER_COL_INDEX = 2
 
 class TimeUnit(Enum):
   SECOND = 's'
@@ -64,24 +67,24 @@ class EditService():
 
     for i, r in enumerate(rows):
       # parse datetime
-      rows[i][0] = datetime.strptime(
-        r[0], ISO_FORMAT)
+      rows[i][DATETIME_COL_INDEX] = datetime.strptime(
+        r[DATETIME_COL_INDEX], ISO_FORMAT)
       
       # extract qualifier codes
-      rows[i][2] = [q.code for q in r[2]['resultQualifiers']]
+      rows[i][QUALIFIER_COL_INDEX] = [q['code'] for q in r[QUALIFIER_COL_INDEX]['resultQualifiers']]
     self._df = pd.DataFrame(rows, columns=cols)
 
   def get_dataframe(self):
     return self._filtered_df or self._df
 
   def get_date_col(self):
-    return self.data["components"][0]
+    return self.data["components"][DATETIME_COL_INDEX]
 
   def get_value_col(self):
-    return self.data["components"][1]
+    return self.data["components"][VALUE_COL_INDEX]
   
   def get_qualifier_col(self):
-    return self.data["components"][2]
+    return self.data["components"][QUALIFIER_COL_INDEX]
 
   ###################
   # Filters

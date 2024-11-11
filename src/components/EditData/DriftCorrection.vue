@@ -93,26 +93,22 @@ import { EnumEditOperations } from '@/types'
 import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
+import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
 const { updateVisualizationData } = useEChartsStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 const emit = defineEmits(['close'])
+const { selectedIndex } = useDataSelection()
 
 const selectedGroups = computed(() => {
-  if (!selectedData.value.length) {
+  if (!selectedIndex.value.length) {
     return []
   }
 
-  const index = selectedData.value.map(
-    (point: { date: Date; value: number; index: number }) =>
-      selectedSeries.value.data.dataFrame.get_index_at(point.index)
-  )
-
   let groups: number[][] = [[]]
-  const sorted = index.sort((a, b) => a - b)
 
-  sorted.reduce((acc: number[][], curr: number) => {
+  selectedIndex.value.reduce((acc: number[][], curr: number) => {
     const target: number[] = acc[acc.length - 1]
 
     if (!target.length || curr == target[target.length - 1] + 1) {
@@ -143,7 +139,7 @@ const onDriftCorrection = async () => {
   await selectedSeries.value.data.dispatch(actions)
 
   brushSelections.value = []
-  selectedData.value = []
+  selectedData.value = {}
   updateVisualizationData()
   emit('close')
 }

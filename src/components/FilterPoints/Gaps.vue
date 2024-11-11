@@ -58,51 +58,58 @@
 import { TimeUnit, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-
-const { gapUnits } = usePyStore()
-const { gapAmount, selectedGapUnit } = storeToRefs(usePyStore())
-
-import { EnumEditOperations } from '@/types'
+import { EnumFilterOperations } from '@/types'
 import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
+import { useDataSelection } from '@/composables/useDataSelection'
 
-const { selectedSeries } = storeToRefs(useEChartsStore())
+const { gapUnits } = usePyStore()
+const { gapAmount, selectedGapUnit } = storeToRefs(usePyStore())
+const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
 const { selectedData } = storeToRefs(useDataVisStore())
+const { selectedIndex, selectedRange } = useDataSelection()
+const { updateVisualizationData } = useEChartsStore()
 
 const emit = defineEmits(['close'])
 const onFindGaps = async () => {
-  const index = selectedData.value.map(
-    (point: { date: Date; value: number; index: number }) =>
-      selectedSeries.value.data.dataFrame.get_index_at(point.index)
-  )
-
-  const range =
-    index.length > 1 ? [index[0], index[index.length - 1]] : undefined
-  const selection = await selectedSeries.value.data.dispatch(
-    EnumEditOperations.FIND_GAPS,
+  let selection = await selectedSeries.value.data.dispatchFilter(
+    EnumFilterOperations.FIND_GAPS,
     +gapAmount.value,
     // @ts-ignore
     TimeUnit[selectedGapUnit.value],
-    range
+    selectedRange.value
   )
 
-  // TODO: select individual datapoints using this selection
-  console.log(Array.from(selection))
+  selection = Array.from(selection)
+  selectedData.value = {}
+  selection.forEach((index: number) => {
+    selectedData.value[index] = {
+      index: index,
+      date: selectedSeries.value.data.dataFrame.get_datetime_at(index),
+      value: selectedSeries.value.data.dataFrame.get_value_at(index),
+    }
+  })
+
+  brushSelections.value = []
+  updateVisualizationData()
+
   emit('close')
 }
 
 const startDateString = computed(() => {
-  const startDate = selectedData.value[0]
-    ? new Date(selectedData.value[0].date)
+  const startIndex = selectedIndex.value[0]
+  const startDate = selectedData.value[startIndex]
+    ? new Date(selectedData.value[startIndex].date)
     : selectedSeries.value.data.beginTime
 
   return formatDate(startDate)
 })
 
 const endDateString = computed(() => {
-  const endDate = selectedData.value[selectedData.value.length - 1]
-    ? new Date(selectedData.value[selectedData.value.length - 1].date)
+  const endIndex = selectedIndex.value[selectedIndex.value.length - 1]
+  const endDate = selectedData.value[endIndex]
+    ? new Date(selectedData.value[endIndex].date)
     : selectedSeries.value.data.endTime
 
   return formatDate(endDate)

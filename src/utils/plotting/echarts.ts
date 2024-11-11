@@ -113,7 +113,7 @@ export function generateSeriesOptions(
         color: (params) => {
           const { selectedData } = storeToRefs(useDataVisStore())
           return (
-            selectedData.value.some((d) => d.index == params.dataIndex)
+            selectedData.value[params.dataIndex]
               ? 'red'
               : series.seriesOption.itemStyle?.color
           ) as ZRColor
@@ -181,7 +181,7 @@ export function generateToolboxOptions() {
         },
         onclick: function () {
           brushSelections.value = []
-          selectedData.value = []
+          selectedData.value = {}
         },
       },
     },
@@ -373,7 +373,7 @@ export const createEChartsOption = (
 
   let echartsOption: EChartsOption = {
     // https://echarts.apache.org/en/option.html#dataset.source
-    dataset: seriesArray.map((s) => s.data.dataset),
+    dataset: seriesArray.map((s) => s.data?.dataset),
     grid: [
       {
         bottom: '160',

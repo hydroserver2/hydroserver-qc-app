@@ -73,9 +73,13 @@ export const usePyStore = defineStore('py', () => {
   const shiftAmount = ref(15)
 
   /** Instantiates a new Pandas DataFrame and returns the instance */
-  const instantiateDataFrame = (data: any) => {
+  const instantiateDataFrame = (dataArray: any[], components: string[]) => {
+    const dataString = JSON.stringify({
+      dataArray,
+      components,
+    })
     const wrapperClass = interpreter.value.globals.get('edit_service_wrapper')
-    const instance = wrapperClass(data)
+    const instance = wrapperClass(dataString)
     return instance
   }
 

@@ -3,8 +3,8 @@
     <v-card-title>Change Values</v-card-title>
     <v-card-subtitle class="mb-4">
       <div>
-        {{ selectedData.length }} Data Point{{
-          selectedData.length === 1 ? '' : 's'
+        {{ selectedIndex.length }} Data Point{{
+          selectedIndex.length === 1 ? '' : 's'
         }}
         selected
       </div>
@@ -75,35 +75,32 @@ import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { useEChartsStore } from '@/store/echarts'
 import { EnumEditOperations } from '@/types'
+import { useDataSelection } from '@/composables/useDataSelection'
 
 const { updateVisualizationData } = useEChartsStore()
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 const { operators } = usePyStore()
 const { selectedOperator, operationValue } = storeToRefs(usePyStore())
+const { selectedIndex } = useDataSelection()
 
 const emit = defineEmits(['close'])
 
 const onChangeValues = async () => {
-  if (!selectedData.value.length) {
+  if (!selectedIndex.value.length) {
     return
   }
 
   const operator = Operator[operators[selectedOperator.value] as Operator]
 
-  const index = selectedData.value.map(
-    (point: { date: Date; value: number; index: number }) =>
-      selectedSeries.value.data.dataFrame.get_index_at(point.index)
-  )
-
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.CHANGE_VALUES,
-    index,
+    selectedIndex,
     operator,
     operationValue.value
   )
   brushSelections.value = []
-  selectedData.value = []
+  selectedData.value = {}
   updateVisualizationData()
 
   emit('close')

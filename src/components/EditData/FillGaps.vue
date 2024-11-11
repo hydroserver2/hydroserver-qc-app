@@ -92,21 +92,16 @@ import { EnumEditOperations } from '@/types'
 import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
+import { useDataSelection } from '@/composables/useDataSelection'
 
 const { updateVisualizationData } = useEChartsStore()
 const { selectedSeries } = storeToRefs(useEChartsStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 
+const { selectedIndex, selectedRange } = useDataSelection()
+
 const emit = defineEmits(['close'])
 const onFillGaps = async () => {
-  const index = selectedData.value.map(
-    (point: { date: Date; value: number; index: number }) =>
-      selectedSeries.value.data.dataFrame.get_index_at(point.index)
-  )
-
-  const range =
-    index.length > 1 ? [index[0], index[index.length - 1]] : undefined
-
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.FILL_GAPS,
     // @ts-ignore
@@ -114,7 +109,7 @@ const onFillGaps = async () => {
     // @ts-ignore
     [+fillAmount.value, TimeUnit[selectedFillUnit.value]],
     interpolateValues.value,
-    range
+    selectedRange.value
   )
 
   updateVisualizationData()
@@ -130,8 +125,8 @@ const startDateString = computed(() => {
 })
 
 const endDateString = computed(() => {
-  const endDate = selectedData.value[selectedData.value.length - 1]
-    ? new Date(selectedData.value[selectedData.value.length - 1].date)
+  const endDate = selectedData.value[selectedIndex.value.length - 1]
+    ? new Date(selectedData.value[selectedIndex.value.length - 1].date)
     : selectedSeries.value.data.endTime
 
   return formatDate(endDate)

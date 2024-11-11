@@ -36,6 +36,7 @@ export const fetchObservationsParallel = async (
     const results = await Promise.all(
       endpoints.map((endpoint) => api.fetchObservations(endpoint))
     )
+
     // return results.reduce((acc, data) => {
     //   if (data?.value?.length > 0 && data.value[0].dataArray) {
     //     return acc.concat(data.value[0].dataArray)

@@ -3,8 +3,8 @@
     <v-card-title>Interpolate</v-card-title>
     <v-card-subtitle class="mb-4">
       <div>
-        {{ selectedData.length }} Data Point{{
-          selectedData.length === 1 ? '' : 's'
+        {{ selectedIndex.length }} Data Point{{
+          selectedIndex.length === 1 ? '' : 's'
         }}
         selected
       </div>
@@ -44,7 +44,9 @@ import { useDataVisStore } from '@/store/dataVisualization'
 
 import { useEChartsStore } from '@/store/echarts'
 import { EnumEditOperations } from '@/types'
+import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedData } = storeToRefs(useDataVisStore())
+const { selectedIndex } = useDataSelection()
 const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
 const { updateVisualizationData } = useEChartsStore()
 
@@ -53,23 +55,17 @@ const { selectedInterpolationMethod } = storeToRefs(usePyStore())
 const emit = defineEmits(['close'])
 
 const onInterpolate = async () => {
-  if (!selectedData.value.length) {
+  if (!selectedIndex.value.length) {
     return
   }
-
-  const index = selectedData.value.map(
-    (point: { date: Date; value: number; index: number }) =>
-      selectedSeries.value.data.dataFrame.get_index_at(point.index)
-  )
-
   // TODO: value error when interpolating values lesser than 1
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.INTERPOLATE,
-    index
+    selectedIndex
   )
 
   brushSelections.value = []
-  selectedData.value = []
+  selectedData.value = {}
   updateVisualizationData()
   emit('close')
 }

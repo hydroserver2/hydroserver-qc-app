@@ -33,8 +33,12 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   // Qualifiers
   const qualifierSet = ref<Set<string>>(new Set())
   const selectedQualifier = ref('')
-  const selectedData = ref<{ date: Date; value: number; index: number }[]>([])
-  // const selectedData = ref<number[]>([])
+
+  /** A dictionary of selected data where the keys are the data indexes.
+   * Provides fast lookup for echart's data point's computed properties based on selection (e.g.: color) */
+  const selectedData = ref<
+    Record<number, { date: Date; value: number; index: number }>
+  >({})
 
   /** Track the loading status of each datastream to be plotted.
    * Set to true when we get a response from the API. Keyed by datastream id. */

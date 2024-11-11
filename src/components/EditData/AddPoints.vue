@@ -145,7 +145,7 @@ const onAddDataPoints = async () => {
     transformedDataPoints
   )
   brushSelections.value = []
-  selectedData.value = []
+  selectedData.value = {}
   updateVisualizationData()
 
   emit('close')
