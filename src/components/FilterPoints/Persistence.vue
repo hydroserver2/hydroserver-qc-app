@@ -6,6 +6,7 @@
 
     <v-card-text>
       <v-timeline
+        v-if="selectedRange"
         direction="horizontal"
         align="center"
         side="start"
@@ -34,7 +35,7 @@
         type="number"
         max-width="15rem"
         suffix="times in a row"
-        min="1"
+        min="2"
       />
     </v-card-text>
 

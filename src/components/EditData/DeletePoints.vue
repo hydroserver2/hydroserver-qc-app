@@ -3,7 +3,7 @@
     <v-card-title>Delete Points</v-card-title>
     <v-card-subtitle class="mb-4">
       <div>
-        {{ selectedIndex.length }} Data Point{{
+        <b class="text-red">{{ selectedIndex.length }}</b> Data Point{{
           selectedIndex.length === 1 ? '' : 's'
         }}
         selected
@@ -15,7 +15,7 @@
     <v-card-text>
       <p class="text-body-1">
         Are you sure you want to delete
-        {{ selectedIndex.length }} selected Data Point{{
+        <b class="text-red">{{ selectedIndex.length }}</b> selected Data Point{{
           selectedIndex.length !== 1 ? 's' : ''
         }}?
       </p>

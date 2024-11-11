@@ -284,6 +284,7 @@ function handleClick(params: any) {
 watch(
   () => brushSelections.value,
   (_newOption) => {
+    // TODO: for large datasets, this delay is not sufficient
     setTimeout(applyBrushSelection, 100)
   },
   { deep: true }

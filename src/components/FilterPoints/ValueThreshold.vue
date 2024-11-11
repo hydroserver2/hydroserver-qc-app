@@ -1,7 +1,7 @@
 <template>
   <v-card rounded="xl" min-height="300">
     <v-card-title class="text-body-1">
-      Filters
+      Filter by value thresholds
       <v-badge
         v-if="Object.keys(appliedFilters).length"
         :content="Object.keys(appliedFilters).length"
