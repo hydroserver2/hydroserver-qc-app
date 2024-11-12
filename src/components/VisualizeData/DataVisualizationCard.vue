@@ -134,8 +134,24 @@ const isDataAvailable = computed(() =>
   graphSeriesArray.value.some((series) => series.data?.dataFrame?.count?.() > 0)
 )
 
+const clearSelected = () => {
+  echartsRef.value?.dispatchAction({
+    type: 'unselect',
+    dataIndex: selectedIndex.value,
+  })
+  selectedData.value = {}
+}
+
+const applySelection = () => {
+  setTimeout(() => {
+    echartsRef.value?.dispatchAction({
+      type: 'select',
+      dataIndex: selectedIndex.value,
+    })
+  }, 100) // Need to wait for brush selection handler
+}
+
 function handleDataZoom(event: any) {
-  console.log('handleDataZoom')
   let start, end
 
   if (event.batch && event.batch.length) {
@@ -191,12 +207,17 @@ interface BrushArea {
  * alive if they're outside of the view window.
  */
 function handleBrushSelected(params: any) {
-  if (selectedSeriesIndex.value === -1) return
-
   console.log('handleBrushSelected')
 
+  if (selectedSeriesIndex.value === -1) {
+    return
+  }
+
   const selectedAreas = params.batch[0].areas
-  if (selectedAreas.length <= 0) return
+  if (selectedAreas.length <= 0) {
+    clearSelected()
+    return
+  }
 
   const currentBrush = JSON.stringify(
     selectedAreas.map((a: BrushArea) => a.coordRange)
@@ -207,7 +228,8 @@ function handleBrushSelected(params: any) {
 
   const seriesData = selectedSeries.value.data.dataset
 
-  selectedData.value = {}
+  // TODO: if keep option selected, merge selected instead
+  clearSelected()
 
   seriesData.source['date'].forEach((_value: number, index: number) => {
     const x = seriesData.source['date'][index]
@@ -242,19 +264,10 @@ function handleBrushSelected(params: any) {
     }
   })
 
-  brushSelections.value = selectedAreas
-}
-
-function applyBrushSelection() {
-  console.log('applyBrushSelection')
-  echartsRef.value?.chart.dispatchAction({
-    type: 'brush',
-    areas: brushSelections.value,
-  })
+  applySelection()
 }
 
 function handleClick(params: any) {
-  const { createVisualization } = useEChartsStore()
   if (!selectedData.value[params.dataIndex]) {
     selectedData.value[params.dataIndex] = {
       date: new Date(params.data[0]),
@@ -264,31 +277,9 @@ function handleClick(params: any) {
   } else {
     delete selectedData.value[params.dataIndex]
   }
-  createVisualization()
+
+  applySelection()
 }
-
-// let areListenersCreated = false
-// watch(echartsRef, (newValue) => {
-//   if (newValue && !areListenersCreated) {
-//     areListenersCreated = true
-//     const echartsInstance = newValue.chart
-//     echartsInstance.on('legendSelectChanged', handleLegendSelected)
-//     echartsInstance.on('brushSelected', handleBrushSelected)
-//     echartsInstance.on('finished', applyBrushSelection())
-//   }
-// })
-
-// TODO: I think ECharts uses a different reactivity system than Vue so the plot isn't always ready when
-// option changes. setTimeout is the only way I could figure getting the selections to reliably repopulate
-// but probably there's a way to do this without setTimeout.
-watch(
-  () => brushSelections.value,
-  (_newOption) => {
-    // TODO: for large datasets, this delay is not sufficient
-    setTimeout(applyBrushSelection, 100)
-  },
-  { deep: true }
-)
 
 const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
   if (

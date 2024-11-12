@@ -86,10 +86,10 @@ export const useObservationStore = defineStore('observations', () => {
       // Return only the data within the requested range
       // TODO: set a data frame date filter using beginTime and endTime
       // TODO: add to current filter in store
-      observations.value[id].dataFrame.set_filter({
-        [FilterOperation.START]: beginTime.getTime(),
-        [FilterOperation.END]: endTime.getTime(),
-      })
+      // observations.value[id].dataFrame.set_filter({
+      //   [FilterOperation.START]: beginTime.getTime(),
+      //   [FilterOperation.END]: endTime.getTime(),
+      // })
       return observations.value[id]
     }
   }

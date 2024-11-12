@@ -96,29 +96,18 @@ export function generateYAxisOptions(
 }
 
 // TODO: Instead of merging manually, use a spread operator on seriesOption
-// The reason we're overlaying a line plot on top of a scatter plot for the selected
-// datastream is because ECharts currently only supports data selection for scatter plots not line plots
 export function generateSeriesOptions(
   seriesArray: GraphSeries[],
   yAxisConfigurations: yAxisConfigurationMap,
   selectedIndex: number
 ): SeriesOption[] {
+  console.log('generateSeriesOptions')
   return seriesArray.flatMap((series, index): SeriesOption[] => {
     const baseSeries: SeriesOption = {
       name: series.name,
       type: 'line',
       xAxisIndex: 0,
       yAxisIndex: yAxisConfigurations.get(series.yAxisLabel)?.index,
-      itemStyle: {
-        color: (params) => {
-          const { selectedData } = storeToRefs(useDataVisStore())
-          return (
-            selectedData.value[params.dataIndex]
-              ? 'red'
-              : series.seriesOption.itemStyle?.color
-          ) as ZRColor
-        },
-      },
       lineStyle: {
         width: 1,
         type: series.seriesOption.lineStyle?.type,
@@ -126,7 +115,8 @@ export function generateSeriesOptions(
       emphasis: {
         focus: 'series',
       },
-      // sampling: 'lttb',
+      symbolSize: 10,
+      sampling: 'lttb',
       symbol: series.seriesOption.symbol,
       showSymbol: !!series.seriesOption.symbol,
       // dimensions: ['date', 'value'],
@@ -138,23 +128,23 @@ export function generateSeriesOptions(
     }
 
     if (index === selectedIndex) {
-      const scatterSeries: SeriesOption = {
-        ...baseSeries,
-        type: 'scatter',
-        large: true, // Makes the series render more efficiently
-        zlevel: 1,
-      }
-
       const lineSeries: SeriesOption = {
         ...baseSeries,
         name: '', // No name for this series so it won't appear in the legend
         lineStyle: { ...baseSeries.lineStyle, opacity: 0.5 },
-        emphasis: { focus: 'none' },
-        showSymbol: false,
+        showSymbol: true,
         tooltip: { show: false },
+        selectedMode: 'multiple',
+        select: { itemStyle: { color: 'red' } },
+        emphasis: {
+          itemStyle: {
+            color: 'red',
+          },
+          focus: 'series',
+        },
       }
 
-      return [scatterSeries, lineSeries]
+      return [lineSeries]
     }
 
     return [baseSeries]
@@ -162,9 +152,6 @@ export function generateSeriesOptions(
 }
 
 export function generateToolboxOptions() {
-  const { brushSelections } = storeToRefs(useEChartsStore())
-  const { selectedData } = storeToRefs(useDataVisStore())
-
   return {
     feature: {
       dataZoom: {
@@ -172,18 +159,6 @@ export function generateToolboxOptions() {
       },
       restore: {},
       saveAsImage: { name: 'plot_export' },
-      myClearSelected: {
-        show: true,
-        title: 'Clear selections',
-        icon: 'path://M2 2h20v20h-20z M7 7l10 10 M7 17l10-10',
-        iconStyle: {
-          borderColor: 'red',
-        },
-        onclick: function () {
-          brushSelections.value = []
-          selectedData.value = {}
-        },
-      },
     },
   }
 }
@@ -409,17 +384,11 @@ export const createEChartsOption = (
     legend: createLegendConfig(),
     toolbox: generateToolboxOptions() as {},
     brush: {
-      toolbox: ['rect', 'keep', 'lineY', 'lineX'],
+      toolbox: ['rect', 'keep', 'lineY', 'lineX', 'clear'],
       xAxisIndex: [0],
       seriesIndex: selectedSeriesIndex.value,
       throttleType: 'debounce',
       throttleDelay: 100,
-      // outOfBrush: {
-      //   colorAlpha: 0.1, // dims the points outside the brushed area
-      // },
-      inBrush: {
-        color: 'red',
-      },
     },
   }
 
