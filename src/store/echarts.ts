@@ -1,13 +1,9 @@
-import {
-  Datastream,
-  EnumEditOperations,
-  GraphSeries,
-  ObservationRecord,
-} from '@/types'
+import { Datastream, GraphSeries } from '@/types'
 import { defineStore, storeToRefs } from 'pinia'
 import { computed, ComputedRef, Ref, ref, watch } from 'vue'
 import { EChartsOption, LineSeriesOption } from 'echarts'
 import { EChartsColors } from '@/utils/materialColors'
+import VChart from 'vue-echarts'
 import {
   createEChartsOption,
   createLegendConfig,
@@ -21,6 +17,10 @@ import { api } from '@/services/api'
 // import { preProcessData } from '@/utils/observationsUtils'
 import { useObservationStore } from '@/store/observations'
 import { useDataVisStore } from './dataVisualization'
+import {
+  EnumEditOperations,
+  ObservationRecord,
+} from '@/utils/plotting/observationRecord'
 
 export const useEChartsStore = defineStore('ECharts', () => {
   const { fetchObservationsInRange } = useObservationStore()
@@ -28,6 +28,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
   const showLegend = ref(true)
   const showTooltip = ref(false)
   const dataZoomEnd = ref(100)
+  const echartsRef = ref<typeof VChart | null>(null) // Populated during DataVisualizationCard onMounted hook
 
   const graphSeriesArray = ref<GraphSeries[]>([])
   /** The index of the ECharts series that represents the datastream selected for quality control */
@@ -213,6 +214,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
     selectedSeries,
     editHistory,
     brushSelections,
+    echartsRef,
     createVisualization,
     updateVisualizationData,
     clearChartState,

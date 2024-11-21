@@ -4,18 +4,18 @@ import {
   SeriesOption,
   LegendComponentOption,
   TooltipComponentOption,
-  ToolboxComponentOption,
 } from 'echarts'
 import { Datastream, GraphSeries } from '@/types'
 import { storeToRefs } from 'pinia'
 import { useEChartsStore } from '@/store/echarts'
 import { useDataVisStore } from '@/store/dataVisualization'
+import { useDataSelection } from '@/composables/useDataSelection'
+
 import {
   GridOption,
   TooltipOption,
   XAXisOption,
   YAXisOption,
-  ZRColor,
 } from 'echarts/types/dist/shared'
 
 type yAxisConfigurationMap = Map<
@@ -152,6 +152,8 @@ export function generateSeriesOptions(
 }
 
 export function generateToolboxOptions() {
+  const { clearSelected } = useDataSelection()
+
   return {
     feature: {
       dataZoom: {
@@ -159,6 +161,12 @@ export function generateToolboxOptions() {
       },
       restore: {},
       saveAsImage: { name: 'plot_export' },
+      myClearSelected: {
+        show: true,
+        title: 'Clear selections',
+        icon: 'path://M2 2h20v20h-20z M7 7l10 10 M7 17l10-10',
+        onclick: clearSelected,
+      },
     },
   }
 }

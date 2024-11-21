@@ -19,6 +19,8 @@ import { api } from '@/services/api'
 import { ref } from 'vue'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
+import * as echarts from 'echarts'
+import dataSample from './utils/custom-down-sample'
 
 // Use stores
 const { $initialized } = usePyStore()
@@ -52,6 +54,13 @@ const initializeHydroServer = async () => {
   observedProperties.value = observedPropertiesResponse
 
   isLoading.value = false
+
+  // TODO: the previous dataSample processor needs to be unregistered
+  echarts.registerProcessor(
+    echarts.PRIORITY.PROCESSOR.STATISTIC,
+    // @ts-ignore
+    dataSample('line')
+  )
 }
 
 initializeHydroServer()

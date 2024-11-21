@@ -62,7 +62,7 @@ import { Ref, ref } from 'vue'
 import { FilterOperation } from '@/store/py'
 import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
-import { EnumFilterOperations } from '@/types'
+import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
 const { updateVisualizationData } = useEChartsStore()
 const { selectedSeries } = storeToRefs(useEChartsStore())
@@ -75,14 +75,13 @@ const emit = defineEmits(['filter', 'close'])
 // FILTERS
 const filterOperators = [...Object.keys(FilterOperation)]
 const selectedFilter = ref(filterOperators[2])
-const filterValue = ref(12)
-
+const filterValue = ref(0)
 const appliedFilters: Ref<{ [key: string]: number }> = ref({})
 
 const clearFilters = async () => {
   appliedFilters.value = {}
   const selection = await selectedSeries.value.data.dispatchFilter(
-    EnumFilterOperations.FILTER,
+    EnumFilterOperations.VALUE_THRESHOLD,
     appliedFilters.value
   )
   applySelection(selection)
@@ -96,7 +95,7 @@ const onAddFilter = (key: string, value: number) => {
 const addFilter = async (key: string, value: number) => {
   appliedFilters.value[key] = +value
   const selection = await selectedSeries.value.data.dispatchFilter(
-    EnumFilterOperations.FILTER,
+    EnumFilterOperations.VALUE_THRESHOLD,
     appliedFilters.value
   )
   applySelection(selection)
@@ -105,7 +104,7 @@ const addFilter = async (key: string, value: number) => {
 const removeFilter = async (key: string) => {
   delete appliedFilters.value[key]
   const selection = await selectedSeries.value.data.dispatchFilter(
-    EnumFilterOperations.FILTER,
+    EnumFilterOperations.VALUE_THRESHOLD,
     appliedFilters.value
   )
   applySelection(selection)

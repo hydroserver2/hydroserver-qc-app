@@ -43,7 +43,7 @@ import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 
 import { useEChartsStore } from '@/store/echarts'
-import { EnumEditOperations } from '@/types'
+import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedIndex } = useDataSelection()

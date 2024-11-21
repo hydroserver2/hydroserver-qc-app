@@ -3,11 +3,12 @@ import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 
-const { selectedData } = storeToRefs(useDataVisStore())
-const { updateVisualizationData } = useEChartsStore()
-const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
-
 export function useDataSelection() {
+  const { selectedData } = storeToRefs(useDataVisStore())
+  const { selectedSeries, brushSelections, echartsRef } = storeToRefs(
+    useEChartsStore()
+  )
+
   const selectedIndex = computed(() => {
     return Object.keys(selectedData.value)
       .map((i) => selectedSeries.value.data.dataFrame.get_index_at(+i))
@@ -23,6 +24,7 @@ export function useDataSelection() {
       : undefined
   })
 
+  /** Applies and dispatches the selection from an iterable object */
   const applySelection = (iterable: any) => {
     const selection = Array.from(iterable)
     selectedData.value = {}
@@ -34,12 +36,34 @@ export function useDataSelection() {
         value: selectedSeries.value.data.dataFrame.get_value_at(index),
       }
     })
-    updateVisualizationData()
+
+    dispatchSelection()
+  }
+
+  /** Dispatch selection of the currently selected points in `selectedData` */
+  const dispatchSelection = () => {
+    setTimeout(() => {
+      console.log('dispatchSelection')
+      echartsRef.value?.dispatchAction({
+        type: 'select',
+        dataIndex: selectedIndex.value,
+      })
+    }, 100) // Need to wait for brush selection handler
+  }
+
+  const clearSelected = () => {
+    echartsRef.value?.dispatchAction({
+      type: 'unselect',
+      dataIndex: selectedIndex.value,
+    })
+    selectedData.value = {}
   }
 
   return {
     selectedIndex,
     selectedRange,
     applySelection,
+    dispatchSelection,
+    clearSelected,
   }
 }

@@ -41,7 +41,7 @@
 import { TimeUnit, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumEditOperations } from '@/types'
+import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 
 import { useEChartsStore } from '@/store/echarts'
 import { useDataSelection } from '@/composables/useDataSelection'

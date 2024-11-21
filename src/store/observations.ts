@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { Datastream, ObservationRecord } from '@/types'
+import { Datastream } from '@/types'
 import { fetchObservationsParallel } from '@/utils/observationsUtils'
-import { FilterOperation } from '@/store/py'
+// import { FilterOperation } from '@/store/py'
+import { ObservationRecord } from '@/utils/plotting/observationRecord'
 
 export const useObservationStore = defineStore('observations', () => {
   const observations = ref<Record<string, ObservationRecord>>({})

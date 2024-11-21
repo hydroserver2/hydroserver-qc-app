@@ -56,7 +56,7 @@ const valueThreshold = ref(2)
 
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumFilterOperations } from '@/types'
+import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
 import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'

@@ -58,18 +58,17 @@
 import { TimeUnit, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumFilterOperations } from '@/types'
 import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
+import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
 
 const { gapUnits } = usePyStore()
 const { gapAmount, selectedGapUnit } = storeToRefs(usePyStore())
-const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+const { selectedSeries } = storeToRefs(useEChartsStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedIndex, selectedRange, applySelection } = useDataSelection()
-const { updateVisualizationData } = useEChartsStore()
 
 const emit = defineEmits(['close'])
 const onFindGaps = async () => {

@@ -88,7 +88,7 @@ const {
   fillAmount,
 } = storeToRefs(usePyStore())
 
-import { EnumEditOperations } from '@/types'
+import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'

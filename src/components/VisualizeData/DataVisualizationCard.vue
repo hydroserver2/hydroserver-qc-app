@@ -13,7 +13,7 @@
         </v-chip>
       </div>
       <v-chart
-        ref="echartsRef"
+        ref="_echartsRef"
         :option="option"
         :style="{ height: `${cardHeight}vh` }"
         autoresize
@@ -92,12 +92,10 @@
 
 <script setup lang="ts">
 import { useDataVisStore } from '@/store/dataVisualization'
-import { ref, watch, computed, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import VChart from 'vue-echarts'
-import 'echarts'
 import { useEChartsStore } from '@/store/echarts'
-import { createEChartsOption } from '@/utils/plotting/echarts'
 import SeriesStyleCard from '@/components/VisualizeData/SeriesStyleCard.vue'
 import { LineSeriesOption } from 'echarts'
 import { Datastream } from '@/types'
@@ -107,10 +105,10 @@ const props = defineProps({
   cardHeight: { type: Number, required: true },
 })
 
-const { selectedIndex } = useDataSelection()
+const { selectedIndex, dispatchSelection, clearSelected } = useDataSelection()
 
-const { loadingStates, plottedDatastreams } = storeToRefs(useDataVisStore())
-const { selectedQualifier, selectedData } = storeToRefs(useDataVisStore())
+const { loadingStates, plottedDatastreams, selectedQualifier, selectedData } =
+  storeToRefs(useDataVisStore())
 const openStyleModal = ref(false)
 const seriesDatastream = ref<Datastream | null>(null)
 
@@ -122,9 +120,14 @@ const {
   selectedSeriesIndex,
   brushSelections,
   selectedSeries,
+  echartsRef,
 } = storeToRefs(useEChartsStore())
 
-const echartsRef = ref<typeof VChart | null>(null)
+const _echartsRef = ref<typeof VChart | null>(null)
+
+onMounted(() => {
+  echartsRef.value = _echartsRef.value
+})
 
 const updating = computed(() =>
   Array.from(loadingStates.value.values()).some((isLoading) => isLoading)
@@ -133,23 +136,6 @@ const updating = computed(() =>
 const isDataAvailable = computed(() =>
   graphSeriesArray.value.some((series) => series.data?.dataFrame?.count?.() > 0)
 )
-
-const clearSelected = () => {
-  echartsRef.value?.dispatchAction({
-    type: 'unselect',
-    dataIndex: selectedIndex.value,
-  })
-  selectedData.value = {}
-}
-
-const applySelection = () => {
-  setTimeout(() => {
-    echartsRef.value?.dispatchAction({
-      type: 'select',
-      dataIndex: selectedIndex.value,
-    })
-  }, 100) // Need to wait for brush selection handler
-}
 
 function handleDataZoom(event: any) {
   let start, end
@@ -170,12 +156,12 @@ function handleDataZoom(event: any) {
   dataZoomEnd.value = end
 }
 
-// watch([() => props.cardHeight], ([newHeight], [oldHeight]) => {
-//   if (Math.abs(newHeight - oldHeight) < 0.2) return
-//   nextTick(() => {
-//     if (echartsRef.value) echartsRef.value.resize()
-//   })
-// })
+watch([() => props.cardHeight], ([newHeight], [oldHeight]) => {
+  if (Math.abs(newHeight - oldHeight) < 0.2) return
+  nextTick(() => {
+    echartsRef.value?.resize()
+  })
+})
 
 // TODO: Is there a better place to put this watcher?
 // watch(selectedQualifier, () => {
@@ -222,7 +208,10 @@ function handleBrushSelected(params: any) {
   const currentBrush = JSON.stringify(
     selectedAreas.map((a: BrushArea) => a.coordRange)
   )
-  if (!currentBrush || currentBrush === previousBrushAreas.value) return
+  if (!currentBrush || currentBrush === previousBrushAreas.value) {
+    dispatchSelection()
+    return
+  }
 
   previousBrushAreas.value = currentBrush
 
@@ -264,7 +253,7 @@ function handleBrushSelected(params: any) {
     }
   })
 
-  applySelection()
+  dispatchSelection()
 }
 
 function handleClick(params: any) {
@@ -278,7 +267,7 @@ function handleClick(params: any) {
     delete selectedData.value[params.dataIndex]
   }
 
-  applySelection()
+  dispatchSelection()
 }
 
 const updateSeriesOption = (updatedOptions: Partial<LineSeriesOption>) => {
