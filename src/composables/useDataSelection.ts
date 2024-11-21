@@ -59,11 +59,20 @@ export function useDataSelection() {
     selectedData.value = {}
   }
 
+  const clearBrush = () => {
+    echartsRef.value?.dispatchAction({
+      type: 'brush',
+      command: 'clear',
+      areas: [],
+    })
+  }
+
   return {
     selectedIndex,
     selectedRange,
     applySelection,
     dispatchSelection,
     clearSelected,
+    clearBrush,
   }
 }

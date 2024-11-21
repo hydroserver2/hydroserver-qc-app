@@ -95,6 +95,7 @@ import { useDataVisStore } from '@/store/dataVisualization'
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import VChart from 'vue-echarts'
+import 'echarts' // Needed to render VChart component
 import { useEChartsStore } from '@/store/echarts'
 import SeriesStyleCard from '@/components/VisualizeData/SeriesStyleCard.vue'
 import { LineSeriesOption } from 'echarts'

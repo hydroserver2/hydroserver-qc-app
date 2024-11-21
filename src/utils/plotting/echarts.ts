@@ -155,7 +155,7 @@ export function generateSeriesOptions(
 }
 
 export function generateToolboxOptions() {
-  const { clearSelected } = useDataSelection()
+  const { clearSelected, clearBrush } = useDataSelection()
 
   return {
     feature: {
@@ -168,7 +168,10 @@ export function generateToolboxOptions() {
         show: true,
         title: 'Clear selections',
         icon: 'path://M2 2h20v20h-20z M7 7l10 10 M7 17l10-10',
-        onclick: clearSelected,
+        onclick: () => {
+          clearSelected()
+          clearBrush()
+        },
       },
     },
   }
