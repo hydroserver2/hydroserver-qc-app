@@ -22,6 +22,17 @@ import {
   ObservationRecord,
 } from '@/utils/plotting/observationRecord'
 
+// Register custom data sampler
+// import * as echarts from 'echarts'
+// import dataSample from '@/utils/custom-down-sample'
+
+// TODO: the previous dataSample processor needs to be unregistered
+// echarts.registerProcessor(
+//   echarts.PRIORITY.PROCESSOR.STATISTIC,
+//   // @ts-ignore
+//   dataSample('line')
+// )
+
 export const useEChartsStore = defineStore('ECharts', () => {
   const { fetchObservationsInRange } = useObservationStore()
 
@@ -34,7 +45,7 @@ export const useEChartsStore = defineStore('ECharts', () => {
   /** The index of the ECharts series that represents the datastream selected for quality control */
   const selectedSeriesIndex = computed(() => {
     const { qcDatastream } = storeToRefs(useDataVisStore())
-    if (qcDatastream.value?.id) {
+    if (qcDatastream?.value?.id) {
       return graphSeriesArray.value.findIndex(
         (s) => s.id === qcDatastream.value?.id
       )

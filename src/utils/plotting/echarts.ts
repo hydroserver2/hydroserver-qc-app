@@ -116,7 +116,10 @@ export function generateSeriesOptions(
         focus: 'series',
       },
       symbolSize: 10,
-      sampling: 'lttb',
+      // sampling: 'lttb',
+      // sampling: () => {
+      //   console.log('test sampling')
+      // },
       symbol: series.seriesOption.symbol,
       showSymbol: !!series.seriesOption.symbol,
       // dimensions: ['date', 'value'],

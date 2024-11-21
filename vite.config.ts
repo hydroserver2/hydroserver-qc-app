@@ -13,6 +13,13 @@ export default defineConfig({
       styles: { configFile: 'src/styles/settings.scss' },
     }),
   ],
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler', // or "modern"
+      },
+    },
+  },
   optimizeDeps: {
     exclude: ['vuetify'],
   },

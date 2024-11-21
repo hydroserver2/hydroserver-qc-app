@@ -28,6 +28,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   // Datasets
   /** The datastream selected to go through the quality control process */
   const qcDatastream = ref<Datastream | null>(null)
+  console.log(qcDatastream)
   const plottedDatastreams = ref<Datastream[]>([])
 
   // Qualifiers
