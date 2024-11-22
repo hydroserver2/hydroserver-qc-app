@@ -116,9 +116,20 @@ export function generateSeriesOptions(
         focus: 'series',
       },
       symbolSize: 10,
-      // sampling: 'lttb',
-      // sampling: () => {
-      //   console.log('test sampling')
+      sampling: 'custom-lttb',
+      // @ts-ignore: Actually supported, but not type annotated or documented in EChart's API
+      // sampling: (frame) => {
+      //   console.log(frame)
+      //   let sum = 0
+      //   let count = 0
+      //   for (let i = 0; i < frame.length; i++) {
+      //     if (!isNaN(frame[i])) {
+      //       sum += frame[i]
+      //       count++
+      //     }
+      //   }
+      //   // Return NaN if count is 0
+      //   return count === 0 ? NaN : sum / count
       // },
       symbol: series.seriesOption.symbol,
       showSymbol: !!series.seriesOption.symbol,

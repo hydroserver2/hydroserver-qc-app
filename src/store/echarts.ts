@@ -23,15 +23,15 @@ import {
 } from '@/utils/plotting/observationRecord'
 
 // Register custom data sampler
-// import * as echarts from 'echarts'
-// import dataSample from '@/utils/custom-down-sample'
+import * as echarts from 'echarts'
+import dataSample from '@/utils/custom-down-sample'
 
 // TODO: the previous dataSample processor needs to be unregistered
-// echarts.registerProcessor(
-//   echarts.PRIORITY.PROCESSOR.STATISTIC,
-//   // @ts-ignore
-//   dataSample('line')
-// )
+echarts.registerProcessor(
+  echarts.PRIORITY.PROCESSOR.STATISTIC,
+  // @ts-ignore
+  dataSample('line')
+)
 
 export const useEChartsStore = defineStore('ECharts', () => {
   const { fetchObservationsInRange } = useObservationStore()
