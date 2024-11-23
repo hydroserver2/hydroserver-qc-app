@@ -4,6 +4,7 @@ import {
   SeriesSamplingOptionMixin,
 } from 'echarts/types/src/util/types'
 import SeriesModel from 'echarts/types/src/model/Series'
+import { range } from './interpolate'
 
 /**
  * Large data down sampling
@@ -12,7 +13,6 @@ import SeriesModel from 'echarts/types/src/model/Series'
  */
 function customDownSample(valueDimension: DimensionIndex, params: any) {
   // TODO:  IN PROGRESS
-  console.log('============ Custom Downsample ============')
   const xAxis = params[0]
   const yAxis = params[1]
   const api = params[2]
@@ -24,11 +24,21 @@ function customDownSample(valueDimension: DimensionIndex, params: any) {
 
   const len = this.count()
 
-  const start = this.getRawIndex(0)
-  const end = this.getRawIndex(len - 1)
-
-  const xDomain = [xStore[start], xStore[end]]
   const xExtent = xAxis.getExtent()
+  const rawXExtent = xAxis.scale.rawExtentInfo
+  const xDomain = [
+    rawXExtent._determinedMin || rawXExtent._dataMin,
+    rawXExtent._determinedMax || rawXExtent._dataMax,
+  ]
+
+  const yExtent = yAxis.getExtent()
+  console.log(this._rawExtent[1]) // TODO: this is the raw extent, unsure if updated after brush
+  // TODO: find yAxis domain
+  // const rawYExtent = yAxis.scale.rawExtentInfo
+  // const yDomain = [
+  //   rawYExtent._determinedMin || rawYExtent._dataMin,
+  //   rawYExtent._determinedMax || rawYExtent._dataMax,
+  // ]
 
   const dpr = api.getDevicePixelRatio()
   // In case coordinste system has been resized
@@ -39,9 +49,23 @@ function customDownSample(valueDimension: DimensionIndex, params: any) {
     const rawIndex = this.getRawIndex(i) // The index in the full dataset
 
     if (rawIndex == 1000) {
-      const y = yStore[rawIndex]
-      const x = xStore[rawIndex]
+      const dx = range(
+        xDomain[0],
+        xDomain[1],
+        xExtent[0],
+        xExtent[1],
+        xStore[rawIndex]
+      )
+      console.log(dx)
+      // const dy = range(
+      //   yDomain[0],
+      //   yDomain[1],
+      //   yExtent[0],
+      //   yExtent[1],
+      //   yStore[rawIndex]
+      // )
       // TODO: use extent and domain to get the current extent coordinates at x, y
+      break
     }
   }
 
