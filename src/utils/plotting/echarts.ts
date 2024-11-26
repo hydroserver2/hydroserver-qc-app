@@ -106,6 +106,7 @@ export function generateSeriesOptions(
     const baseSeries: SeriesOption = {
       name: series.name,
       type: 'line',
+      animation: false,
       xAxisIndex: 0,
       yAxisIndex: yAxisConfigurations.get(series.yAxisLabel)?.index,
       lineStyle: {
@@ -115,7 +116,6 @@ export function generateSeriesOptions(
       emphasis: {
         focus: 'series',
       },
-      symbolSize: 10,
       sampling: 'custom-lttb',
       // @ts-ignore: Actually supported, but not type annotated or documented in EChart's API
       // sampling: (frame) => {
@@ -132,7 +132,9 @@ export function generateSeriesOptions(
       //   return count === 0 ? NaN : sum / count
       // },
       symbol: series.seriesOption.symbol,
+      symbolSize: 10,
       showSymbol: !!series.seriesOption.symbol,
+      progressive: 1,
       // dimensions: ['date', 'value'],
       encode: {
         x: 'date',
@@ -200,6 +202,7 @@ export function generateDataZoomOptions(initializeZoomed: boolean) {
   const sliderSettings = {
     type: 'slider',
     xAxisIndex: [0, 1],
+    realtime: false,
     bottom: '60',
     ...(initializeZoomed && {
       start: dataZoomStart.value,
