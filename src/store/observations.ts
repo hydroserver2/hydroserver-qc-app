@@ -31,7 +31,10 @@ export const useObservationStore = defineStore('observations', () => {
         endTime
       )
 
-      observations.value[id] = new ObservationRecord(fetchedData, datastream)
+      // Loading the data is an asynchronous operation that cannot be awaited in the constructor
+      observations.value[id] = new ObservationRecord(datastream)
+      // We implicitly call `loadData` here to await it
+      await observations.value[id].loadData(fetchedData)
       observations.value[id].generateDataset()
 
       // Return the dataframe

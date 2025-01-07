@@ -42,9 +42,7 @@ export enum DriftCorrectionMethods {
 }
 
 export const usePyStore = defineStore('py', () => {
-  const interpreter: Ref<any> = ref(null)
   const $initialized = new Subject<boolean>()
-  const startEl = document.getElementById('start') // Used to detect when PyScript has finished initializing
 
   // Change Values
   const operators = [...Object.keys(Operator)]
@@ -73,13 +71,16 @@ export const usePyStore = defineStore('py', () => {
   const shiftAmount = ref(15)
 
   /** Instantiates a new Pandas DataFrame and returns the instance */
-  const instantiateDataFrame = (dataArray: any[], components: string[]) => {
+  const instantiateDataFrame = async (
+    dataArray: any[],
+    components: string[]
+  ) => {
     const dataString = JSON.stringify({
       dataArray,
       components,
     })
-    const wrapperClass = interpreter.value.globals.get('edit_service_wrapper')
-    const instance = wrapperClass(dataString)
+    const instance = await (window as _Window).edit_service_wrapper(dataString)
+    console.log(instance)
     return instance
   }
 
@@ -130,25 +131,8 @@ export const usePyStore = defineStore('py', () => {
   //   return interpreter.value.globals.get('count')?.()
   // }
 
-  if (startEl) {
-    const init = () => {
-      setTimeout(() => {
-        interpreter.value = _window.pyscript.interpreter
-        $initialized.next(true)
-
-        // Cleanup
-        startEl?.removeEventListener('click', init)
-        startEl?.remove()
-      }, 0)
-    }
-    startEl.onclick = init
-  } else {
-    throw 'Failed to detect PyScript initialization'
-  }
-
   return {
     // Getters
-    interpreter,
     $initialized,
     shiftUnits,
     selectedShiftUnit,

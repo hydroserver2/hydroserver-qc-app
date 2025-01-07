@@ -1,5 +1,5 @@
 from edit_service import EditService, FilterOperation, ISO_FORMAT
-from pyscript import Element
+from pyscript import window
 from datetime import datetime
 import json
 
@@ -110,6 +110,4 @@ class edit_service_wrapper():
     values = self.edit_service._df._mgr.arrays[QUALIFIER_COL_INDEX][0]
     return [val for val in values]
 
-
-# Signal start
-Element("start").element.click()
+window.edit_service_wrapper = edit_service_wrapper

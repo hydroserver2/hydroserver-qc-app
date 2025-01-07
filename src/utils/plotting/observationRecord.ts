@@ -36,14 +36,16 @@ export class ObservationRecord {
   isLoading: boolean
   ds: Datastream
 
-  constructor(dataArray: any[], ds: Datastream) {
-    const { instantiateDataFrame } = usePyStore()
-    const components = ['date', 'value', 'qualifier']
+  constructor(ds: Datastream) {
     this.history = []
     this.ds = ds
+    this.isLoading = true
+  }
 
-    this.dataFrame = instantiateDataFrame(dataArray, components)
-
+  async loadData(dataArray: any[]) {
+    const { instantiateDataFrame } = usePyStore()
+    const components = ['date', 'value', 'qualifier']
+    this.dataFrame = await instantiateDataFrame(dataArray, components)
     this.isLoading = false
   }
 
@@ -62,7 +64,7 @@ export class ObservationRecord {
 
     const components = ['date', 'value', 'qualifier']
 
-    this.dataFrame = instantiateDataFrame(fetchedData, components)
+    this.dataFrame = await instantiateDataFrame(fetchedData, components)
     this.history = []
   }
 
@@ -283,7 +285,7 @@ export class ObservationRecord {
       number,
       Partial<{
         resultQualifiers: string[]
-      }>
+      }>,
     ][]
   ) {
     this.dataFrame.add_points(dataPoints)

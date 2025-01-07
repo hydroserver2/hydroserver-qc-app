@@ -26,6 +26,13 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     port: 1203,
+    /** @see https://docs.pyscript.net/2024.11.1/user-guide/workers/ */
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+    },
   },
   resolve: {
     extensions: ['.js', '.json', '.vue', '.less', '.scss', '.ts'],

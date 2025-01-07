@@ -404,6 +404,6 @@ export enum OAuthProvider {
 }
 
 export type _Window = Window &
-  typeof globalThis & { pyscript: any; loadPyodide: any; pyGlobals: any } & {
+  typeof globalThis & { edit_service_wrapper: any } & {
     [key: string]: any
   }
