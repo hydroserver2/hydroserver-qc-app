@@ -116,7 +116,7 @@ export function generateSeriesOptions(
       emphasis: {
         focus: 'series',
       },
-      sampling: 'custom-lttb',
+      // sampling: 'custom-lttb',
       // @ts-ignore: Actually supported, but not type annotated or documented in EChart's API
       // sampling: (frame) => {
       //   console.log(frame)

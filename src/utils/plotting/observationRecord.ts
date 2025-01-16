@@ -114,12 +114,12 @@ export class ObservationRecord {
   }
 
   get beginTime() {
-    const beginDateTime = this.dataFrame.get_datetime_at(0)
+    const beginDateTime = this.dataFrame?.get_datetime_at(0)
     return new Date(beginDateTime)
   }
 
   get endTime() {
-    const endDateTime = this.dataFrame.get_datetime_at(
+    const endDateTime = this.dataFrame?.get_datetime_at(
       this.dataFrame.count() - 1
     )
     return new Date(endDateTime)
