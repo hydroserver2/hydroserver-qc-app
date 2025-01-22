@@ -272,8 +272,9 @@ import { usePyStore, FilterOperation, TimeUnit, Operator } from '@/store/py'
 import { _Window } from '@/types'
 import { storeToRefs } from 'pinia'
 import { useEChartsStore } from '@/store/echarts'
+import { usePlotlyStore } from '@/store/plotly'
 const { graphSeriesArray } = storeToRefs(useEChartsStore())
-const { createVisualization } = useEChartsStore()
+const { createVisualization } = usePlotlyStore()
 
 // Use stores
 const py = usePyStore()

@@ -1,13 +1,11 @@
 import { useDataVisStore } from '@/store/dataVisualization'
-import { useEChartsStore } from '@/store/echarts'
+import { usePlotlyStore } from '@/store/plotly'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 
 export function useDataSelection() {
   const { selectedData } = storeToRefs(useDataVisStore())
-  const { selectedSeries, brushSelections, echartsRef } = storeToRefs(
-    useEChartsStore()
-  )
+  const { selectedSeries } = storeToRefs(usePlotlyStore())
 
   const selectedIndex = computed(() => {
     return Object.keys(selectedData.value)
@@ -28,7 +26,7 @@ export function useDataSelection() {
   const applySelection = (iterable: any) => {
     const selection = Array.from(iterable)
     selectedData.value = {}
-    brushSelections.value = []
+    // brushSelections.value = []
     selection.forEach((index) => {
       selectedData.value[index as number] = {
         index: index as number,
@@ -44,27 +42,27 @@ export function useDataSelection() {
   const dispatchSelection = () => {
     setTimeout(() => {
       console.log('dispatchSelection')
-      echartsRef.value?.dispatchAction({
-        type: 'select',
-        dataIndex: selectedIndex.value,
-      })
+      // echartsRef.value?.dispatchAction({
+      //   type: 'select',
+      //   dataIndex: selectedIndex.value,
+      // })
     }, 100) // Need to wait for brush selection handler
   }
 
   const clearSelected = () => {
-    echartsRef.value?.dispatchAction({
-      type: 'unselect',
-      dataIndex: selectedIndex.value,
-    })
+    // echartsRef.value?.dispatchAction({
+    //   type: 'unselect',
+    //   dataIndex: selectedIndex.value,
+    // })
     selectedData.value = {}
   }
 
   const clearBrush = () => {
-    echartsRef.value?.dispatchAction({
-      type: 'brush',
-      command: 'clear',
-      areas: [],
-    })
+    // echartsRef.value?.dispatchAction({
+    //   type: 'brush',
+    //   command: 'clear',
+    //   areas: [],
+    // })
   }
 
   return {

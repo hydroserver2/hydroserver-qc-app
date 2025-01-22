@@ -110,10 +110,10 @@ import { computed, reactive, ref } from 'vue'
 import DatastreamInformationCard from './DatastreamInformationCard.vue'
 import { downloadPlottedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
 import { useUIStore } from '@/store/userInterface'
-import { useEChartsStore } from '@/store/echarts'
+import { usePlotlyStore } from '@/store/plotly'
 
 const { tableHeight } = storeToRefs(useUIStore())
-const { createVisualization } = useEChartsStore()
+const { createVisualization } = usePlotlyStore()
 const {
   things,
   filteredDatastreams,

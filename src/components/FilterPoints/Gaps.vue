@@ -89,7 +89,7 @@ const onFindGaps = async () => {
 const startDateString = computed(() => {
   const startIndex = selectedIndex.value[0]
   const startDate = selectedData.value[startIndex]
-    ? new Date(selectedData.value[startIndex].date)
+    ? new Date(selectedData.value[startIndex].x)
     : selectedSeries.value.data.beginTime
 
   return formatDate(startDate)
@@ -98,7 +98,7 @@ const startDateString = computed(() => {
 const endDateString = computed(() => {
   const endIndex = selectedIndex.value[selectedIndex.value.length - 1]
   const endDate = selectedData.value[endIndex]
-    ? new Date(selectedData.value[endIndex].date)
+    ? new Date(selectedData.value[endIndex].x)
     : selectedSeries.value.data.endTime
 
   return formatDate(endDate)

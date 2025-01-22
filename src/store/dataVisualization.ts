@@ -1,18 +1,19 @@
 import { Datastream, ObservedProperty, ProcessingLevel, Thing } from '@/types'
 import { defineStore, storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
-import { useEChartsStore } from './echarts'
+// import { useEChartsStore } from './echarts'
+import { usePlotlyStore } from './plotly'
 
 export const useDataVisStore = defineStore('dataVisualization', () => {
   const {
-    resetChartZoom,
+    // resetChartZoom,
     createVisualization,
     clearChartState,
     fetchGraphSeries,
     fetchGraphSeriesData,
-  } = useEChartsStore()
+  } = usePlotlyStore()
 
-  const { graphSeriesArray } = storeToRefs(useEChartsStore())
+  const { graphSeriesArray } = storeToRefs(usePlotlyStore())
 
   // To only fetch these once per page
   const things = ref<Thing[]>([])
@@ -37,7 +38,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   /** A dictionary of selected data where the keys are the data indexes.
    * Provides fast lookup for echart's data point's computed properties based on selection (e.g.: color) */
   const selectedData = ref<
-    Record<number, { date: Date; value: number; index: number }>
+    Record<number, { x: Date; y: number; index: number }>
   >({})
 
   /** Track the loading status of each datastream to be plotted.
@@ -58,7 +59,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     endDate.value = new Date()
     beginDate.value = new Date(new Date().getTime() - oneWeek)
     selectedDateBtnId.value = 0
-    resetChartZoom()
+    // resetChartZoom()
   }
 
   function matchesSelectedObservedProperty(datastream: Datastream) {
@@ -110,7 +111,8 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       label: 'Last Year',
       calculateBeginDate: () => {
         const now = endDate.value
-        return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+        // TODO
+        return new Date(now.getFullYear() - 10, now.getMonth(), now.getDate())
       },
     },
     {
@@ -152,7 +154,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     update = true,
     custom = true,
   }: SetDateRangeParams) => {
-    resetChartZoom()
+    // resetChartZoom()
     if (begin) beginDate.value = begin
     if (end) endDate.value = end
     if (custom) selectedDateBtnId.value = -1
@@ -163,10 +165,10 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       endDate.value &&
       plottedDatastreams.value.length
     ) {
-      const { updateVisualizationData } = useEChartsStore()
+      // const { updateVisualizationData } = usePlotlyStore()
       await refreshGraphSeriesArray(plottedDatastreams.value)
       // TODO: regenerate echart datasets
-      updateVisualizationData()
+      // updateVisualizationData()
     }
   }
 
@@ -210,8 +212,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
         graphSeriesArray.value.push(newSeries)
       }
 
-      // TODO: when updating use setOption https://echarts.apache.org/en/api.html#echartsInstance.setOption
-      // createVisualization()
+      createVisualization()
     } catch (error) {
       console.error(
         `Failed to fetch or update dataset for ${datastream.id}:`,

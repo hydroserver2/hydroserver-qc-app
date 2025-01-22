@@ -118,7 +118,7 @@ const onFillGaps = async () => {
 
 const startDateString = computed(() => {
   const startDate = selectedData.value[0]
-    ? new Date(selectedData.value[0].date)
+    ? new Date(selectedData.value[0].x)
     : selectedSeries.value.data.beginTime
 
   return formatDate(startDate)
@@ -126,7 +126,7 @@ const startDateString = computed(() => {
 
 const endDateString = computed(() => {
   const endDate = selectedData.value[selectedIndex.value.length - 1]
-    ? new Date(selectedData.value[selectedIndex.value.length - 1].date)
+    ? new Date(selectedData.value[selectedIndex.value.length - 1].x)
     : selectedSeries.value.data.endTime
 
   return formatDate(endDate)

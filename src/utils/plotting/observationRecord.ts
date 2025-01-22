@@ -28,7 +28,7 @@ export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   dataFrame: any
   /** The generated dataset to be used in echarts */
-  dataset: { dimensions: string[]; source: { [key: string]: any[] } } = {
+  dataset: { dimensions: string[]; source: { [key: string]: any } } = {
     dimensions: [],
     source: {},
   }
@@ -101,11 +101,12 @@ export class ObservationRecord {
       //  'qualifier'
     ]
     this.dataset = {
-      dimensions: components,
+      dimensions: components, // TODO: no longer needed?
       source: {
-        date: (Array.from(this.dataFrame.get_date_column()) as number[]) || [],
-        value:
-          (Array.from(this.dataFrame.get_value_column()) as number[]) || [],
+        x: (Array.from(this.dataFrame.get_date_column()) as number[]) || [],
+        y: (Array.from(this.dataFrame.get_value_column()) as number[]) || [],
+        // mode: 'lines+markers',
+        // type: 'scatter',
         // qualifier: Array.from(
         //   this.dataFrame.get_qualifier_column()
         // ) as string[][],
