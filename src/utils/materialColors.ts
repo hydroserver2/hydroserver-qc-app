@@ -42,7 +42,7 @@ export const materialColorsHex = [
   '#9E9E9E', // grey
 ]
 
-export const EChartsColors = [
+export const LineColors = [
   // '#5571c7', // blue  !only the qc selected datastream should be blue
   '#91cc75', // green
   '#795548', // brown

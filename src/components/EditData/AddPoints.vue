@@ -75,9 +75,8 @@
 import { onMounted, reactive, Ref } from 'vue'
 import type { MaskInputOptions } from 'maska'
 
-import { useEChartsStore } from '@/store/echarts'
-const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
-const { updateVisualizationData } = useEChartsStore()
+const { selectedSeries } = storeToRefs(usePlotlyStore())
+const { updateVisualizationData } = usePlotlyStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 
@@ -88,6 +87,7 @@ import { VForm } from 'vuetify/lib/components/index.mjs'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { usePlotlyStore } from '@/store/plotly'
 
 const form = ref<InstanceType<typeof VForm>>()
 
@@ -95,7 +95,7 @@ const dataPoints: Ref<
   [
     datetime: string,
     value: number,
-    qualifier: Partial<{ resultQualifiers: string[] }>
+    qualifier: Partial<{ resultQualifiers: string[] }>,
   ][]
 > = ref([['', 0, { resultQualifiers: [] }]])
 const options = reactive<MaskInputOptions>({
@@ -121,7 +121,7 @@ const onAddDataPoints = async () => {
     number,
     Partial<{
       resultQualifiers: string[]
-    }>
+    }>,
   ][] = dataPoints.value.map((point) => {
     const matches = point[0].match(
       /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/
@@ -144,8 +144,8 @@ const onAddDataPoints = async () => {
     EnumEditOperations.ADD_POINTS,
     transformedDataPoints
   )
-  brushSelections.value = []
-  selectedData.value = {}
+  // brushSelections.value = []
+  // selectedData.value = {}
   updateVisualizationData()
 
   emit('close')

@@ -67,7 +67,6 @@ export default defineConfig({
         '**/src/utils/mdi-icons.ts',
         '**/src/utils/materialColors.ts',
         '**/src/utils/CSVDownloadUtils.ts',
-        '**/src/utils/plotting/echarts.ts',
         '**/src/utils/plotting/graphSeriesUtils.ts',
         '**/src/utils/test/**',
         '**/src/utils/googleMaps/**',

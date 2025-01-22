@@ -29,11 +29,11 @@
 </template>
 
 <script setup lang="ts">
-import { useEChartsStore } from '@/store/echarts'
+import { usePlotlyStore } from '@/store/plotly'
 import { storeToRefs } from 'pinia'
 import { onMounted, ref } from 'vue'
 
-const { graphSeriesArray } = storeToRefs(useEChartsStore())
+const { graphSeriesArray } = storeToRefs(usePlotlyStore())
 
 const props = defineProps({ datastreamId: { type: String, required: true } })
 const emit = defineEmits(['submit', 'close'])

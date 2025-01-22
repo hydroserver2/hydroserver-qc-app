@@ -3,8 +3,8 @@
     <v-card-title>Change Values</v-card-title>
     <v-card-subtitle class="mb-4">
       <div>
-        {{ selectedIndex.length }} Data Point{{
-          selectedIndex.length === 1 ? '' : 's'
+        {{ selectedData?.points.length }} Data Point{{
+          selectedData?.points.length === 1 ? '' : 's'
         }}
         selected
       </div>
@@ -73,21 +73,21 @@
 import { Operator, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { useEChartsStore } from '@/store/echarts'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
 
-const { updateVisualizationData } = useEChartsStore()
-const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+import { usePlotlyStore } from '@/store/plotly'
+const { updateVisualizationData } = usePlotlyStore()
+const { selectedSeries } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 const { operators } = usePyStore()
 const { selectedOperator, operationValue } = storeToRefs(usePyStore())
-const { selectedIndex } = useDataSelection()
+const { clearSelected } = useDataSelection()
 
 const emit = defineEmits(['close'])
 
 const onChangeValues = async () => {
-  if (!selectedIndex.value.length) {
+  if (!selectedData.value?.points.length) {
     return
   }
 
@@ -95,12 +95,12 @@ const onChangeValues = async () => {
 
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.CHANGE_VALUES,
-    selectedIndex.value,
+    selectedData.value.points.map((p) => p.pointIndex),
     operator,
-    operationValue.value
+    +operationValue.value
   )
-  brushSelections.value = []
-  selectedData.value = {}
+
+  await clearSelected()
   updateVisualizationData()
 
   emit('close')

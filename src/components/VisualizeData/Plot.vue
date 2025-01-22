@@ -1,12 +1,12 @@
 <template>
   <div class="text-center">
     <v-chip color="grey-lighten-4" elevation="2" variant="elevated">
-      <b class="mr-2 text-red">{{ selectedIndex.length }}</b>
-      Data Point{{ selectedIndex.length === 1 ? '' : 's' }}
+      <b class="mr-2 text-red">{{ selectedData?.points.length }}</b>
+      Data Point{{ selectedData?.points.length === 1 ? '' : 's' }}
       selected
     </v-chip>
   </div>
-  <div ref="plot" style="width: 1000px; height: 500px"></div>
+  <div ref="plot"></div>
 </template>
 
 <script setup lang="ts">
@@ -17,15 +17,19 @@ import Plotly from 'plotly.js-dist'
 import { usePlotlyStore } from '@/store/plotly'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { storeToRefs } from 'pinia'
+import {
+  handleClick,
+  handleRelayout,
+  handleSelected,
+} from '@/utils/plotting/plotly'
+import { useDataVisStore } from '@/store/dataVisualization'
 
 const plot = ref<HTMLDivElement>()
-const { graphSeriesArray, selectedSeries, plotlyOptions } =
+const { graphSeriesArray, selectedSeries, plotlyOptions, plotlyRef } =
   storeToRefs(usePlotlyStore())
-const { selectedIndex } = useDataSelection()
+const { selectedData } = storeToRefs(useDataVisStore())
 
 onMounted(async () => {
-  console.log(plotlyOptions.value.datasets)
-
   const myPlot = await Plotly.newPlot(
     plot.value,
     plotlyOptions.value.data,
@@ -33,43 +37,11 @@ onMounted(async () => {
     plotlyOptions.value.config
   )
 
-  console.log(myPlot)
+  plotlyRef.value = myPlot
 
-  myPlot.on('plotly_selected', function (eventData: any) {
-    console.log(eventData)
-
-    // Plotly.restyle(myPlot, 'marker.color', [colors], [0])
-  })
-
-  // TODO: bind selection control keys (Ctrl, Shift, etc)
-  // TODO: too costly
-  // myPlot
-  //   .on('plotly_click', function (eventData: any) {
-  //     if ('selectedpoints' in eventData.points[0].fullData) {
-  //       const point = eventData.points[0]
-  //       point.data.selectedpoints = [point.pointIndex]
-
-  //       Plotly.update(
-  //         myPlot,
-  //         {
-  //           selectedpoints: [point.pointIndex],
-  //         },
-  //         {},
-  //         0
-  //       )
-  //     }
-  //   })
-  //   .on('plotly_relayout', (eventData: any) => {
-  //     if ('selections' in eventData) {
-  //       Plotly.update(
-  //         myPlot,
-  //         {},
-  //         {
-  //           selections: [],
-  //         }
-  //       )
-  //     }
-  //   })
+  // myPlot.on('plotly_click', handleClick)
+  // myPlot.on('plotly_relayout', handleRelayout)
+  myPlot.on('plotly_selected', handleSelected)
 
   // https://plotly.com/javascript/plotlyjs-function-reference/#plotlyupdate
 })

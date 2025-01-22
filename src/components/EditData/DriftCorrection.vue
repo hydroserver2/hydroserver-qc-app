@@ -85,36 +85,34 @@ import { DriftCorrectionMethods, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 
-const { driftGapWidth, selectedDriftCorrectionMethod } = storeToRefs(
-  usePyStore()
-)
+const { driftGapWidth, selectedDriftCorrectionMethod } =
+  storeToRefs(usePyStore())
 
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
-import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
-const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
-const { updateVisualizationData } = useEChartsStore()
+const { selectedSeries } = storeToRefs(usePlotlyStore())
+import { usePlotlyStore } from '@/store/plotly'
+const { updateVisualizationData } = usePlotlyStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 const emit = defineEmits(['close'])
-const { selectedIndex } = useDataSelection()
 
 const selectedGroups = computed(() => {
-  if (!selectedIndex.value.length) {
-    return []
+  if (!selectedData.value?.points.length) {
+    return
   }
 
   let groups: number[][] = [[]]
 
-  selectedIndex.value.reduce((acc: number[][], curr: number) => {
+  selectedData.value.points.reduce((acc: number[][], curr) => {
     const target: number[] = acc[acc.length - 1]
 
-    if (!target.length || curr == target[target.length - 1] + 1) {
-      target.push(curr)
+    if (!target.length || curr.pointIndex == target[target.length - 1] + 1) {
+      target.push(curr.pointIndex)
     } else {
-      acc.push([curr])
+      acc.push([curr.pointIndex])
     }
 
     return acc
@@ -125,7 +123,7 @@ const selectedGroups = computed(() => {
 
 const onDriftCorrection = async () => {
   const actions: [EnumEditOperations, ...any][] = []
-  selectedGroups.value.forEach(async (g) => {
+  selectedGroups.value?.forEach(async (g) => {
     const start = g[0]
     const end = g[g.length - 1]
     actions.push([
@@ -139,7 +137,7 @@ const onDriftCorrection = async () => {
   await selectedSeries.value.data.dispatch(actions)
 
   brushSelections.value = []
-  selectedData.value = {}
+  // selectedData.value = {}
   updateVisualizationData()
   emit('close')
 }

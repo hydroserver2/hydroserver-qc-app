@@ -89,16 +89,16 @@ const {
 } = storeToRefs(usePyStore())
 
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
-import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
 
-const { updateVisualizationData } = useEChartsStore()
-const { selectedSeries } = storeToRefs(useEChartsStore())
+import { usePlotlyStore } from '@/store/plotly'
+const { updateVisualizationData } = usePlotlyStore()
+const { selectedSeries } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 
-const { selectedIndex, selectedRange } = useDataSelection()
+// const { selectedIndex, selectedRange } = useDataSelection()
 
 const emit = defineEmits(['close'])
 const onFillGaps = async () => {

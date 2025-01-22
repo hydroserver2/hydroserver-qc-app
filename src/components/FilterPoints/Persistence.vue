@@ -57,15 +57,15 @@ const valueThreshold = ref(2)
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
-import { useEChartsStore } from '@/store/echarts'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
 
-const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
+const { selectedSeries } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedIndex, selectedRange } = useDataSelection()
-const { updateVisualizationData } = useEChartsStore()
+import { usePlotlyStore } from '@/store/plotly'
+const { updateVisualizationData } = usePlotlyStore()
 
 const emit = defineEmits(['close'])
 const onPersistence = async () => {
@@ -80,8 +80,8 @@ const onPersistence = async () => {
   selection.forEach((index: number) => {
     selectedData.value[index] = {
       index: index,
-      date: selectedSeries.value.data.dataFrame.get_datetime_at(index),
-      value: selectedSeries.value.data.dataFrame.get_value_at(index),
+      x: selectedSeries.value.data.dataFrame.get_datetime_at(index),
+      y: selectedSeries.value.data.dataFrame.get_value_at(index),
     }
   })
 

@@ -80,7 +80,7 @@ export const useObservationStore = defineStore('observations', () => {
         observations.value[id].dataFrame.add_points(endData)
       }
 
-      // If the data has changed, renegerate the echarts dataset
+      // If the data has changed, renegerate the dataset
       if (beginData.length > 0 || endData.length > 0) {
         existingRecord.generateDataset()
       }

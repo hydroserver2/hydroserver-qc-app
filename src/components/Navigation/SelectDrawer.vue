@@ -55,12 +55,12 @@
 import DataVisTimeFilters from '@/components/VisualizeData/DataVisTimeFilters.vue'
 import DatastreamFilters from '@/components/VisualizeData/DatastreamFilters.vue'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
 import { computed, watch } from 'vue'
 import DataVisualizationControls from '../VisualizeData/DataVisualizationControls.vue'
+import { usePlotlyStore } from '@/store/plotly'
 
-const { showLegend, showTooltip } = storeToRefs(useEChartsStore())
+const { showLegend, showTooltip } = storeToRefs(usePlotlyStore())
 const { qualifierSet, selectedQualifier } = storeToRefs(useDataVisStore())
 
 const qualifierOptions = computed(() => {

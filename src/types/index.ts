@@ -1,5 +1,4 @@
 import { ObservationRecord } from '@/utils/plotting/observationRecord'
-import { LineSeriesOption } from 'echarts'
 
 export type EnumDictionary<T extends string | symbol | number, U> = {
   [K in T]: U
@@ -31,7 +30,7 @@ export interface GraphSeries {
   // data: DataPoint[]
   data: ObservationRecord // dataframe
   yAxisLabel: string
-  seriesOption: LineSeriesOption
+  seriesOption: any
 }
 
 export type TimeSpacingUnit = 'seconds' | 'minutes' | 'hours' | 'days'

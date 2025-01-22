@@ -1,10 +1,10 @@
 import { Datastream, EnumDictionary } from '@/types'
 import { Operator, TimeUnit, usePyStore } from '@/store/py'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
 
 import { fetchObservationsParallel } from '@/utils/observationsUtils'
+import { usePlotlyStore } from '@/store/plotly'
 
 export enum EnumEditOperations {
   ADD_POINTS = 'ADD_POINTS',
@@ -27,7 +27,7 @@ export enum EnumFilterOperations {
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   dataFrame: any
-  /** The generated dataset to be used in echarts */
+  /** The generated dataset to be used for plotting */
   dataset: { dimensions: string[]; source: { [key: string]: any } } = {
     dimensions: [],
     source: {},
@@ -105,8 +105,6 @@ export class ObservationRecord {
       source: {
         x: (Array.from(this.dataFrame.get_date_column()) as number[]) || [],
         y: (Array.from(this.dataFrame.get_value_column()) as number[]) || [],
-        // mode: 'lines+markers',
-        // type: 'scatter',
         // qualifier: Array.from(
         //   this.dataFrame.get_qualifier_column()
         // ) as string[][],
@@ -131,7 +129,7 @@ export class ObservationRecord {
     action: EnumEditOperations | [EnumEditOperations, ...any][],
     ...args: any
   ) {
-    const { editHistory } = storeToRefs(useEChartsStore())
+    const { editHistory } = storeToRefs(usePlotlyStore())
     const actions: EnumDictionary<EnumEditOperations, Function> = {
       [EnumEditOperations.ADD_POINTS]: this._addDataPoints,
       [EnumEditOperations.CHANGE_VALUES]: this._changeValues,
@@ -163,6 +161,7 @@ export class ObservationRecord {
           const method = action[i][0]
           const args = action[i].slice(1, action[i].length)
           const res = await actions[method].apply(this, args)
+
           response.push(res)
           this.history.push({ method, args, icon: editIcons[method] })
         }

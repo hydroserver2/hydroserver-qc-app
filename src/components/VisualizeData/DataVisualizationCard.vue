@@ -76,9 +76,7 @@
 import { useDataVisStore } from '@/store/dataVisualization'
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import VChart from 'vue-echarts'
 import SeriesStyleCard from '@/components/VisualizeData/SeriesStyleCard.vue'
-import { LineSeriesOption } from 'echarts'
 import { Datastream } from '@/types'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
@@ -88,7 +86,7 @@ const props = defineProps({
   cardHeight: { type: Number, required: true },
 })
 
-const { selectedIndex, dispatchSelection, clearSelected } = useDataSelection()
+const { dispatchSelection, clearSelected } = useDataSelection()
 
 const { loadingStates, plottedDatastreams, selectedQualifier, selectedData } =
   storeToRefs(useDataVisStore())

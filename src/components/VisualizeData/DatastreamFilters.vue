@@ -108,7 +108,6 @@
 import { computed, ref, watch } from 'vue'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
-import { useEChartsStore } from '@/store/echarts'
 
 const {
   matchesSelectedObservedProperty,

@@ -80,11 +80,11 @@
 </template>
 
 <script setup lang="ts">
-import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
 
-const { editHistory, selectedSeries } = storeToRefs(useEChartsStore())
-const { updateVisualizationData } = useEChartsStore()
+const { editHistory, selectedSeries } = storeToRefs(usePlotlyStore())
+import { usePlotlyStore } from '@/store/plotly'
+const { updateVisualizationData } = usePlotlyStore()
 
 const onReload = async () => {
   await selectedSeries.value.data.reload()

@@ -3,8 +3,8 @@
     <v-card-title>Shift Datetimes</v-card-title>
     <v-card-subtitle class="mb-4">
       <div>
-        {{ selectedIndex.length }} Data Point{{
-          selectedIndex.length === 1 ? '' : 's'
+        {{ selectedData?.points.length }} Data Point{{
+          selectedData?.points.length === 1 ? '' : 's'
         }}
         selected
       </div>
@@ -43,32 +43,32 @@ import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 
-import { useEChartsStore } from '@/store/echarts'
 import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedData } = storeToRefs(useDataVisStore())
-const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
-const { updateVisualizationData } = useEChartsStore()
+const { selectedSeries } = storeToRefs(usePlotlyStore())
+import { usePlotlyStore } from '@/store/plotly'
+const { updateVisualizationData } = usePlotlyStore()
 
 const { shiftUnits } = usePyStore()
 const { selectedShiftUnit, shiftAmount } = storeToRefs(usePyStore())
-const { selectedIndex } = useDataSelection()
+// const { selectedIndex } = useDataSelection()
 
 const emit = defineEmits(['close'])
 
 const onShiftDatetimes = async () => {
-  if (!selectedIndex.value.length) {
+  if (!selectedData.value?.points.length) {
     return
   }
 
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.SHIFT_DATETIMES,
-    selectedIndex.value,
+    selectedData.value.points.map((p) => p.pointIndex),
     shiftAmount.value,
     // @ts-ignore
     TimeUnit[selectedShiftUnit.value]
   )
-  brushSelections.value = []
-  selectedData.value = {}
+  // brushSelections.value = []
+  // selectedData.value = {}
   updateVisualizationData()
 
   emit('close')

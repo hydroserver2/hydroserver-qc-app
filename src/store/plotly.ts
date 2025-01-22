@@ -1,7 +1,6 @@
 import { Datastream, GraphSeries } from '@/types'
 import { defineStore, storeToRefs } from 'pinia'
 import { computed, ComputedRef, Ref, ref, watch } from 'vue'
-import { EChartsColors } from '@/utils/materialColors'
 
 import { Snackbar } from '@/utils/notifications'
 import { api } from '@/services/api'
@@ -12,13 +11,19 @@ import {
   EnumEditOperations,
   ObservationRecord,
 } from '@/utils/plotting/observationRecord'
+// @ts-ignore no type definitions
+import Plotly from 'plotly.js-dist'
 
 // Register custom data sampler
-import dataSample from '@/utils/custom-down-sample'
+// import dataSample from '@/utils/custom-down-sample'
 import { createPlotlyOption } from '@/utils/plotting/plotly'
+import { LineColors } from '@/utils/materialColors'
 
 export const usePlotlyStore = defineStore('Plotly', () => {
   const { fetchObservationsInRange } = useObservationStore()
+
+  const showLegend = ref(true)
+  const showTooltip = ref(false)
 
   const graphSeriesArray = ref<GraphSeries[]>([])
   /** The index of the series that represents the datastream selected for quality control */
@@ -41,11 +46,12 @@ export const usePlotlyStore = defineStore('Plotly', () => {
   })
 
   const plotlyOptions: Ref<any> = ref({})
+  const plotlyRef: Ref<HTMLDivElement | null> = ref(null) // Populated during DataVisualizationCard onMounted hook
 
   /**
    * This function searches through the Pinia store's GraphSeries[] to determine which colors,
-   * defined in the EChartsColors array, are currently in use. It then selects and returns
-   * the first color from EChartsColors that is not already being used in any of the graph series.
+   * are currently in use. It then selects and returns
+   * the first color that is not already being used in any of the graph series.
    *
    * @returns {string} - Hex code of the first available color that is not in use. Returns black as a default if all are in use.
    */
@@ -54,7 +60,7 @@ export const usePlotlyStore = defineStore('Plotly', () => {
       graphSeriesArray.value.map((s) => s.seriesOption.itemStyle?.color)
     )
 
-    for (const color of EChartsColors) {
+    for (const color of LineColors) {
       if (!usedColors.has(color)) {
         return color
       }
@@ -68,13 +74,44 @@ export const usePlotlyStore = defineStore('Plotly', () => {
   }
 
   /**
-   * This won't trigger EChart's setOption because the reference changes.
-   * Builds the chart from scratch.
-   * @see https://echarts.apache.org/en/api.html#echartsInstance.setOption
+   * Set the initial chart options.
    */
   function createVisualization() {
     console.log('createVisualization')
+    // @ts-ignore
     plotlyOptions.value = createPlotlyOption(graphSeriesArray.value)
+  }
+
+  /**
+   * Use this function to update the chart
+   */
+  async function updateVisualizationData() {
+    console.log('updateVisualizationData')
+    createVisualization()
+    await Plotly.react(
+      plotlyRef.value,
+      plotlyOptions.value.data,
+      {}
+      // plotlyOptions.value.layout
+    )
+
+    // TODO: does not work with axis autorange
+    // Plotly.animate(
+    //   plotlyRef.value,
+    //   {
+    //     data: plotlyOptions.value.data,
+    //   },
+    //   {
+    //     transition: {
+    //       duration: 500,
+    //       easing: 'cubic-in-out',
+    //     },
+    //     frame: {
+    //       duration: 500,
+    //       // redraw: false
+    //     },
+    //   }
+    // )
   }
 
   const fetchGraphSeriesData = async (
@@ -138,15 +175,31 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     } as GraphSeries
   }
 
+  watch(showLegend, () => {
+    if (plotlyOptions.value) {
+      // TODO: integrate createLegendConfig()
+    }
+  })
+
+  watch(showTooltip, () => {
+    if (plotlyOptions.value) {
+      // TODO: integrate createTooltipConfig()
+    }
+  })
+
   return {
     graphSeriesArray,
+    showLegend,
+    showTooltip,
     selectedSeriesIndex,
     selectedSeries,
     editHistory,
     createVisualization,
+    updateVisualizationData,
     clearChartState,
     fetchGraphSeries,
     fetchGraphSeriesData,
     plotlyOptions,
+    plotlyRef,
   }
 })

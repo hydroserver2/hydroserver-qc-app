@@ -3,8 +3,8 @@
     <v-card-title>Interpolate</v-card-title>
     <v-card-subtitle class="mb-4">
       <div>
-        {{ selectedIndex.length }} Data Point{{
-          selectedIndex.length === 1 ? '' : 's'
+        {{ selectedData?.points.length }} Data Point{{
+          selectedData?.points.length === 1 ? '' : 's'
         }}
         selected
       </div>
@@ -42,30 +42,29 @@ import { InterpolationMethods, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 
-import { useEChartsStore } from '@/store/echarts'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
-import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedData } = storeToRefs(useDataVisStore())
-const { selectedIndex } = useDataSelection()
-const { selectedSeries, brushSelections } = storeToRefs(useEChartsStore())
-const { updateVisualizationData } = useEChartsStore()
+// const { selectedIndex } = useDataSelection()
+const { selectedSeries } = storeToRefs(usePlotlyStore())
+import { usePlotlyStore } from '@/store/plotly'
+const { updateVisualizationData } = usePlotlyStore()
 
 const { selectedInterpolationMethod } = storeToRefs(usePyStore())
 
 const emit = defineEmits(['close'])
 
 const onInterpolate = async () => {
-  if (!selectedIndex.value.length) {
+  if (!selectedData.value?.points.length) {
     return
   }
   // TODO: value error when interpolating values lesser than 1
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.INTERPOLATE,
-    selectedIndex.value
+    selectedData.value.points.map((p) => p.pointIndex)
   )
 
-  brushSelections.value = []
-  selectedData.value = {}
+  // brushSelections.value = []
+  // selectedData.value = {}
   updateVisualizationData()
   emit('close')
 }

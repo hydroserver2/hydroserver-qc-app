@@ -1,7 +1,6 @@
 import { Datastream, ObservedProperty, ProcessingLevel, Thing } from '@/types'
 import { defineStore, storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
-// import { useEChartsStore } from './echarts'
 import { usePlotlyStore } from './plotly'
 
 export const useDataVisStore = defineStore('dataVisualization', () => {
@@ -35,11 +34,11 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const qualifierSet = ref<Set<string>>(new Set())
   const selectedQualifier = ref('')
 
-  /** A dictionary of selected data where the keys are the data indexes.
-   * Provides fast lookup for echart's data point's computed properties based on selection (e.g.: color) */
-  const selectedData = ref<
-    Record<number, { x: Date; y: number; index: number }>
-  >({})
+  const selectedData = ref<{
+    points: { x: string; y: number; pointIndex: number }[]
+    range: { x: [string, string]; y: [number, number] }
+    selections: any[]
+  } | null>(null)
 
   /** Track the loading status of each datastream to be plotted.
    * Set to true when we get a response from the API. Keyed by datastream id. */
@@ -165,10 +164,9 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       endDate.value &&
       plottedDatastreams.value.length
     ) {
-      // const { updateVisualizationData } = usePlotlyStore()
+      const { updateVisualizationData } = usePlotlyStore()
       await refreshGraphSeriesArray(plottedDatastreams.value)
-      // TODO: regenerate echart datasets
-      // updateVisualizationData()
+      updateVisualizationData()
     }
   }
 

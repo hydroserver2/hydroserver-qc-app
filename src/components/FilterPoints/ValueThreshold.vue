@@ -60,12 +60,12 @@
 <script setup lang="ts">
 import { Ref, ref } from 'vue'
 import { FilterOperation } from '@/store/py'
-import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
 import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
-const { updateVisualizationData } = useEChartsStore()
-const { selectedSeries } = storeToRefs(useEChartsStore())
+import { usePlotlyStore } from '@/store/plotly'
+const { updateVisualizationData } = usePlotlyStore()
+const { selectedSeries } = storeToRefs(usePlotlyStore())
 const { applySelection } = useDataSelection()
 
 const emit = defineEmits(['filter', 'close'])
