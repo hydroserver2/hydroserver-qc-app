@@ -3,8 +3,8 @@
     <v-card-title>Shift Datetimes</v-card-title>
     <v-card-subtitle class="mb-4">
       <div>
-        {{ selectedData?.points.length }} Data Point{{
-          selectedData?.points.length === 1 ? '' : 's'
+        {{ selectedData?.length }} Data Point{{
+          selectedData?.length === 1 ? '' : 's'
         }}
         selected
       </div>
@@ -47,7 +47,7 @@ import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedSeries } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'
-const { updateVisualizationData } = usePlotlyStore()
+const { redraw } = usePlotlyStore()
 
 const { shiftUnits } = usePyStore()
 const { selectedShiftUnit, shiftAmount } = storeToRefs(usePyStore())
@@ -56,7 +56,7 @@ const { selectedShiftUnit, shiftAmount } = storeToRefs(usePyStore())
 const emit = defineEmits(['close'])
 
 const onShiftDatetimes = async () => {
-  if (!selectedData.value?.points.length) {
+  if (!selectedData.value?.length) {
     return
   }
 
@@ -69,7 +69,7 @@ const onShiftDatetimes = async () => {
   )
   // brushSelections.value = []
   // selectedData.value = {}
-  updateVisualizationData()
+  redraw()
 
   emit('close')
 }

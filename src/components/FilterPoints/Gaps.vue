@@ -69,38 +69,47 @@ const { gapAmount, selectedGapUnit } = storeToRefs(usePyStore())
 const { selectedSeries } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 const { applySelection } = useDataSelection()
+const { plotlyRef } = usePlotlyStore()
 
 const emit = defineEmits(['close'])
+
 const onFindGaps = async () => {
-  // TODO: this only returns the last point of each gap
   const selection = await selectedSeries.value.data.dispatchFilter(
     EnumFilterOperations.FIND_GAPS,
     +gapAmount.value,
     // @ts-ignore
     TimeUnit[selectedGapUnit.value],
-    selectedRange.value
+    selectedData.value
+      ? [
+          selectedData.value[0],
+          selectedData.value[selectedData.value.length - 1],
+        ]
+      : undefined
   )
 
   applySelection(selection)
-
   emit('close')
 }
 
 const startDateString = computed(() => {
-  const startIndex = selectedIndex.value[0]
-  const startDate = selectedData.value[startIndex]
-    ? new Date(selectedData.value[startIndex].x)
-    : selectedSeries.value.data.beginTime
+  let dateStr = selectedSeries.value.data.beginTime
+  if (selectedData.value) {
+    const startIndex = selectedData.value[0]
+    dateStr =
+      plotlyRef?.data[0].x[startIndex] || selectedSeries.value.data.beginTime
+  }
 
-  return formatDate(startDate)
+  return formatDate(new Date(Date.parse(dateStr)))
 })
 
 const endDateString = computed(() => {
-  const endIndex = selectedIndex.value[selectedIndex.value.length - 1]
-  const endDate = selectedData.value[endIndex]
-    ? new Date(selectedData.value[endIndex].x)
-    : selectedSeries.value.data.endTime
+  let dateStr = selectedSeries.value.data.endTime
+  if (selectedData.value) {
+    const endIndex = selectedData.value[selectedData.value.length - 1]
+    dateStr =
+      plotlyRef?.data[0].x[endIndex] || selectedSeries.value.data.endTime
+  }
 
-  return formatDate(endDate)
+  return formatDate(new Date(Date.parse(dateStr)))
 })
 </script>

@@ -2,7 +2,6 @@
   <v-navigation-drawer
     permanent
     :width="250"
-    rounded="e-xl"
     elevation="3"
     class="bg-navbar"
     theme="dark"
@@ -57,6 +56,7 @@
         v-for="(item, i) in editData"
         :key="i"
         @click="item.clickAction"
+        :disabled="item.isDisabled?.()"
       >
         <template v-slot:prepend>
           <v-icon :icon="item.props.prependIcon"></v-icon>
@@ -130,6 +130,8 @@ import DriftCorrection from '@/components/EditData/DriftCorrection.vue'
 import AddPoints from '@/components/EditData/AddPoints.vue'
 import ShiftDatetimes from '@/components/EditData/ShiftDatetimes.vue'
 import FillGaps from '@/components/EditData/FillGaps.vue'
+import { storeToRefs } from 'pinia'
+import { useDataVisStore } from '@/store/dataVisualization'
 
 // FILTER POINTS
 const openValueThreshold = ref(false)
@@ -186,6 +188,8 @@ const filterPoints = [
   },
 ]
 
+const { selectedData } = storeToRefs(useDataVisStore())
+
 const editData = [
   {
     title: 'Qualifying comments',
@@ -202,6 +206,7 @@ const editData = [
     clickAction: () => {
       openDriftCorrection.value = true
     },
+    isDisabled: () => !selectedData.value?.length,
   },
   {
     title: 'Interpolate',
@@ -209,6 +214,7 @@ const editData = [
       prependIcon: 'mdi-transit-connection-horizontal',
     },
     clickAction: () => (openInterpolate.value = true),
+    isDisabled: () => !selectedData.value?.length,
   },
   {
     title: 'Change values',
@@ -216,6 +222,7 @@ const editData = [
       prependIcon: 'mdi-pencil',
     },
     clickAction: () => (openChangeValues.value = true),
+    isDisabled: () => !selectedData.value?.length,
   },
   {
     title: 'Shift Datetimes',
@@ -223,6 +230,7 @@ const editData = [
       prependIcon: 'mdi-calendar',
     },
     clickAction: () => (openShiftDatetimes.value = true),
+    isDisabled: () => !selectedData.value?.length,
   },
   {
     title: 'Delete points',
@@ -232,6 +240,7 @@ const editData = [
     clickAction: () => {
       openDeletePoints.value = true
     },
+    isDisabled: () => !selectedData.value?.length,
   },
   {
     title: 'Add points',

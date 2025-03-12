@@ -54,6 +54,46 @@ export const fetchObservationsParallel = async (
   }
 }
 
+export const fetchObservationsSync = async (
+  datastream: Datastream,
+  startTime?: Date,
+  endTime?: Date
+): Promise<any[]> => {
+  const { id, phenomenonBeginTime, phenomenonEndTime, valueCount } = datastream
+  if (!phenomenonBeginTime || !phenomenonEndTime) return []
+
+  const pageSize = 50_000
+  const endpoints: string[] = []
+  let skipCount = 0
+  while (skipCount < valueCount) {
+    endpoints.push(
+      getObservationsEndpoint({
+        id,
+        pageSize,
+        startTime: startTime?.toISOString() ?? phenomenonBeginTime,
+        endTime: endTime?.toISOString() ?? phenomenonEndTime,
+        skipCount,
+        addResultQualifiers: true,
+      })
+    )
+    skipCount += pageSize
+  }
+
+  try {
+    const results: any[] = []
+
+    for (const endpoint of endpoints) {
+      const result = await api.fetchObservations(endpoint)
+      results.push(result)
+    }
+
+    return results.map((r) => r.value[0]?.dataArray || []).flat()
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return Promise.reject(error)
+  }
+}
+
 // export function toDataPointArray(dataArray: DataArray): DataPoint[] {
 //   return dataArray.map(([dateString, value, qualifiers]) => ({
 //     date: new Date(dateString),

@@ -1,10 +1,17 @@
 import { Datastream, EnumDictionary } from '@/types'
-import { Operator, TimeUnit, usePyStore } from '@/store/py'
+import { FilterOperation, Operator, TimeUnit, usePyStore } from '@/store/py'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
 
-import { fetchObservationsParallel } from '@/utils/observationsUtils'
+import { useObservationStore } from '@/store/observations'
+
+import {
+  fetchObservationsParallel,
+  fetchObservationsSync,
+} from '@/utils/observationsUtils'
 import { usePlotlyStore } from '@/store/plotly'
+// @ts-ignore no type definitions
+import Plotly from 'plotly.js-dist'
 
 export enum EnumEditOperations {
   ADD_POINTS = 'ADD_POINTS',
@@ -26,7 +33,7 @@ export enum EnumFilterOperations {
 
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
-  dataFrame: any
+  dataArray: [string, number, any][] = [] // Source of truth
   /** The generated dataset to be used for plotting */
   dataset: { dimensions: string[]; source: { [key: string]: any } } = {
     dimensions: [],
@@ -42,29 +49,45 @@ export class ObservationRecord {
     this.isLoading = true
   }
 
-  async loadData(dataArray: any[]) {
-    const { instantiateDataFrame } = usePyStore()
+  loadData(dataArray: [string, number, any][]) {
     const components = ['date', 'value', 'qualifier']
-    this.dataFrame = await instantiateDataFrame(dataArray, components)
+    this.dataArray = dataArray
+    this.dataset = {
+      dimensions: components, // TODO: no longer needed?
+      source: {
+        // Plotly.js scattergl performs best with typed arrays (e.g., Float32Array):
+        // x: new Int32Array(dataArray.length),
+        // y: new Float32Array(dataArray.length),
+        x: [],
+        y: [],
+        // qualifier: Array.from(
+        //   this.dataFrame.get_qualifier_column()
+        // ) as string[][],
+      },
+    }
+
+    this.dataArray.forEach((d, i) => {
+      this.dataset.source.x[i] = d[0]
+      this.dataset.source.y[i] = d[1]
+    })
+
     this.isLoading = false
   }
 
   /**
-   * Reloads the DataFrame
+   * Reloads the dataset
    */
   async reload() {
-    const { instantiateDataFrame } = usePyStore()
+    console.log('reload')
+    // const { instantiateDataFrame } = usePyStore()
     const { beginDate, endDate } = storeToRefs(useDataVisStore())
+    const { fetchObservationsInRange } = useObservationStore()
 
-    const fetchedData = await fetchObservationsParallel(
-      this.ds,
-      beginDate.value,
-      endDate.value
-    )
+    await fetchObservationsInRange(this.ds, beginDate.value, endDate.value)
 
-    const components = ['date', 'value', 'qualifier']
+    // const components = ['date', 'value', 'qualifier']
+    this.loadData(this.dataArray)
 
-    this.dataFrame = await instantiateDataFrame(fetchedData, components)
     this.history = []
   }
 
@@ -89,39 +112,14 @@ export class ObservationRecord {
     newHistory.splice(index, 1)
     await this.reload()
     await this.dispatch(newHistory.map((h) => [h.method, ...(h.args || [])]))
-    return
-  }
-
-  /** This is an expensive operation and should be only executed when necessary */
-  generateDataset() {
-    console.log('generateDataset')
-    const components = [
-      'date',
-      'value',
-      //  'qualifier'
-    ]
-    this.dataset = {
-      dimensions: components, // TODO: no longer needed?
-      source: {
-        x: (Array.from(this.dataFrame.get_date_column()) as number[]) || [],
-        y: (Array.from(this.dataFrame.get_value_column()) as number[]) || [],
-        // qualifier: Array.from(
-        //   this.dataFrame.get_qualifier_column()
-        // ) as string[][],
-      },
-    }
   }
 
   get beginTime() {
-    const beginDateTime = this.dataFrame?.get_datetime_at(0)
-    return new Date(beginDateTime)
+    return this.dataset.source.x[0]
   }
 
   get endTime() {
-    const endDateTime = this.dataFrame?.get_datetime_at(
-      this.dataFrame.count() - 1
-    )
-    return new Date(endDateTime)
+    return this.dataset.source.x[this.dataset.source.x.length - 1]
   }
 
   /** Dispatch an operation and log its signature in hisotry */
@@ -179,11 +177,13 @@ export class ObservationRecord {
       console.log(e)
     }
 
-    this.generateDataset()
+    // TODO: trigger graph redraw
+    // const { plotlyRef } = storeToRefs(usePlotlyStore())
+    // await Plotly.update(plotlyRef.value, {}, {}, 0)
     return response
   }
 
-  /** Filter operations do not transform the data */
+  /** Filter operations do not transform the data and are not logged in history */
   async dispatchFilter(
     action: EnumFilterOperations | [EnumFilterOperations, ...any][],
     ...args: any
@@ -224,11 +224,67 @@ export class ObservationRecord {
    * @returns The modified DataFrame
    */
   private _changeValues(index: number[], operator: Operator, value: number) {
-    this.dataFrame.change_values(index, operator, value)
+    const operation = (x: number) => {
+      switch (operator) {
+        case Operator.ADD:
+          return x + value
+        case Operator.ASSIGN:
+          return value
+        case Operator.DIV:
+          return x / value
+        case Operator.MULT:
+          return x * value
+        case Operator.SUB:
+          return x - value
+        default:
+          return x
+      }
+    }
+
+    index.forEach((index: number) => {
+      this.dataset.source.y[index] = operation(this.dataset.source.y[index])
+    })
   }
 
   private _interpolate(index: number[]) {
-    this.dataFrame.interpolate(index)
+    console.log('_interpolate')
+    const groups = this._getConsecutiveGroups(index)
+
+    groups.forEach((g) => {
+      const start = g[0]
+      const end = g[g.length - 1]
+
+      let lowerIndex = Math.max(0, start - 1)
+      let upperIndex = Math.min(this.dataset.source.y.length - 1, end + 1)
+
+      for (let i = 0; i < g.length; i++) {
+        this.dataset.source.y[g[i]] = this._interpolateLinear(
+          g[i],
+          lowerIndex,
+          upperIndex
+        )
+      }
+    })
+  }
+
+  private _interpolateLinear(
+    index: number,
+    lowerIndex: number,
+    upperIndex: number
+  ) {
+    // Apply the linear interpolation formula
+    const datetime = Date.parse(this.dataset.source.x[index])
+    const lowerDatetime = Date.parse(this.dataset.source.x[lowerIndex])
+    const upperDatetime = Date.parse(this.dataset.source.x[upperIndex])
+
+    const interpolatedValue =
+      this.dataset.source.y[lowerIndex] +
+      ((datetime - lowerDatetime) *
+        (this.dataset.source.y[upperIndex] -
+          this.dataset.source.y[lowerIndex])) /
+        (upperDatetime - lowerDatetime)
+
+    return interpolatedValue
   }
 
   /**
@@ -239,7 +295,7 @@ export class ObservationRecord {
    * @returns
    */
   private _shift(index: number[], amount: number, unit: TimeUnit) {
-    this.dataFrame.shift_points(index, amount, unit)
+    // this.dataFrame.shift_points(index, amount, unit)
   }
 
   /**
@@ -255,7 +311,7 @@ export class ObservationRecord {
     interpolateValues: boolean,
     range?: [number, number]
   ) {
-    return this.dataFrame.fill_gaps(gap, fill, interpolateValues, range)
+    // return this.dataFrame.fill_gaps(gap, fill, interpolateValues, range)
   }
 
   /**
@@ -263,7 +319,15 @@ export class ObservationRecord {
    * @param index The index list of entries to shift
    */
   private _deleteDataPoints(index: number[]) {
-    this.dataFrame.delete_data_points(index)
+    const groups = this._getConsecutiveGroups(index)
+
+    for (let i = groups.length - 1; i >= 0; i--) {
+      const group = groups[i]
+      const start = group[0]
+
+      this.dataset.source.x.splice(start, group.length)
+      this.dataset.source.y.splice(start, group.length)
+    }
   }
 
   /**
@@ -273,7 +337,31 @@ export class ObservationRecord {
    * @param value The drift amount
    */
   private _driftCorrection(start: number, end: number, value: number) {
-    this.dataFrame.drift_correction(start, end, value)
+    // this.dataFrame.drift_correction(start, end, value)
+  }
+
+  /** Traverses the index array and returns groups of consecutive values.
+   * i.e.: `[0, 1, 3, 4, 6] => [[0, 1], [3, 4], [6]]`
+   * Assumes the input array is sorted.
+   * @param index: the index array (sorted)
+   */
+  private _getConsecutiveGroups(index: number[]): number[][] {
+    const groups: number[][] = [[]]
+
+    // Form groups of consecutive points to delete in order to minimize the number of splice operations
+    index.reduce((acc: number[][], curr: number) => {
+      const target: number[] = acc[acc.length - 1]
+
+      if (!target.length || curr == target[target.length - 1] + 1) {
+        target.push(curr)
+      } else {
+        acc.push([curr])
+      }
+
+      return acc
+    }, groups)
+
+    return groups
   }
 
   /**
@@ -288,7 +376,7 @@ export class ObservationRecord {
       }>,
     ][]
   ) {
-    this.dataFrame.add_points(dataPoints)
+    // this.dataFrame.add_points(dataPoints)
   }
 
   // =======================
@@ -301,7 +389,38 @@ export class ObservationRecord {
    * @returns
    */
   private _valueThreshold(appliedFilters: { [key: string]: number }) {
-    return this.dataFrame.set_filter(appliedFilters)
+    const selection: number[] = []
+
+    this.dataset.source.y.forEach((value: number, index: number) => {
+      if (
+        appliedFilters.hasOwnProperty(FilterOperation.E) &&
+        value == appliedFilters[FilterOperation.E]
+      ) {
+        selection.push(index)
+      } else if (
+        appliedFilters.hasOwnProperty(FilterOperation.GT) &&
+        value > appliedFilters[FilterOperation.GT]
+      ) {
+        selection.push(index)
+      } else if (
+        appliedFilters.hasOwnProperty(FilterOperation.GTE) ||
+        value >= appliedFilters[FilterOperation.GTE]
+      ) {
+        selection.push(index)
+      } else if (
+        appliedFilters.hasOwnProperty(FilterOperation.LT) &&
+        value < appliedFilters[FilterOperation.LT]
+      ) {
+        selection.push(index)
+      } else if (
+        appliedFilters.hasOwnProperty(FilterOperation.LTE) &&
+        value <= appliedFilters[FilterOperation.LTE]
+      ) {
+        selection.push(index)
+      }
+    })
+
+    return selection
   }
 
   /**
@@ -310,7 +429,7 @@ export class ObservationRecord {
    * @returns
    */
   private _rateOfChange(comparator: string, value: number) {
-    return this.dataFrame.rate_of_change(comparator, value)
+    // return this.dataFrame.rate_of_change(comparator, value)
   }
 
   /**
@@ -321,7 +440,50 @@ export class ObservationRecord {
    * @returns
    */
   private _findGaps(value: number, unit: TimeUnit, range?: [number, number]) {
-    return this.dataFrame.find_gaps(value, unit, range)
+    const SECOND = 1
+    const MINUTE = SECOND * 60
+    const HOUR = MINUTE * 60
+    const DAY = HOUR * 24
+    const WEEK = DAY * 7
+    const MONTH = HOUR * 30
+    const YEAR = DAY * 365
+
+    const timeUnitMultipliers: EnumDictionary<TimeUnit, number> = {
+      [TimeUnit.SECOND]: SECOND,
+      [TimeUnit.MINUTE]: MINUTE,
+      [TimeUnit.HOUR]: HOUR,
+      [TimeUnit.DAY]: DAY,
+      [TimeUnit.WEEK]: WEEK,
+      [TimeUnit.MONTH]: MONTH,
+      [TimeUnit.YEAR]: YEAR,
+    }
+
+    const selection: number[] = []
+    let dataX = this.dataset.source.x
+    let start = 0
+    let end = dataX.length
+    if (range?.[0] && range?.[1]) {
+      start = range[0]
+      end = range[1]
+    }
+
+    let prevDatetime = Date.parse(dataX[start])
+
+    for (let i = start + 1; i < end; i++) {
+      const curr = dataX[i]
+      const currDatetime = Date.parse(curr)
+      const delta = currDatetime - prevDatetime // milliseconds
+
+      if (delta > value * timeUnitMultipliers[unit] * 1000) {
+        if (selection[selection.length - 1] != i - 1) {
+          selection.push(i - 1)
+        }
+        selection.push(i)
+      }
+      prevDatetime = currDatetime
+    }
+
+    return selection
   }
 
   /**
@@ -331,6 +493,30 @@ export class ObservationRecord {
    * @returns
    */
   private _persistence(times: number, range?: [number, number]) {
-    return this.dataFrame.persistence(times, range)
+    let selection: number[] = []
+    let dataY = this.dataset.source.y
+    let start = 0
+    let end = dataY.length
+    if (range?.[0] && range?.[1]) {
+      start = range[0]
+      end = range[1]
+    }
+
+    let prev = dataY[start]
+    let stack = []
+
+    for (let i = start + 1; i < end; i++) {
+      const curr = dataY[i]
+      if (curr != prev || i === end) {
+        if (stack.length >= times) {
+          selection = [...selection, ...stack]
+        }
+        stack = []
+      } else {
+        stack.push(i)
+      }
+    }
+
+    return selection
   }
 }

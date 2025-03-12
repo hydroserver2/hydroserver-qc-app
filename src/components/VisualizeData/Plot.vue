@@ -1,47 +1,179 @@
 <template>
-  <div class="text-center">
-    <v-chip color="grey-lighten-4" elevation="2" variant="elevated">
-      <b class="mr-2 text-red">{{ selectedData?.points.length }}</b>
-      Data Point{{ selectedData?.points.length === 1 ? '' : 's' }}
-      selected
-    </v-chip>
+  <div class="d-flex flex-column">
+    <div class="d-flex">
+      <div class="d-flex align-center gap-2">
+        <v-switch
+          v-model="areTooltipsEnabled"
+          color="primary"
+          label="Tooltips"
+          :disabled="isLargeDataset"
+          hide-details
+        />
+
+        <!-- <v-text-field
+          type="number"
+          label="Disable tooltips after"
+          v-model="tooltipsMaxDataPoints"
+          density="compact"
+          hide-details
+          suffix="data points"
+          min="0"
+          width="240"
+          :loading="isUpdating"
+        ></v-text-field> -->
+
+        <!-- <label v-if="visiblePoints"
+          >Showing <span class="text-red">{{ visiblePoints }}</span> data
+          points</label
+        > -->
+      </div>
+
+      <v-spacer></v-spacer>
+
+      <v-chip
+        v-if="selectedData?.length"
+        color="grey-darken-2"
+        variant="outlined"
+        class="align-self-center"
+        hide-details
+      >
+        <b class="mr-2 text-red">{{ selectedData?.length }}</b>
+        Data Point{{ selectedData?.length === 1 ? '' : 's' }}
+        selected
+      </v-chip>
+    </div>
+    <v-divider></v-divider>
+    <div ref="plot" class="flex-grow-1"></div>
   </div>
-  <div ref="plot"></div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, Ref } from 'vue'
 
 // @ts-ignore no type definitions
 import Plotly from 'plotly.js-dist'
 import { usePlotlyStore } from '@/store/plotly'
-import { useDataSelection } from '@/composables/useDataSelection'
 import { storeToRefs } from 'pinia'
-import {
-  handleClick,
-  handleRelayout,
-  handleSelected,
-} from '@/utils/plotting/plotly'
 import { useDataVisStore } from '@/store/dataVisualization'
 
 const plot = ref<HTMLDivElement>()
-const { graphSeriesArray, selectedSeries, plotlyOptions, plotlyRef } =
-  storeToRefs(usePlotlyStore())
+const { plotlyOptions, plotlyRef } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
+const areTooltipsEnabled = ref(true)
+const isLargeDataset = ref(true)
+const tooltipsMaxDataPoints = ref(10 * 1000)
+const isUpdating = ref(false)
+const visiblePoints: Ref<number> = ref(0)
 
 onMounted(async () => {
   const myPlot = await Plotly.newPlot(
     plot.value,
-    plotlyOptions.value.data,
+    plotlyOptions.value.traces,
     plotlyOptions.value.layout,
     plotlyOptions.value.config
   )
 
   plotlyRef.value = myPlot
 
-  // myPlot.on('plotly_click', handleClick)
-  // myPlot.on('plotly_relayout', handleRelayout)
-  myPlot.on('plotly_selected', handleSelected)
+  // Binary search
+  const findLowerBound = (target: number) => {
+    const xData = myPlot.data[0].x
+    let low = 0
+    let high = xData.length
+    while (low < high) {
+      const mid = (low + high) >>> 1
+      if (Date.parse(xData[mid]) < target) {
+        low = mid + 1
+      } else high = mid
+    }
+    return low
+  }
+
+  const handleRelayout = async (eventData: any) => {
+    console.log('handleRelayout')
+    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+
+    if (isUpdating.value) {
+      return
+    }
+
+    isUpdating.value = true
+
+    try {
+      let yMin = 0
+      let yMax = 0
+
+      // Check if tooltips need to be toggled on or off
+      if (!eventData || !eventData['xaxis.range[0]']) {
+        // No zoom data. Use the total extent.
+        visiblePoints.value = plotlyRef.value?.data[0].x.length || 0
+      } else {
+        const xMin = Date.parse(eventData['xaxis.range[0]'])
+        const xMax = Date.parse(eventData['xaxis.range[1]'])
+
+        // Find visible points count using binary search
+        // Plotly does not return the indexes. We must find them using binary function
+        // TODO: xMin date weird format when comparing against source
+        const startIdx = findLowerBound(xMin)
+        const endIdx = findLowerBound(xMax)
+
+        // auto scale y axis
+        // Get the data from the first trace
+        const traceData = myPlot.data[0]
+        const yData = traceData.y as number[]
+
+        // Find all y-values within the current x-axis range
+        yMin = yData[startIdx]
+        yMax = yData[startIdx]
+
+        for (let i = startIdx + 1; i < endIdx; i++) {
+          if (yMin > yData[i]) {
+            yMin = yData[i]
+          } else if (yMax < yData[i]) {
+            yMax = yData[i]
+          }
+        }
+
+        visiblePoints.value = endIdx - startIdx
+      }
+
+      // Calculate new y-axis range with padding
+      if (visiblePoints.value && yMax !== yMin) {
+        const padding = (yMax - yMin) * 0.1 // 10% padding
+
+        // Update y-axis range
+        await Plotly.update(
+          plotlyRef.value,
+          {},
+          {
+            'yaxis.range': [yMin - padding, yMax + padding],
+            'yaxis.autorange': false,
+          }
+        )
+      }
+
+      // Threshold check
+      const newHoverState =
+        visiblePoints.value > tooltipsMaxDataPoints.value ? 'skip' : 'x+y'
+      isLargeDataset.value = newHoverState === 'skip'
+
+      // Only update if state changed
+      if (plotlyRef.value?.data[0].hoverinfo !== newHoverState) {
+        if (newHoverState === 'x+y' && !areTooltipsEnabled.value) {
+          return
+        }
+
+        await Plotly.restyle(plotlyRef.value, { hoverinfo: [newHoverState] }, 0)
+      }
+    } finally {
+      isUpdating.value = false
+    }
+  }
+
+  handleRelayout(null)
+
+  myPlot.on('plotly_redraw', handleRelayout)
+  myPlot.on('plotly_relayout', handleRelayout)
 
   // https://plotly.com/javascript/plotlyjs-function-reference/#plotlyupdate
 })

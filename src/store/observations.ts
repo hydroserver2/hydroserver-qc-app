@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Datastream } from '@/types'
-import { fetchObservationsParallel } from '@/utils/observationsUtils'
+import { fetchObservationsSync } from '@/utils/observationsUtils'
 // import { FilterOperation } from '@/store/py'
 import { ObservationRecord } from '@/utils/plotting/observationRecord'
 
@@ -23,9 +23,9 @@ export const useObservationStore = defineStore('observations', () => {
     const id = datastream.id
 
     // If nothing is stored yet, create a new record and fetch the data in range
-    if (!observations.value[id]?.dataFrame) {
+    if (!observations.value[id]?.dataset) {
       // TODO: handle error
-      const fetchedData = await fetchObservationsParallel(
+      const fetchedData = await fetchObservationsSync(
         datastream,
         beginTime,
         endTime
@@ -35,9 +35,9 @@ export const useObservationStore = defineStore('observations', () => {
       observations.value[id] = new ObservationRecord(datastream)
       // We implicitly call `loadData` here to await it
       await observations.value[id].loadData(fetchedData)
-      observations.value[id].generateDataset()
+      // observations.value[id].generateDataset()
 
-      // Return the dataframe
+      // Return the ObservationRecord
       return observations.value[id]
     } else {
       const existingRecord = observations.value[id]
@@ -46,7 +46,7 @@ export const useObservationStore = defineStore('observations', () => {
 
       // Check if new data before the stored data is needed
       if (beginTime < existingRecord.beginTime) {
-        beginDataPromise = fetchObservationsParallel(
+        beginDataPromise = fetchObservationsSync(
           datastream,
           beginTime,
           existingRecord.beginTime
@@ -58,7 +58,7 @@ export const useObservationStore = defineStore('observations', () => {
         const temp = existingRecord.endTime
         temp.setSeconds(temp.getSeconds() + 1)
 
-        endDataPromise = fetchObservationsParallel(
+        endDataPromise = fetchObservationsSync(
           datastream,
           // TODO: is inclusive. We need to increase by one second
           temp,
@@ -73,17 +73,23 @@ export const useObservationStore = defineStore('observations', () => {
       ])
 
       if (beginData.length > 0) {
-        observations.value[id].dataFrame.add_points(beginData)
+        observations.value[id].dataArray = [
+          ...beginData,
+          ...observations.value[id].dataArray,
+        ]
       }
 
       if (endData.length > 0) {
-        observations.value[id].dataFrame.add_points(endData)
+        observations.value[id].dataArray = [
+          ...observations.value[id].dataArray,
+          ...endData,
+        ]
       }
 
       // If the data has changed, renegerate the dataset
-      if (beginData.length > 0 || endData.length > 0) {
-        existingRecord.generateDataset()
-      }
+      // if (beginData.length > 0 || endData.length > 0) {
+      //   existingRecord.generateDataset()
+      // }
 
       existingRecord.isLoading = false
 

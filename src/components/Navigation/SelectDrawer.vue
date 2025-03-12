@@ -2,7 +2,6 @@
   <v-navigation-drawer
     permanent
     :width="350"
-    rounded="e-xl"
     elevation="1"
     class="bg-navbar"
     theme="dark"
@@ -22,8 +21,9 @@
         title="Show tooltip"
       />
 
-      <v-list-item class="pb-0">
+      <v-list-item>
         <v-select
+          class="mt-4"
           :disabled="!qualifierOptions.length"
           :items="qualifierOptions"
           density="compact"

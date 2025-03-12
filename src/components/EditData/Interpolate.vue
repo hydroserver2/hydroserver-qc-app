@@ -3,8 +3,8 @@
     <v-card-title>Interpolate</v-card-title>
     <v-card-subtitle class="mb-4">
       <div>
-        {{ selectedData?.points.length }} Data Point{{
-          selectedData?.points.length === 1 ? '' : 's'
+        {{ selectedData?.length }} Data Point{{
+          selectedData?.length === 1 ? '' : 's'
         }}
         selected
       </div>
@@ -47,25 +47,23 @@ const { selectedData } = storeToRefs(useDataVisStore())
 // const { selectedIndex } = useDataSelection()
 const { selectedSeries } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'
-const { updateVisualizationData } = usePlotlyStore()
+const { redraw } = usePlotlyStore()
 
 const { selectedInterpolationMethod } = storeToRefs(usePyStore())
 
 const emit = defineEmits(['close'])
 
 const onInterpolate = async () => {
-  if (!selectedData.value?.points.length) {
+  if (!selectedData.value?.length) {
     return
   }
   // TODO: value error when interpolating values lesser than 1
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.INTERPOLATE,
-    selectedData.value.points.map((p) => p.pointIndex)
+    selectedData.value
   )
 
-  // brushSelections.value = []
-  // selectedData.value = {}
-  updateVisualizationData()
+  redraw()
   emit('close')
 }
 </script>

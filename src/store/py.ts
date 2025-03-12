@@ -71,15 +71,15 @@ export const usePyStore = defineStore('py', () => {
   const shiftAmount = ref(15)
 
   /** Instantiates a new Pandas DataFrame and returns the instance */
-  const instantiateDataFrame = (dataArray: any[], components: string[]) => {
-    const dataString = JSON.stringify({
-      dataArray,
-      components,
-    })
-    const wrapperClass = _window.edit_service_wrapper
-    const instance = wrapperClass(dataString) // because it's from the main thread we don't need to await
-    return instance
-  }
+  // const instantiateDataFrame = (dataArray: any[], components: string[]) => {
+  //   const dataString = JSON.stringify({
+  //     dataArray,
+  //     components,
+  //   })
+  //   const wrapperClass = _window.edit_service_wrapper
+  //   const instance = wrapperClass(dataString) // because it's from the main thread we don't need to await
+  //   return instance
+  // }
 
   addEventListener('py:all-done', () => {
     console.log('Python execution is complete.')
@@ -142,7 +142,7 @@ export const usePyStore = defineStore('py', () => {
     selectedInterpolationMethod,
     driftGapWidth,
     selectedDriftCorrectionMethod,
-    instantiateDataFrame,
+    // instantiateDataFrame,
     operators,
     selectedOperator,
     operationValue,

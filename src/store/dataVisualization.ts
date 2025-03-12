@@ -6,7 +6,7 @@ import { usePlotlyStore } from './plotly'
 export const useDataVisStore = defineStore('dataVisualization', () => {
   const {
     // resetChartZoom,
-    createVisualization,
+    updateOptions,
     clearChartState,
     fetchGraphSeries,
     fetchGraphSeriesData,
@@ -34,11 +34,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const qualifierSet = ref<Set<string>>(new Set())
   const selectedQualifier = ref('')
 
-  const selectedData = ref<{
-    points: { x: string; y: number; pointIndex: number }[]
-    range: { x: [string, string]; y: [number, number] }
-    selections: any[]
-  } | null>(null)
+  const selectedData = ref<number[] | null>(null)
 
   /** Track the loading status of each datastream to be plotted.
    * Set to true when we get a response from the API. Keyed by datastream id. */
@@ -164,9 +160,9 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       endDate.value &&
       plottedDatastreams.value.length
     ) {
-      const { updateVisualizationData } = usePlotlyStore()
+      const { redraw } = usePlotlyStore()
       await refreshGraphSeriesArray(plottedDatastreams.value)
-      updateVisualizationData()
+      redraw()
     }
   }
 
@@ -210,7 +206,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
         graphSeriesArray.value.push(newSeries)
       }
 
-      createVisualization()
+      updateOptions()
     } catch (error) {
       console.error(
         `Failed to fetch or update dataset for ${datastream.id}:`,
@@ -286,7 +282,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
         if (newDatastreamIds !== prevDatastreamIds) {
           await refreshGraphSeriesArray(newDs)
-          createVisualization()
+          updateOptions()
         }
       }
       prevDatastreamIds = newDatastreamIds

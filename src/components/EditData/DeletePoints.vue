@@ -3,8 +3,8 @@
     <v-card-title>Delete Points</v-card-title>
     <v-card-subtitle class="mb-4">
       <div>
-        <b class="text-red">{{ selectedData?.points.length }}</b> Data Point{{
-          selectedData?.points.length === 1 ? '' : 's'
+        <b class="text-red">{{ selectedData?.length }}</b> Data Point{{
+          selectedData?.length === 1 ? '' : 's'
         }}
         selected
       </div>
@@ -15,8 +15,9 @@
     <v-card-text>
       <p class="text-body-1">
         Are you sure you want to delete
-        <b class="text-red">{{ selectedData?.points.length }}</b> selected Data
-        Point{{ selectedData?.points.length !== 1 ? 's' : '' }}?
+        <b class="text-red">{{ selectedData?.length }}</b> selected Data Point{{
+          selectedData?.length !== 1 ? 's' : ''
+        }}?
       </p>
     </v-card-text>
 
@@ -37,7 +38,7 @@ import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedSeries } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'
-const { updateVisualizationData } = usePlotlyStore()
+const { redraw, updateOptions } = usePlotlyStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 // const { selectedIndex } = useDataSelection()
@@ -45,17 +46,16 @@ const { selectedData } = storeToRefs(useDataVisStore())
 const emit = defineEmits(['close'])
 
 const onDeleteDataPoints = async () => {
-  if (!selectedData.value?.points.length) {
+  if (!selectedData.value?.length) {
     return
   }
 
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.DELETE_POINTS,
-    selectedData.value.points.map((p) => p.pointIndex)
+    selectedData.value
   )
-  // brushSelections.value = []
-  // selectedData.value = {}
-  updateVisualizationData()
+  // TODO: redraw without changing the zoom
+  redraw()
 
   emit('close')
 }

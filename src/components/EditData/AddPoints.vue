@@ -76,7 +76,7 @@ import { onMounted, reactive, Ref } from 'vue'
 import type { MaskInputOptions } from 'maska'
 
 const { selectedSeries } = storeToRefs(usePlotlyStore())
-const { updateVisualizationData } = usePlotlyStore()
+const { redraw } = usePlotlyStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 
@@ -146,7 +146,7 @@ const onAddDataPoints = async () => {
   )
   // brushSelections.value = []
   // selectedData.value = {}
-  updateVisualizationData()
+  redraw()
 
   emit('close')
 }

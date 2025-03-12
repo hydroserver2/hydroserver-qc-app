@@ -94,25 +94,25 @@ import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedSeries } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'
-const { updateVisualizationData } = usePlotlyStore()
+const { redraw } = usePlotlyStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 const emit = defineEmits(['close'])
 
 const selectedGroups = computed(() => {
-  if (!selectedData.value?.points.length) {
+  if (!selectedData.value?.length) {
     return
   }
 
   let groups: number[][] = [[]]
 
-  selectedData.value.points.reduce((acc: number[][], curr) => {
+  selectedData.value.reduce((acc: number[][], curr) => {
     const target: number[] = acc[acc.length - 1]
 
-    if (!target.length || curr.pointIndex == target[target.length - 1] + 1) {
-      target.push(curr.pointIndex)
+    if (!target.length || curr == target[target.length - 1] + 1) {
+      target.push(curr)
     } else {
-      acc.push([curr.pointIndex])
+      acc.push([curr])
     }
 
     return acc
@@ -136,17 +136,18 @@ const onDriftCorrection = async () => {
 
   await selectedSeries.value.data.dispatch(actions)
 
-  brushSelections.value = []
+  // brushSelections.value = []
   // selectedData.value = {}
-  updateVisualizationData()
+  redraw()
   emit('close')
 }
 
 const getDotTooltip = (group: number[]) => {
-  const start = formatDate(
-    new Date(selectedSeries.value.data.dataFrame.get_datetime_at(group[0]))
-  )
-  return `${group.length} Points starting at ${start}`
+  return ''
+  // const start = formatDate(
+  //   new Date(selectedSeries.value.data.dataFrame.get_datetime_at(group[0]))
+  // )
+  // return `${group.length} Points starting at ${start}`
 }
 </script>
 

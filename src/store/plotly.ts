@@ -18,6 +18,7 @@ import Plotly from 'plotly.js-dist'
 // import dataSample from '@/utils/custom-down-sample'
 import { createPlotlyOption } from '@/utils/plotting/plotly'
 import { LineColors } from '@/utils/materialColors'
+import { Y } from 'vitest/dist/chunks/reporters.D7Jzd9GS'
 
 export const usePlotlyStore = defineStore('Plotly', () => {
   const { fetchObservationsInRange } = useObservationStore()
@@ -46,7 +47,8 @@ export const usePlotlyStore = defineStore('Plotly', () => {
   })
 
   const plotlyOptions: Ref<any> = ref({})
-  const plotlyRef: Ref<HTMLDivElement | null> = ref(null) // Populated during DataVisualizationCard onMounted hook
+  const plotlyRef: Ref<(HTMLDivElement & { [key: string]: any }) | null> =
+    ref(null) // Populated during DataVisualization onMounted hook
 
   /**
    * This function searches through the Pinia store's GraphSeries[] to determine which colors,
@@ -76,42 +78,56 @@ export const usePlotlyStore = defineStore('Plotly', () => {
   /**
    * Set the initial chart options.
    */
-  function createVisualization() {
-    console.log('createVisualization')
+  function updateOptions() {
+    console.log('updateOptions')
     // @ts-ignore
     plotlyOptions.value = createPlotlyOption(graphSeriesArray.value)
   }
 
   /**
-   * Use this function to update the chart
+   * Use this function to update the chart after the data has mutated.
    */
-  async function updateVisualizationData() {
-    console.log('updateVisualizationData')
-    createVisualization()
+  async function redraw() {
+    console.log('redraw')
+
+    // updateOptions()
+    // await Plotly.update(
+    //   plotlyRef.value,
+    //   plotlyOptions.value.traces[0],
+    //   plotlyOptions.value.layout,
+    //   [0]
+    // )
+
+    // const update: any = {
+    //   // 'xaxis.range': [0, 5], // updates the xaxis range
+    // }
+    // updateOptions()
+    // plotlyOptions.value.traces.forEach((trace: any, index: number) => {
+    //   const key = `xaxis${index + 1}`
+    //   update[`${key}.range`] = plotlyOptions.value.layout[key].range
+    //   update[`${key}.minallowed`] = plotlyOptions.value.layout[key].minallowed
+    //   update[`${key}.maxallowed`] = plotlyOptions.value.layout[key].maxallowed
+    // })
+    // await Plotly.relayout(plotlyRef.value, update)
+    await Plotly.redraw(plotlyRef.value, [0])
+    // await Plotly.react(
+    //   plotlyRef.value,
+    //   plotlyOptions.value.traces,
+    //   plotlyOptions.value.layout
+    // )
+  }
+
+  /**
+   * Use this function to create the chart from scratch (i.e.: if the data source has changed).
+   */
+  async function createVisualization() {
+    console.log('createVisualization')
+
     await Plotly.react(
       plotlyRef.value,
-      plotlyOptions.value.data,
-      {}
-      // plotlyOptions.value.layout
+      plotlyOptions.value.traces,
+      plotlyOptions.value.layout
     )
-
-    // TODO: does not work with axis autorange
-    // Plotly.animate(
-    //   plotlyRef.value,
-    //   {
-    //     data: plotlyOptions.value.data,
-    //   },
-    //   {
-    //     transition: {
-    //       duration: 500,
-    //       easing: 'cubic-in-out',
-    //     },
-    //     frame: {
-    //       duration: 500,
-    //       // redraw: false
-    //     },
-    //   }
-    // )
   }
 
   const fetchGraphSeriesData = async (
@@ -194,8 +210,9 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     selectedSeriesIndex,
     selectedSeries,
     editHistory,
+    updateOptions,
+    redraw,
     createVisualization,
-    updateVisualizationData,
     clearChartState,
     fetchGraphSeries,
     fetchGraphSeriesData,

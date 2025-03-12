@@ -273,7 +273,7 @@ import { _Window } from '@/types'
 import { storeToRefs } from 'pinia'
 import { usePlotlyStore } from '@/store/plotly'
 const { graphSeriesArray } = storeToRefs(usePlotlyStore())
-const { createVisualization } = usePlotlyStore()
+const { updateOptions } = usePlotlyStore()
 
 // Use stores
 const py = usePyStore()
@@ -408,7 +408,7 @@ const onFindGaps = () => {
   isLoading.value = true
   setTimeout(() => {
     findGaps()
-    createVisualization()
+    updateOptions()
     isLoading.value = false
   }, 0)
 }
@@ -417,7 +417,7 @@ const onFillGaps = () => {
   isLoading.value = true
   setTimeout(() => {
     fillGaps()
-    createVisualization()
+    updateOptions()
     isLoading.value = false
   }, 0)
 }
@@ -467,7 +467,7 @@ const onShift = (tableIndex: number[]) => {
   isLoading.value = true
   setTimeout(() => {
     shift(index)
-    createVisualization()
+    updateOptions()
     // parseDataFrame()
     isLoading.value = false
   }, 0)
@@ -492,7 +492,7 @@ const onDeleteDataPoints = (tableIndex: number[]) => {
   isLoading.value = true
   setTimeout(() => {
     deleteDataPoints(index)
-    createVisualization()
+    updateOptions()
     // parseDataFrame()
     isLoading.value = false
   }, 0)
@@ -521,7 +521,7 @@ const onChangeValues = (tableIndex: number[]) => {
       Operator[selectedOperator.value],
       +operationValue.value
     )
-    createVisualization()
+    updateOptions()
     // parseDataFrame()
     isLoading.value = false
   }, 0)
@@ -531,7 +531,7 @@ const onAddFilter = (key: string, value: number) => {
   isLoading.value = true
   setTimeout(() => {
     addFilter(key, value)
-    createVisualization()
+    updateOptions()
     // parseDataFrame()
     selected.value = []
     isLoading.value = false
@@ -558,7 +558,7 @@ const removeFilter = (key: string) => {
     delete appliedFilters.value[key]
     graphSeriesArray.value[0].data.dataFrame.set_filter(appliedFilters.value)
     const end = performance.now()
-    createVisualization()
+    updateOptions()
     // parseDataFrame()
     selected.value = []
     isLoading.value = false
@@ -577,7 +577,7 @@ const clearFilters = () => {
     appliedFilters.value = {}
     graphSeriesArray.value[0].data.dataFrame.set_filter(appliedFilters.value)
     const end = performance.now()
-    createVisualization()
+    updateOptions()
     selected.value = []
     isLoading.value = false
     logger.value.unshift({
@@ -596,7 +596,7 @@ const onInterpolate = (tableIndex: number[]) => {
   setTimeout(() => {
     // TODO: value error when interpolating values lesser than 1
     interpolate(index)
-    createVisualization()
+    updateOptions()
     // parseDataFrame()
     isLoading.value = false
   }, 0)
@@ -644,7 +644,7 @@ const onDriftCorrection = () => {
       driftCorrection(start, end, +driftGapWidth.value)
     })
 
-    createVisualization()
+    updateOptions()
     // parseDataFrame()
     isLoading.value = false
   }, 0)
@@ -737,7 +737,7 @@ const runTests = () => {
   console.log('\tDone')
 
   // parseDataFrame()
-  createVisualization()
+  updateOptions()
 }
 </script>
 

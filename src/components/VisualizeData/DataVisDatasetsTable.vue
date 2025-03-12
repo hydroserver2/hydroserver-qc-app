@@ -1,10 +1,8 @@
 <template>
-  <v-row class="my-2" align="center">
-    <v-col>
+  <div class="d-flex flex-column">
+    <div class="d-flex align-center justify-space-between my-2">
       <h5 class="text-h5">Datastreams</h5>
-    </v-col>
 
-    <v-col cols="12" sm="3" class="ml-auto">
       <v-select
         label="Show/Hide columns"
         v-model="selectedHeaders"
@@ -16,90 +14,93 @@
         density="compact"
         variant="solo"
         hide-details
+        max-width="200"
       >
         <template v-slot:selection="{ item, index }">
           <!-- Leave blank so nothing appears in the v-select box -->
         </template>
       </v-select>
-    </v-col>
-  </v-row>
+    </div>
 
-  <v-card>
-    <v-toolbar flat color="secondary-lighten-2">
-      <v-text-field
-        class="mx-2"
-        clearable
-        v-model="search"
-        prepend-inner-icon="mdi-magnify"
-        label="Search"
-        hide-details
+    <v-card class="flex-grow-1 d-flex flex-column">
+      <v-toolbar flat color="secondary-lighten-2">
+        <v-text-field
+          class="mx-2"
+          clearable
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          label="Search"
+          hide-details
+          density="compact"
+          rounded="xl"
+        />
+
+        <v-spacer />
+
+        <v-btn @click="clearSelected"> Clear Selected </v-btn>
+
+        <v-btn
+          variant="outlined"
+          rounded="xl"
+          @click="showOnlySelected = !showOnlySelected"
+        >
+          {{ showOnlySelected ? 'Show All' : 'Show Selected' }}
+        </v-btn>
+
+        <v-btn
+          :loading="downloading"
+          prepend-icon="mdi-download"
+          @click="downloadPlotted(plottedDatastreams)"
+          >Download Selected</v-btn
+        >
+      </v-toolbar>
+
+      <v-data-table-virtual
+        :headers="headers.filter((header) => header.visible)"
+        :items="tableItems"
+        :sort-by="sortBy"
+        multi-sort
+        :search="search"
+        style="min-height: 30vh; height: 0"
+        fixed-header
+        class="elevation-2 flex-grow-1"
+        color="secondary"
         density="compact"
-        rounded="xl"
+        @click:row="onRowClick"
+        hover
+      >
+        <template v-slot:item.plot="{ item }">
+          <v-checkbox
+            :model-value="isChecked(item)"
+            :disabled="
+              (plottedDatastreams.length >= 5 && !isChecked(item)) ||
+              isSelected(item)
+            "
+            class="d-flex align-self-center"
+            density="compact"
+            @change="() => updatePlottedDatastreams(item)"
+          />
+        </template>
+        <template v-slot:item.select="{ item }">
+          <!-- TODO: disable when the dataset is loading -->
+          <v-checkbox
+            :model-value="isSelected(item)"
+            :disabled="plottedDatastreams.length >= 5 && !isChecked(item)"
+            class="d-flex align-self-center"
+            density="compact"
+            @change="() => updateSelectedDatastream(item)"
+          />
+        </template>
+      </v-data-table-virtual>
+    </v-card>
+
+    <v-dialog v-model="openInfoCard" width="50rem" v-if="selectedDatastream">
+      <DatastreamInformationCard
+        :datastream="selectedDatastream"
+        @close="openInfoCard = false"
       />
-
-      <v-spacer />
-
-      <v-btn @click="clearSelected"> Clear Selected </v-btn>
-
-      <v-btn
-        variant="outlined"
-        rounded="xl"
-        @click="showOnlySelected = !showOnlySelected"
-      >
-        {{ showOnlySelected ? 'Show All' : 'Show Selected' }}
-      </v-btn>
-
-      <v-btn
-        :loading="downloading"
-        prepend-icon="mdi-download"
-        @click="downloadPlotted(plottedDatastreams)"
-        >Download Selected</v-btn
-      >
-    </v-toolbar>
-    <v-data-table-virtual
-      :headers="headers.filter((header) => header.visible)"
-      :items="tableItems"
-      :sort-by="sortBy"
-      multi-sort
-      :search="search"
-      :style="{ 'max-height': `${tableHeight}vh` }"
-      fixed-header
-      class="elevation-2"
-      color="secondary"
-      density="compact"
-      @click:row="onRowClick"
-      hover
-    >
-      <template v-slot:item.plot="{ item }">
-        <v-checkbox
-          :model-value="isChecked(item)"
-          :disabled="
-            (plottedDatastreams.length >= 5 && !isChecked(item)) ||
-            isSelected(item)
-          "
-          class="d-flex align-self-center"
-          density="compact"
-          @change="() => updatePlottedDatastreams(item)"
-        />
-      </template>
-      <template v-slot:item.select="{ item }">
-        <v-checkbox
-          :model-value="isSelected(item)"
-          :disabled="plottedDatastreams.length >= 5 && !isChecked(item)"
-          class="d-flex align-self-center"
-          density="compact"
-          @change="() => updateSelectedDatastream(item)"
-        />
-      </template>
-    </v-data-table-virtual>
-  </v-card>
-
-  <v-dialog v-model="openInfoCard" width="50rem" v-if="selectedDatastream">
-    <DatastreamInformationCard
-      :datastream="selectedDatastream"
-      @close="openInfoCard = false"
-    />
-  </v-dialog>
+    </v-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -109,11 +110,9 @@ import { storeToRefs } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import DatastreamInformationCard from './DatastreamInformationCard.vue'
 import { downloadPlottedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
-import { useUIStore } from '@/store/userInterface'
 import { usePlotlyStore } from '@/store/plotly'
 
-const { tableHeight } = storeToRefs(useUIStore())
-const { createVisualization } = usePlotlyStore()
+const { updateOptions } = usePlotlyStore()
 const {
   things,
   filteredDatastreams,
@@ -140,7 +139,7 @@ const downloadPlotted = async (plottedDatastreams: Datastream[]) => {
 
 const onRowClick = (event: Event, item: any) => {
   // If the click came from a checkbox, do nothing.
-  let targetElement = event.target as HTMLElement
+  const targetElement = event.target as HTMLElement
   if (targetElement.id && targetElement.id.startsWith('checkbox-')) return
 
   const selectedDatastreamId = item.item.id
@@ -232,6 +231,7 @@ const sortBy = [
   { key: 'siteCodeName' },
   { key: 'observedPropertyName' },
   { key: 'qualityControlLevelDefinition' },
+  // { key: 'valueCount', order: 'desc' },
 ]
 const selectedHeaders = computed({
   get: () =>
@@ -272,7 +272,7 @@ function updateSelectedDatastream(datastream: Datastream) {
     qcDatastream.value = datastream
     removeDatastreamFromPlotted(datastream)
     addDatastreamToPlotted(datastream)
-    createVisualization()
+    updateOptions()
     return
   }
 
@@ -292,7 +292,7 @@ function updateSelectedDatastream(datastream: Datastream) {
     qcDatastream.value = null
     removeDatastreamFromPlotted(datastream)
     addDatastreamToPlotted(datastream)
-    createVisualization()
+    updateOptions()
     return
   }
 
@@ -300,6 +300,6 @@ function updateSelectedDatastream(datastream: Datastream) {
   qcDatastream.value = datastream
   removeDatastreamFromPlotted(datastream)
   addDatastreamToPlotted(datastream)
-  createVisualization()
+  updateOptions()
 }
 </script>

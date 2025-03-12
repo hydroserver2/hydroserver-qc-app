@@ -94,7 +94,7 @@ import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
 
 import { usePlotlyStore } from '@/store/plotly'
-const { updateVisualizationData } = usePlotlyStore()
+const { redraw } = usePlotlyStore()
 const { selectedSeries } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 
@@ -112,7 +112,7 @@ const onFillGaps = async () => {
     selectedRange.value
   )
 
-  updateVisualizationData()
+  redraw()
   emit('close')
 }
 

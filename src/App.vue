@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-main>
-      <FullScreenLoader v-if="isLoading || !hasPyScriptInitialized" />
+      <FullScreenLoader v-if="isLoading" />
       <router-view v-else />
     </v-main>
 
@@ -23,13 +23,13 @@ import { storeToRefs } from 'pinia'
 // Use stores
 const { $initialized } = usePyStore()
 const isLoading = ref(true)
-const hasPyScriptInitialized = ref(false)
+// const hasPyScriptInitialized = ref(false)
 
 const { things, processingLevels, observedProperties, datastreams } =
   storeToRefs(useDataVisStore())
 
 const initializedSub = $initialized.subscribe(() => {
-  hasPyScriptInitialized.value = true
+  // hasPyScriptInitialized.value = true
   initializedSub.unsubscribe()
 })
 

@@ -25,7 +25,7 @@
           >
         </div>
         <v-spacer></v-spacer>
-        <v-btn @click="clearFilters" variant="flat">Clear</v-btn>
+        <v-btn @click="clearFilters" variant="outlined" rounded>Clear</v-btn>
       </v-card-text>
 
       <v-divider></v-divider>
@@ -64,7 +64,7 @@ import { storeToRefs } from 'pinia'
 import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
-const { updateVisualizationData } = usePlotlyStore()
+const { redraw } = usePlotlyStore()
 const { selectedSeries } = storeToRefs(usePlotlyStore())
 const { applySelection } = useDataSelection()
 
@@ -82,6 +82,7 @@ const clearFilters = async () => {
   appliedFilters.value = {}
   const selection = await selectedSeries.value.data.dispatchFilter(
     EnumFilterOperations.VALUE_THRESHOLD,
+
     appliedFilters.value
   )
   applySelection(selection)
@@ -89,7 +90,7 @@ const clearFilters = async () => {
 
 const onAddFilter = (key: string, value: number) => {
   addFilter(key, value)
-  updateVisualizationData()
+  redraw()
 }
 
 const addFilter = async (key: string, value: number) => {
@@ -98,6 +99,7 @@ const addFilter = async (key: string, value: number) => {
     EnumFilterOperations.VALUE_THRESHOLD,
     appliedFilters.value
   )
+
   applySelection(selection)
 }
 
