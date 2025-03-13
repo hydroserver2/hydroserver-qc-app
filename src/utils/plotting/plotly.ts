@@ -56,46 +56,43 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
     },
   }))
 
-  if (traces.length > 1) {
-    console.log(traces.length)
-    debugger
-  }
-
   const xaxis: any = {}
   const yaxis: any = {}
 
   seriesArray.forEach((s, index) => {
     const xData = s.data?.dataset.source.x
-    const maxDatetime = Date.parse(xData[xData.length - 1])
-    const minDatetime = Date.parse(xData[0])
+    const maxDatetime = xData[xData.length - 1]
+    const minDatetime = xData[0]
 
-    xaxis[`xaxis${index + 1}`] = {
+    xaxis[`xaxis${index > 0 ? index + 1 : ''}`] = {
       type: 'date',
-      title: '',
+      title: 'Datetime',
       rangeselector: selectorOptions,
       range: [minDatetime, maxDatetime],
       minallowed: minDatetime,
       maxallowed: maxDatetime,
+      autorange: false,
       // range slider compatibility for Scattergl: https://github.com/plotly/plotly.js/issues/2627
     }
 
-    yaxis[`yaxis${index + 1}`] = {
+    yaxis[`yaxis${index > 0 ? index + 1 : ''}`] = {
       title: s.yAxisLabel,
       fixedrange: true,
+      // autorange: true,
     }
   })
 
-  const plotlyOptions = {
-    traces: traces,
+  const newPlotlyOptions = {
+    traces,
     layout: {
-      // automargin: true,
-      // annotations: false,
       spikedistance: 0, // https://github.com/plotly/plotly.js/issues/5927#issuecomment-1697679087
       // hoverdistance: 20,
       ...xaxis,
       ...yaxis,
       dragmode: 'pan',
       hovermode: 'closest', // Disable if hovering is too costly
+      uirevision: 'true',
+      title: seriesArray[0].name,
     },
     config: {
       displayModeBar: true,
@@ -107,7 +104,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
     },
   }
 
-  return plotlyOptions
+  return newPlotlyOptions
 }
 
 // TODO

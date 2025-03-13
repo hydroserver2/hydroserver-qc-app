@@ -55,7 +55,7 @@ const onDeleteDataPoints = async () => {
     selectedData.value
   )
   // TODO: redraw without changing the zoom
-  redraw()
+  await redraw()
 
   emit('close')
 }

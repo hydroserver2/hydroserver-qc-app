@@ -74,18 +74,21 @@ const { plotlyRef } = usePlotlyStore()
 const emit = defineEmits(['close'])
 
 const onFindGaps = async () => {
-  const selection = await selectedSeries.value.data.dispatchFilter(
-    EnumFilterOperations.FIND_GAPS,
-    +gapAmount.value,
-    // @ts-ignore
-    TimeUnit[selectedGapUnit.value],
-    selectedData.value
-      ? [
-          selectedData.value[0],
-          selectedData.value[selectedData.value.length - 1],
-        ]
-      : undefined
-  )
+  const gaps: [number, number][] =
+    await selectedSeries.value.data.dispatchFilter(
+      EnumFilterOperations.FIND_GAPS,
+      +gapAmount.value,
+      // @ts-ignore
+      TimeUnit[selectedGapUnit.value],
+      selectedData.value
+        ? [
+            selectedData.value[0],
+            selectedData.value[selectedData.value.length - 1],
+          ]
+        : undefined
+    )
+
+  const selection = [...new Set(gaps.flat())]
 
   applySelection(selection)
   emit('close')

@@ -19,6 +19,7 @@ import Plotly from 'plotly.js-dist'
 import { createPlotlyOption } from '@/utils/plotting/plotly'
 import { LineColors } from '@/utils/materialColors'
 import { Y } from 'vitest/dist/chunks/reporters.D7Jzd9GS'
+import { useDataSelection } from '@/composables/useDataSelection'
 
 export const usePlotlyStore = defineStore('Plotly', () => {
   const { fetchObservationsInRange } = useObservationStore()
@@ -81,6 +82,12 @@ export const usePlotlyStore = defineStore('Plotly', () => {
   function updateOptions() {
     console.log('updateOptions')
     // @ts-ignore
+    // const newPlotlyOptions = createPlotlyOption(graphSeriesArray.value)
+    // plotlyOptions.value = {
+    //   ...newPlotlyOptions,
+    //   traces: plotlyOptions.value.traces || newPlotlyOptions.traces, // Keep the traces
+    // }
+
     plotlyOptions.value = createPlotlyOption(graphSeriesArray.value)
   }
 
@@ -90,26 +97,12 @@ export const usePlotlyStore = defineStore('Plotly', () => {
   async function redraw() {
     console.log('redraw')
 
-    // updateOptions()
-    // await Plotly.update(
-    //   plotlyRef.value,
-    //   plotlyOptions.value.traces[0],
-    //   plotlyOptions.value.layout,
-    //   [0]
-    // )
+    updateOptions()
 
-    // const update: any = {
-    //   // 'xaxis.range': [0, 5], // updates the xaxis range
-    // }
-    // updateOptions()
-    // plotlyOptions.value.traces.forEach((trace: any, index: number) => {
-    //   const key = `xaxis${index + 1}`
-    //   update[`${key}.range`] = plotlyOptions.value.layout[key].range
-    //   update[`${key}.minallowed`] = plotlyOptions.value.layout[key].minallowed
-    //   update[`${key}.maxallowed`] = plotlyOptions.value.layout[key].maxallowed
-    // })
-    // await Plotly.relayout(plotlyRef.value, update)
+    // TODO: this works, but doesn't update range
     await Plotly.redraw(plotlyRef.value, [0])
+
+    // TODO: this updates range, but breaks selection controls
     // await Plotly.react(
     //   plotlyRef.value,
     //   plotlyOptions.value.traces,
@@ -122,6 +115,8 @@ export const usePlotlyStore = defineStore('Plotly', () => {
    */
   async function createVisualization() {
     console.log('createVisualization')
+
+    updateOptions()
 
     await Plotly.react(
       plotlyRef.value,

@@ -94,9 +94,11 @@ import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
 
 import { usePlotlyStore } from '@/store/plotly'
-const { redraw } = usePlotlyStore()
+const { createVisualization, redraw, updateOptions } = usePlotlyStore()
 const { selectedSeries } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
+const { plotlyRef } = usePlotlyStore()
+const { clearSelected } = useDataSelection()
 
 // const { selectedIndex, selectedRange } = useDataSelection()
 
@@ -109,26 +111,38 @@ const onFillGaps = async () => {
     // @ts-ignore
     [+fillAmount.value, TimeUnit[selectedFillUnit.value]],
     interpolateValues.value,
-    selectedRange.value
+    selectedData.value
+      ? [
+          selectedData.value[0],
+          selectedData.value[selectedData.value.length - 1],
+        ]
+      : undefined
   )
 
+  await clearSelected()
   redraw()
   emit('close')
 }
 
 const startDateString = computed(() => {
-  const startDate = selectedData.value[0]
-    ? new Date(selectedData.value[0].x)
-    : selectedSeries.value.data.beginTime
+  let dateStr = selectedSeries.value.data.beginTime
+  if (selectedData.value) {
+    const startIndex = selectedData.value[0]
+    dateStr =
+      plotlyRef?.data[0].x[startIndex] || selectedSeries.value.data.beginTime
+  }
 
-  return formatDate(startDate)
+  return formatDate(new Date(Date.parse(dateStr)))
 })
 
 const endDateString = computed(() => {
-  const endDate = selectedData.value[selectedIndex.value.length - 1]
-    ? new Date(selectedData.value[selectedIndex.value.length - 1].x)
-    : selectedSeries.value.data.endTime
+  let dateStr = selectedSeries.value.data.endTime
+  if (selectedData.value) {
+    const endIndex = selectedData.value[selectedData.value.length - 1]
+    dateStr =
+      plotlyRef?.data[0].x[endIndex] || selectedSeries.value.data.endTime
+  }
 
-  return formatDate(endDate)
+  return formatDate(new Date(Date.parse(dateStr)))
 })
 </script>

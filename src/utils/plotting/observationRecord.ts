@@ -20,7 +20,6 @@ export enum EnumEditOperations {
   DRIFT_CORRECTION = 'DRIFT_CORRECTION',
   INTERPOLATE = 'INTERPOLATE',
   SHIFT_DATETIMES = 'SHIFT_DATETIMES',
-  FIND_GAPS = 'FIND_GAPS',
   FILL_GAPS = 'FILL_GAPS',
 }
 
@@ -29,6 +28,24 @@ export enum EnumFilterOperations {
   PERSISTENCE = 'PERSISTENCE',
   RATE_OF_CHANGE = 'RATE_OF_CHANGE',
   VALUE_THRESHOLD = 'VALUE_THRESHOLD',
+}
+
+const SECOND = 1
+const MINUTE = SECOND * 60
+const HOUR = MINUTE * 60
+const DAY = HOUR * 24
+const WEEK = DAY * 7
+const MONTH = HOUR * 30
+const YEAR = DAY * 365
+
+const timeUnitMultipliers: EnumDictionary<TimeUnit, number> = {
+  [TimeUnit.SECOND]: SECOND,
+  [TimeUnit.MINUTE]: MINUTE,
+  [TimeUnit.HOUR]: HOUR,
+  [TimeUnit.DAY]: DAY,
+  [TimeUnit.WEEK]: WEEK,
+  [TimeUnit.MONTH]: MONTH,
+  [TimeUnit.YEAR]: YEAR,
 }
 
 export class ObservationRecord {
@@ -67,7 +84,7 @@ export class ObservationRecord {
     }
 
     this.dataArray.forEach((d, i) => {
-      this.dataset.source.x[i] = d[0]
+      this.dataset.source.x[i] = Date.parse(d[0])
       this.dataset.source.y[i] = d[1]
     })
 
@@ -115,11 +132,11 @@ export class ObservationRecord {
   }
 
   get beginTime() {
-    return this.dataset.source.x[0]
+    return new Date(Date.parse(this.dataArray[0][0]))
   }
 
   get endTime() {
-    return this.dataset.source.x[this.dataset.source.x.length - 1]
+    return new Date(Date.parse(this.dataArray[this.dataArray.length - 1][0]))
   }
 
   /** Dispatch an operation and log its signature in hisotry */
@@ -135,7 +152,6 @@ export class ObservationRecord {
       [EnumEditOperations.DRIFT_CORRECTION]: this._driftCorrection,
       [EnumEditOperations.INTERPOLATE]: this._interpolate,
       [EnumEditOperations.SHIFT_DATETIMES]: this._shift,
-      [EnumEditOperations.FIND_GAPS]: this._findGaps,
       [EnumEditOperations.FILL_GAPS]: this._fillGaps,
     }
 
@@ -148,7 +164,6 @@ export class ObservationRecord {
       [EnumEditOperations.INTERPOLATE]: 'mdi-transit-connection-horizontal',
       [EnumEditOperations.SHIFT_DATETIMES]: 'mdi-calendar',
       [EnumEditOperations.FILL_GAPS]: 'mdi-keyboard-space',
-      [EnumEditOperations.FIND_GAPS]: 'mdi-keyboard-space',
     }
 
     let response = []
@@ -311,7 +326,79 @@ export class ObservationRecord {
     interpolateValues: boolean,
     range?: [number, number]
   ) {
-    // return this.dataFrame.fill_gaps(gap, fill, interpolateValues, range)
+    const value = gap[0]
+    const unit = gap[1]
+
+    const gaps = this._findGaps(gap[0], gap[1], range)
+    const dataX = this.dataset.source.x
+    // const dataY = this.dataset.source.y
+    const collection: any = {}
+
+    for (let i = 0; i < gaps.length; i++) {
+      const left = dataX[gaps[i][0]]
+      const right = dataX[gaps[i][1]]
+      const leftDatetime = Date.parse(left)
+      const rightDatetime = Date.parse(right)
+
+      // const delta = currDatetime - prevDatetime // milliseconds
+
+      // if (delta > value * timeUnitMultipliers[unit] * 1000) {
+      // Fill the gap
+      const fillPoints = []
+      const fillDelta = fill[0] * timeUnitMultipliers[fill[1]] * 1000
+      let nextFillDatetime = leftDatetime + fillDelta
+
+      while (nextFillDatetime < rightDatetime) {
+        fillPoints.push([
+          new Date(nextFillDatetime).toISOString().substring(0, 19) + 'Z',
+          -9999,
+        ])
+        nextFillDatetime += fillDelta
+      }
+
+      collection[gaps[i][0]] = fillPoints
+      // }
+    }
+
+    const keys = Object.keys(collection)
+
+    // insert in reverse order so we don't alter the array indexes
+    for (let i = keys.length - 1; i >= 0; i--) {
+      const insertIndex = +keys[i]
+      console.log(insertIndex)
+      console.log(this.dataset.source.x[insertIndex])
+      console.log(collection[keys[i]][0])
+      console.log(collection[keys[i]][collection[keys[i]].length - 1])
+
+      this.dataset.source.x.splice(
+        insertIndex + 1,
+        0,
+        ...collection[keys[i]].map((a) => a[0])
+      )
+      this.dataset.source.y.splice(
+        insertIndex + 1,
+        0,
+        ...collection[keys[i]].map((a) => a[1])
+      )
+
+      // const leftX = this.dataset.source.x.slice(0, insertIndex + 1)
+      // const rightX = this.dataset.source.x.slice(insertIndex + 1, dataX.length)
+
+      // // TODO: insert instead so we don't have to recreate the graph
+      // this.dataset.source.x = [
+      //   ...leftX,
+      //   ...collection[keys[i]].map((a) => a[0]),
+      //   ...rightX,
+      // ]
+
+      // const leftY = this.dataset.source.y.slice(0, insertIndex + 1)
+      // const rightY = this.dataset.source.y.slice(insertIndex + 1, dataY.length)
+      // this.dataset.source.y = [
+      //   ...leftY,
+      //   ...collection[keys[i]].map((a) => a[1]),
+      //   ...rightY,
+      // ]
+    }
   }
 
   /**
@@ -439,29 +526,16 @@ export class ObservationRecord {
    * @param range If specified, the gaps will be found only within the range
    * @returns
    */
-  private _findGaps(value: number, unit: TimeUnit, range?: [number, number]) {
-    const SECOND = 1
-    const MINUTE = SECOND * 60
-    const HOUR = MINUTE * 60
-    const DAY = HOUR * 24
-    const WEEK = DAY * 7
-    const MONTH = HOUR * 30
-    const YEAR = DAY * 365
-
-    const timeUnitMultipliers: EnumDictionary<TimeUnit, number> = {
-      [TimeUnit.SECOND]: SECOND,
-      [TimeUnit.MINUTE]: MINUTE,
-      [TimeUnit.HOUR]: HOUR,
-      [TimeUnit.DAY]: DAY,
-      [TimeUnit.WEEK]: WEEK,
-      [TimeUnit.MONTH]: MONTH,
-      [TimeUnit.YEAR]: YEAR,
-    }
-
-    const selection: number[] = []
-    let dataX = this.dataset.source.x
+  private _findGaps(
+    value: number,
+    unit: TimeUnit,
+    range?: [number, number]
+  ): [number, number][] {
+    const selection: [number, number][] = []
+    const dataX = this.dataset.source.x
     let start = 0
     let end = dataX.length
+
     if (range?.[0] && range?.[1]) {
       start = range[0]
       end = range[1]
@@ -475,10 +549,10 @@ export class ObservationRecord {
       const delta = currDatetime - prevDatetime // milliseconds
 
       if (delta > value * timeUnitMultipliers[unit] * 1000) {
-        if (selection[selection.length - 1] != i - 1) {
-          selection.push(i - 1)
-        }
-        selection.push(i)
+        // if (selection[selection.length - 1] != i - 1) {
+        //   selection.push(i - 1)
+        // }
+        selection.push([i - 1, i])
       }
       prevDatetime = currDatetime
     }

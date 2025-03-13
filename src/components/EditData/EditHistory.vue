@@ -90,22 +90,19 @@ const onReload = async () => {
   await selectedSeries.value.data.reload()
   // selectedSeries.value.data.generateDataset()
   editHistory.value = []
-  redraw()
+  await createVisualization()
 }
 
 const onReloadHistory = async (index: number) => {
   if (index < editHistory.value.length - 1) {
     await selectedSeries.value.data.reloadHistory(index)
-    redraw()
+    await createVisualization()
   }
 }
 
 const onRemoveHistoryItem = async (index: number) => {
   console.log('onRemoveHistoryItem')
   await selectedSeries.value.data.removeHistoryItem(index)
-  // Undoing actions will reload the data from scratch, so we must recreate the chart
-  updateOptions() // Updates options
-
   await createVisualization()
 }
 

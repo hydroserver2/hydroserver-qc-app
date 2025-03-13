@@ -82,7 +82,8 @@ onMounted(async () => {
     let high = xData.length
     while (low < high) {
       const mid = (low + high) >>> 1
-      if (Date.parse(xData[mid]) < target) {
+      // if (Date.parse(xData[mid]) < target) {
+      if (xData[mid] < target) {
         low = mid + 1
       } else high = mid
     }
@@ -91,40 +92,42 @@ onMounted(async () => {
 
   const handleRelayout = async (eventData: any) => {
     console.log('handleRelayout')
-    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
 
-    if (isUpdating.value) {
+    if (isUpdating.value || eventData?.dragmode === 'select') {
       return
     }
+
+    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
 
     isUpdating.value = true
 
     try {
       let yMin = 0
       let yMax = 0
+      let xMin = 0
+      let xMax = 0
 
       // Check if tooltips need to be toggled on or off
       if (!eventData || !eventData['xaxis.range[0]']) {
         // No zoom data. Use the total extent.
         visiblePoints.value = plotlyRef.value?.data[0].x.length || 0
       } else {
-        const xMin = Date.parse(eventData['xaxis.range[0]'])
-        const xMax = Date.parse(eventData['xaxis.range[1]'])
+        xMin = Date.parse(eventData['xaxis.range[0]'])
+        xMax = Date.parse(eventData['xaxis.range[1]'])
 
         // Find visible points count using binary search
         // Plotly does not return the indexes. We must find them using binary function
-        // TODO: xMin date weird format when comparing against source
         const startIdx = findLowerBound(xMin)
         const endIdx = findLowerBound(xMax)
 
         // auto scale y axis
         // Get the data from the first trace
-        const traceData = myPlot.data[0]
+        const traceData = plotlyRef.value?.data[0]
         const yData = traceData.y as number[]
 
         // Find all y-values within the current x-axis range
         yMin = yData[startIdx]
-        yMax = yData[startIdx]
+        yMax = yData[endIdx]
 
         for (let i = startIdx + 1; i < endIdx; i++) {
           if (yMin > yData[i]) {
@@ -141,15 +144,21 @@ onMounted(async () => {
       if (visiblePoints.value && yMax !== yMin) {
         const padding = (yMax - yMin) * 0.1 // 10% padding
 
-        // Update y-axis range
-        await Plotly.update(
-          plotlyRef.value,
-          {},
-          {
-            'yaxis.range': [yMin - padding, yMax + padding],
-            'yaxis.autorange': false,
-          }
-        )
+        // Update axis range
+        const layoutUpdates = {
+          ...plotlyOptions.value.layout,
+          yaxis: {
+            ...plotlyOptions.value.layout.yaxis,
+            range: [yMin - padding, yMax + padding],
+            autorange: false,
+          },
+        }
+
+        await Plotly.update(plotlyRef.value, {}, layoutUpdates)
+      } else {
+        // Update axis range
+        // TODO: this will reset the zoom. Check  if range has changed
+        await Plotly.update(plotlyRef.value, {}, plotlyOptions.value.layout)
       }
 
       // Threshold check
