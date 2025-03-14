@@ -32,19 +32,25 @@ export function useDataSelection() {
     }
   }
 
+  /** Call this method after operations that change the order of elements or remove elements in the data */
   const clearSelected = async () => {
     const { selectedData } = storeToRefs(useDataVisStore())
+    const { plotlyRef } = storeToRefs(usePlotlyStore())
 
+    // Removes selected areas
     await Plotly.update(
       plotlyRef.value,
-      {
-        selections: [], // Removes the selected areas
-        selectedpoints: [],
-      },
       {},
-      0
+      { selections: [], selectedpoints: [[]] },
+      [0]
     )
-    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+
+    // Updates the color
+    await Plotly.restyle(plotlyRef.value, {
+      selectedpoints: [[]],
+    })
+
+    selectedData.value = []
   }
 
   return {

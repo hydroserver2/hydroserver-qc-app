@@ -48,13 +48,18 @@ const timeUnitMultipliers: EnumDictionary<TimeUnit, number> = {
   [TimeUnit.YEAR]: YEAR,
 }
 
+const components = ['date', 'value', 'qualifier']
+
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   dataArray: [string, number, any][] = [] // Source of truth
   /** The generated dataset to be used for plotting */
   dataset: { dimensions: string[]; source: { [key: string]: any } } = {
-    dimensions: [],
-    source: {},
+    dimensions: components,
+    source: {
+      x: [],
+      y: [],
+    },
   }
   history: { method: EnumEditOperations; args?: any[]; icon: string }[]
   isLoading: boolean
@@ -67,26 +72,14 @@ export class ObservationRecord {
   }
 
   loadData(dataArray: [string, number, any][]) {
-    const components = ['date', 'value', 'qualifier']
     this.dataArray = dataArray
-    this.dataset = {
-      dimensions: components, // TODO: no longer needed?
-      source: {
-        // Plotly.js scattergl performs best with typed arrays (e.g., Float32Array):
-        // x: new Int32Array(dataArray.length),
-        // y: new Float32Array(dataArray.length),
-        x: [],
-        y: [],
-        // qualifier: Array.from(
-        //   this.dataFrame.get_qualifier_column()
-        // ) as string[][],
-      },
-    }
 
-    this.dataArray.forEach((d, i) => {
-      this.dataset.source.x[i] = Date.parse(d[0])
-      this.dataset.source.y[i] = d[1]
-    })
+    // Clear the array
+    this.dataset.source.x.length = 0
+    this.dataset.source.y.length = 0
+
+    this.dataset.source.x.push(...this.dataArray.map((d) => Date.parse(d[0])))
+    this.dataset.source.y.push(...this.dataArray.map((d) => d[1]))
 
     this.isLoading = false
   }
@@ -96,13 +89,11 @@ export class ObservationRecord {
    */
   async reload() {
     console.log('reload')
-    // const { instantiateDataFrame } = usePyStore()
     const { beginDate, endDate } = storeToRefs(useDataVisStore())
     const { fetchObservationsInRange } = useObservationStore()
 
     await fetchObservationsInRange(this.ds, beginDate.value, endDate.value)
 
-    // const components = ['date', 'value', 'qualifier']
     this.loadData(this.dataArray)
 
     this.history = []
@@ -365,10 +356,6 @@ export class ObservationRecord {
     // insert in reverse order so we don't alter the array indexes
     for (let i = keys.length - 1; i >= 0; i--) {
       const insertIndex = +keys[i]
-      console.log(insertIndex)
-      console.log(this.dataset.source.x[insertIndex])
-      console.log(collection[keys[i]][0])
-      console.log(collection[keys[i]][collection[keys[i]].length - 1])
 
       this.dataset.source.x.splice(
         insertIndex + 1,
@@ -380,24 +367,6 @@ export class ObservationRecord {
         0,
         ...collection[keys[i]].map((a) => a[1])
       )
-
-      // const leftX = this.dataset.source.x.slice(0, insertIndex + 1)
-      // const rightX = this.dataset.source.x.slice(insertIndex + 1, dataX.length)
-
-      // // TODO: insert instead so we don't have to recreate the graph
-      // this.dataset.source.x = [
-      //   ...leftX,
-      //   ...collection[keys[i]].map((a) => a[0]),
-      //   ...rightX,
-      // ]
-
-      // const leftY = this.dataset.source.y.slice(0, insertIndex + 1)
-      // const rightY = this.dataset.source.y.slice(insertIndex + 1, dataY.length)
-      // this.dataset.source.y = [
-      //   ...leftY,
-      //   ...collection[keys[i]].map((a) => a[1]),
-      //   ...rightY,
-      // ]
     }
   }
 

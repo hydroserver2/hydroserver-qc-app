@@ -82,12 +82,6 @@ export const usePlotlyStore = defineStore('Plotly', () => {
   function updateOptions() {
     console.log('updateOptions')
     // @ts-ignore
-    // const newPlotlyOptions = createPlotlyOption(graphSeriesArray.value)
-    // plotlyOptions.value = {
-    //   ...newPlotlyOptions,
-    //   traces: plotlyOptions.value.traces || newPlotlyOptions.traces, // Keep the traces
-    // }
-
     plotlyOptions.value = createPlotlyOption(graphSeriesArray.value)
   }
 
@@ -108,21 +102,6 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     //   plotlyOptions.value.traces,
     //   plotlyOptions.value.layout
     // )
-  }
-
-  /**
-   * Use this function to create the chart from scratch (i.e.: if the data source has changed).
-   */
-  async function createVisualization() {
-    console.log('createVisualization')
-
-    updateOptions()
-
-    await Plotly.react(
-      plotlyRef.value,
-      plotlyOptions.value.traces,
-      plotlyOptions.value.layout
-    )
   }
 
   const fetchGraphSeriesData = async (
@@ -207,7 +186,6 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     editHistory,
     updateOptions,
     redraw,
-    createVisualization,
     clearChartState,
     fetchGraphSeries,
     fetchGraphSeriesData,

@@ -84,26 +84,26 @@ import { storeToRefs } from 'pinia'
 
 const { editHistory, selectedSeries } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'
-const { createVisualization, redraw, updateOptions } = usePlotlyStore()
+const { redraw } = usePlotlyStore()
 
 const onReload = async () => {
   await selectedSeries.value.data.reload()
   // selectedSeries.value.data.generateDataset()
   editHistory.value = []
-  await createVisualization()
+  await redraw()
 }
 
 const onReloadHistory = async (index: number) => {
   if (index < editHistory.value.length - 1) {
     await selectedSeries.value.data.reloadHistory(index)
-    await createVisualization()
+    await redraw()
   }
 }
 
 const onRemoveHistoryItem = async (index: number) => {
   console.log('onRemoveHistoryItem')
   await selectedSeries.value.data.removeHistoryItem(index)
-  await createVisualization()
+  await redraw()
 }
 
 // TODO: ADD CONFIRMATION DIALOGS TO HISTORY OPERATIONS

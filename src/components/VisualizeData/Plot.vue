@@ -55,6 +55,13 @@ import Plotly from 'plotly.js-dist'
 import { usePlotlyStore } from '@/store/plotly'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
+import {
+  handleClick,
+  handleDeselect,
+  handleDoubleClick,
+  handleSelected,
+} from '@/utils/plotting/plotly'
+import { isEqual } from 'lodash-es'
 
 const plot = ref<HTMLDivElement>()
 const { plotlyOptions, plotlyRef } = storeToRefs(usePlotlyStore())
@@ -66,18 +73,16 @@ const isUpdating = ref(false)
 const visiblePoints: Ref<number> = ref(0)
 
 onMounted(async () => {
-  const myPlot = await Plotly.newPlot(
+  plotlyRef.value = await Plotly.newPlot(
     plot.value,
     plotlyOptions.value.traces,
     plotlyOptions.value.layout,
     plotlyOptions.value.config
   )
 
-  plotlyRef.value = myPlot
-
   // Binary search
   const findLowerBound = (target: number) => {
-    const xData = myPlot.data[0].x
+    const xData = plotlyRef.value?.data[0].x
     let low = 0
     let high = xData.length
     while (low < high) {
@@ -92,12 +97,19 @@ onMounted(async () => {
 
   const handleRelayout = async (eventData: any) => {
     console.log('handleRelayout')
+    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
 
-    if (isUpdating.value || eventData?.dragmode === 'select') {
+    // Plotly fires the relayout event for basically everything.
+    // We only need to handle it when panning or zooming
+    if (
+      isUpdating.value ||
+      eventData?.dragmode || // Changing selected tool
+      eventData?.selections || // Selecting points
+      eventData?.['selections[0].x0'] || // Moving a selected area
+      isEqual(eventData, {}) // Double click using pan tool
+    ) {
       return
     }
-
-    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
 
     isUpdating.value = true
 
@@ -107,59 +119,66 @@ onMounted(async () => {
       let xMin = 0
       let xMax = 0
 
-      // Check if tooltips need to be toggled on or off
-      if (!eventData || !eventData['xaxis.range[0]']) {
-        // No zoom data. Use the total extent.
-        visiblePoints.value = plotlyRef.value?.data[0].x.length || 0
-      } else {
-        xMin = Date.parse(eventData['xaxis.range[0]'])
-        xMax = Date.parse(eventData['xaxis.range[1]'])
-
-        // Find visible points count using binary search
-        // Plotly does not return the indexes. We must find them using binary function
-        const startIdx = findLowerBound(xMin)
-        const endIdx = findLowerBound(xMax)
-
-        // auto scale y axis
-        // Get the data from the first trace
-        const traceData = plotlyRef.value?.data[0]
-        const yData = traceData.y as number[]
-
-        // Find all y-values within the current x-axis range
-        yMin = yData[startIdx]
-        yMax = yData[endIdx]
-
-        for (let i = startIdx + 1; i < endIdx; i++) {
-          if (yMin > yData[i]) {
-            yMin = yData[i]
-          } else if (yMax < yData[i]) {
-            yMax = yData[i]
-          }
-        }
-
-        visiblePoints.value = endIdx - startIdx
+      const layoutUpdates = { ...plotlyOptions.value.layout }
+      // Plotly will rewrite timestamps as datestrings. We need to convert them back to timestamps.
+      if (typeof layoutUpdates.xaxis.range[0] == 'string') {
+        layoutUpdates.xaxis.range[0] = Date.parse(layoutUpdates.xaxis.range[0])
+        layoutUpdates.xaxis.range[1] = Date.parse(layoutUpdates.xaxis.range[1])
       }
+
+      const currentRange = plotlyRef.value?.layout.xaxis.range.map(
+        (d: string) => {
+          if (typeof d == 'string') {
+            return Date.parse(d)
+          }
+          return d
+        }
+      )
+
+      layoutUpdates.xaxis.range = [
+        Math.max(currentRange[0], layoutUpdates.xaxis.range[0]),
+        Math.min(currentRange[1], layoutUpdates.xaxis.range[1]),
+      ]
+
+      xMin = layoutUpdates.xaxis.range[0]
+      xMax = layoutUpdates.xaxis.range[1]
+
+      // Find visible points count using binary search
+      // Plotly does not return the indexes. We must find them using binary seach
+      const startIdx = findLowerBound(xMin)
+      const endIdx = findLowerBound(xMax)
+
+      // auto scale y axis using data from the first trace
+      const traceData = plotlyRef.value?.data[0]
+      const yData = traceData.y as number[]
+
+      // Find all y-values within the current x-axis range
+      yMin = yData[startIdx]
+      yMax = yData[endIdx]
+
+      for (let i = startIdx + 1; i < endIdx; i++) {
+        if (yMin > yData[i]) {
+          yMin = yData[i]
+        } else if (yMax < yData[i]) {
+          yMax = yData[i]
+        }
+      }
+
+      visiblePoints.value = endIdx - startIdx
 
       // Calculate new y-axis range with padding
       if (visiblePoints.value && yMax !== yMin) {
         const padding = (yMax - yMin) * 0.1 // 10% padding
 
-        // Update axis range
-        const layoutUpdates = {
-          ...plotlyOptions.value.layout,
-          yaxis: {
-            ...plotlyOptions.value.layout.yaxis,
-            range: [yMin - padding, yMax + padding],
-            autorange: false,
-          },
+        layoutUpdates.yaxis = {
+          ...plotlyOptions.value.layout.yaxis,
+          range: [yMin - padding, yMax + padding],
+          autorange: false,
         }
-
-        await Plotly.update(plotlyRef.value, {}, layoutUpdates)
-      } else {
-        // Update axis range
-        // TODO: this will reset the zoom. Check  if range has changed
-        await Plotly.update(plotlyRef.value, {}, plotlyOptions.value.layout)
       }
+
+      // Update axis range
+      await Plotly.update(plotlyRef.value, {}, layoutUpdates)
 
       // Threshold check
       const newHoverState =
@@ -181,8 +200,12 @@ onMounted(async () => {
 
   handleRelayout(null)
 
-  myPlot.on('plotly_redraw', handleRelayout)
-  myPlot.on('plotly_relayout', handleRelayout)
+  plotlyRef.value?.on('plotly_redraw', handleRelayout)
+  plotlyRef.value?.on('plotly_relayout', handleRelayout)
+  plotlyRef.value?.on('plotly_click', handleClick)
+  plotlyRef.value?.on('plotly_selected', handleSelected)
+  plotlyRef.value?.on('plotly_deselec', handleDeselect)
+  plotlyRef.value?.on('plotly_doubleclick', handleDoubleClick)
 
   // https://plotly.com/javascript/plotlyjs-function-reference/#plotlyupdate
 })

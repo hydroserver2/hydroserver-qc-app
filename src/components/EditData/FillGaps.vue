@@ -94,7 +94,7 @@ import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
 
 import { usePlotlyStore } from '@/store/plotly'
-const { createVisualization, redraw, updateOptions } = usePlotlyStore()
+const { redraw } = usePlotlyStore()
 const { selectedSeries } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 const { plotlyRef } = usePlotlyStore()

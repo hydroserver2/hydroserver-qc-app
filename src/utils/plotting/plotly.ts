@@ -91,7 +91,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       ...yaxis,
       dragmode: 'pan',
       hovermode: 'closest', // Disable if hovering is too costly
-      uirevision: 'true',
+      uirevision: true,
       title: seriesArray[0].name,
     },
     config: {
@@ -100,6 +100,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       modeBarButtonsToRemove: ['toImage'],
       scrollZoom: true,
       responsive: true,
+      doubleClick: false,
       // plotGlPixelRatio: 1,
     },
   }
@@ -107,11 +108,11 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
   return newPlotlyOptions
 }
 
-// TODO
 export const handleClick = async (eventData: any) => {
   console.log('handleClick')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
-  // if ('selectedpoints' in eventData.points[0].fullData) {
+  const { selectedData } = storeToRefs(useDataVisStore())
+
   const point = eventData.points[0]
   if (point) {
     let alreadySelected = []
@@ -122,33 +123,57 @@ export const handleClick = async (eventData: any) => {
         : [point.data.selectedpoints]
     }
 
-    // point.data.selectedpoints = [...alreadySelected, point.pointIndex]
+    const index = alreadySelected.indexOf(point.pointIndex)
+    // Toggle the point
+    index >= 0
+      ? alreadySelected.splice(index, 1)
+      : alreadySelected.push(point.pointIndex)
 
+    alreadySelected.sort()
+
+    // Removes selected areas
+    await Plotly.update(plotlyRef.value, {}, { selections: [] }, [0])
+
+    // Colors selected points
     await Plotly.restyle(plotlyRef.value, {
-      selectedpoints: [...alreadySelected, point.pointIndex],
+      selectedpoints: [[...alreadySelected]],
     })
-  }
 
-  // Plotly.update(
-  //   plotlyRef.value,
-  //   {
-  //     selections: [], // Removes the selected areas
-  //     selectedpoints: [point.pointIndex],
-  //   },
-  //   {},
-  //   [0]
-  // )
-  // }
+    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+  }
 }
 
-// export const handleSelected = (eventData: any) => {
-//   console.log(eventData)
-//   console.log('handleSelected')
-//   const { plotlyRef } = storeToRefs(usePlotlyStore())
-//   // console.log(plotlyRef.value?.data[0].selectedpoints)
-//   // TODO: undefined event data even when points are still selected
-//   if (eventData) {
-//     const { selectedData } = storeToRefs(useDataVisStore())
-//     selectedData.value = eventData
-//   }
-// }
+export const handleSelected = async (eventData: any) => {
+  console.log('handleSelected')
+  const { plotlyRef } = storeToRefs(usePlotlyStore())
+  const { selectedData } = storeToRefs(useDataVisStore())
+  selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+}
+
+export const handleDeselect = async () => {
+  console.log('handleDeselect')
+  const { plotlyRef } = storeToRefs(usePlotlyStore())
+  const { selectedData } = storeToRefs(useDataVisStore())
+  selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+}
+
+export const handleDoubleClick = async () => {
+  console.log('handleDoubleClick')
+  const { plotlyRef } = storeToRefs(usePlotlyStore())
+
+  // Removes selected areas
+  await Plotly.update(
+    plotlyRef.value,
+    {},
+    { selections: [], selectedpoints: [[]] },
+    [0]
+  )
+
+  // Updates the color
+  await Plotly.restyle(plotlyRef.value, {
+    selectedpoints: [[]],
+  })
+
+  const { selectedData } = storeToRefs(useDataVisStore())
+  selectedData.value = []
+}

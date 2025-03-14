@@ -38,10 +38,10 @@ import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedSeries } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'
-const { redraw, updateOptions } = usePlotlyStore()
+const { redraw } = usePlotlyStore()
+const { clearSelected } = useDataSelection()
 
 const { selectedData } = storeToRefs(useDataVisStore())
-// const { selectedIndex } = useDataSelection()
 
 const emit = defineEmits(['close'])
 
@@ -54,7 +54,8 @@ const onDeleteDataPoints = async () => {
     EnumEditOperations.DELETE_POINTS,
     selectedData.value
   )
-  // TODO: redraw without changing the zoom
+
+  await clearSelected()
   await redraw()
 
   emit('close')
