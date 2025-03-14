@@ -54,7 +54,7 @@ export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   dataArray: [string, number, any][] = [] // Source of truth
   /** The generated dataset to be used for plotting */
-  dataset: { dimensions: string[]; source: { [key: string]: any } } = {
+  dataset: { dimensions: string[]; source: { [key: string]: number[] } } = {
     dimensions: components,
     source: {
       x: [],
@@ -78,8 +78,12 @@ export class ObservationRecord {
     this.dataset.source.x.length = 0
     this.dataset.source.y.length = 0
 
-    this.dataset.source.x.push(...this.dataArray.map((d) => Date.parse(d[0])))
-    this.dataset.source.y.push(...this.dataArray.map((d) => d[1]))
+    this.dataArray.forEach((row, _index) => {
+      if (!isNaN(row[1])) {
+        this.dataset.source.x.push(Date.parse(row[0]))
+        this.dataset.source.y.push(row[1])
+      }
+    })
 
     this.isLoading = false
   }
@@ -279,9 +283,9 @@ export class ObservationRecord {
     upperIndex: number
   ) {
     // Apply the linear interpolation formula
-    const datetime = Date.parse(this.dataset.source.x[index])
-    const lowerDatetime = Date.parse(this.dataset.source.x[lowerIndex])
-    const upperDatetime = Date.parse(this.dataset.source.x[upperIndex])
+    const datetime = this.dataset.source.x[index]
+    const lowerDatetime = this.dataset.source.x[lowerIndex]
+    const upperDatetime = this.dataset.source.x[upperIndex]
 
     const interpolatedValue =
       this.dataset.source.y[lowerIndex] +

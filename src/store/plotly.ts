@@ -18,8 +18,6 @@ import Plotly from 'plotly.js-dist'
 // import dataSample from '@/utils/custom-down-sample'
 import { createPlotlyOption } from '@/utils/plotting/plotly'
 import { LineColors } from '@/utils/materialColors'
-import { Y } from 'vitest/dist/chunks/reporters.D7Jzd9GS'
-import { useDataSelection } from '@/composables/useDataSelection'
 
 export const usePlotlyStore = defineStore('Plotly', () => {
   const { fetchObservationsInRange } = useObservationStore()
@@ -93,7 +91,6 @@ export const usePlotlyStore = defineStore('Plotly', () => {
 
     updateOptions()
 
-    // TODO: this works, but doesn't update range
     await Plotly.redraw(plotlyRef.value, [0])
 
     // TODO: this updates range, but breaks selection controls
