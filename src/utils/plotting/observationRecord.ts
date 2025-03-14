@@ -267,31 +267,31 @@ export class ObservationRecord {
       let lowerIndex = Math.max(0, start - 1)
       let upperIndex = Math.min(this.dataset.source.y.length - 1, end + 1)
 
+      const xData = this.dataset.source.x
+      const yData = this.dataset.source.y
       for (let i = 0; i < g.length; i++) {
         this.dataset.source.y[g[i]] = this._interpolateLinear(
-          g[i],
-          lowerIndex,
-          upperIndex
+          xData[g[i]],
+          xData[lowerIndex],
+          yData[lowerIndex],
+          xData[upperIndex],
+          yData[upperIndex]
         )
       }
     })
   }
 
+  /** Interpolate existing values in the data source */
   private _interpolateLinear(
-    index: number,
-    lowerIndex: number,
-    upperIndex: number
+    datetime: number,
+    lowerDatetime: number,
+    lowerValue: number,
+    upperDatetime: number,
+    upperValue: number
   ) {
-    // Apply the linear interpolation formula
-    const datetime = this.dataset.source.x[index]
-    const lowerDatetime = this.dataset.source.x[lowerIndex]
-    const upperDatetime = this.dataset.source.x[upperIndex]
-
     const interpolatedValue =
-      this.dataset.source.y[lowerIndex] +
-      ((datetime - lowerDatetime) *
-        (this.dataset.source.y[upperIndex] -
-          this.dataset.source.y[lowerIndex])) /
+      lowerValue +
+      ((datetime - lowerDatetime) * (upperValue - lowerValue)) /
         (upperDatetime - lowerDatetime)
 
     return interpolatedValue
@@ -321,35 +321,38 @@ export class ObservationRecord {
     interpolateValues: boolean,
     range?: [number, number]
   ) {
-    const value = gap[0]
-    const unit = gap[1]
-
     const gaps = this._findGaps(gap[0], gap[1], range)
     const dataX = this.dataset.source.x
-    // const dataY = this.dataset.source.y
+    const dataY = this.dataset.source.y
     const collection: any = {}
 
     for (let i = 0; i < gaps.length; i++) {
-      const left = dataX[gaps[i][0]]
-      const right = dataX[gaps[i][1]]
+      const currentGap = gaps[i]
+      const left = dataX[currentGap[0]]
+      const right = dataX[currentGap[1]]
       const leftDatetime = left
       const rightDatetime = right
 
-      // const delta = currDatetime - prevDatetime // milliseconds
-
-      // if (delta > value * timeUnitMultipliers[unit] * 1000) {
-      // Fill the gap
       const fillPoints = []
       const fillDelta = fill[0] * timeUnitMultipliers[fill[1]] * 1000
       let nextFillDatetime = leftDatetime + fillDelta
 
       while (nextFillDatetime < rightDatetime) {
-        fillPoints.push([nextFillDatetime, -9999])
+        const val: number = interpolateValues
+          ? this._interpolateLinear(
+              nextFillDatetime,
+              dataX[currentGap[0]],
+              dataY[currentGap[0]],
+              dataX[currentGap[1]],
+              dataY[currentGap[1]]
+            )
+          : -9999
+
+        fillPoints.push([nextFillDatetime, val])
         nextFillDatetime += fillDelta
       }
 
-      collection[gaps[i][0]] = fillPoints
-      // }
+      collection[currentGap[0]] = fillPoints
     }
 
     const keys = Object.keys(collection)
@@ -515,16 +518,12 @@ export class ObservationRecord {
 
     for (let i = start + 1; i < end; i++) {
       const curr = dataX[i]
-      const currDatetime = curr
-      const delta = currDatetime - prevDatetime // milliseconds
+      const delta = curr - prevDatetime // milliseconds
 
       if (delta > value * timeUnitMultipliers[unit] * 1000) {
-        // if (selection[selection.length - 1] != i - 1) {
-        //   selection.push(i - 1)
-        // }
         selection.push([i - 1, i])
       }
-      prevDatetime = currDatetime
+      prevDatetime = curr
     }
 
     return selection
