@@ -66,7 +66,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
 
     xaxis[`xaxis${index > 0 ? index + 1 : ''}`] = {
       type: 'date',
-      title: 'Datetime',
+      title: { text: 'Datetime' },
       rangeselector: selectorOptions,
       range: [minDatetime, maxDatetime],
       minallowed: minDatetime,
@@ -76,7 +76,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
     }
 
     yaxis[`yaxis${index > 0 ? index + 1 : ''}`] = {
-      title: s.yAxisLabel,
+      title: { text: s.yAxisLabel },
       fixedrange: true,
       // autorange: true,
     }
@@ -92,12 +92,12 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       dragmode: 'pan',
       hovermode: 'closest', // Disable if hovering is too costly
       uirevision: true,
-      title: seriesArray[0].name,
+      title: { text: seriesArray[0].name },
     },
     config: {
       displayModeBar: true,
       showlegend: true,
-      modeBarButtonsToRemove: ['toImage'],
+      modeBarButtonsToRemove: ['toImage', 'autoScale'],
       scrollZoom: true,
       responsive: true,
       doubleClick: false,
