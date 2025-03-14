@@ -332,8 +332,8 @@ export class ObservationRecord {
     for (let i = 0; i < gaps.length; i++) {
       const left = dataX[gaps[i][0]]
       const right = dataX[gaps[i][1]]
-      const leftDatetime = Date.parse(left)
-      const rightDatetime = Date.parse(right)
+      const leftDatetime = left
+      const rightDatetime = right
 
       // const delta = currDatetime - prevDatetime // milliseconds
 
@@ -344,10 +344,7 @@ export class ObservationRecord {
       let nextFillDatetime = leftDatetime + fillDelta
 
       while (nextFillDatetime < rightDatetime) {
-        fillPoints.push([
-          new Date(nextFillDatetime).toISOString().substring(0, 19) + 'Z',
-          -9999,
-        ])
+        fillPoints.push([nextFillDatetime, -9999])
         nextFillDatetime += fillDelta
       }
 
@@ -514,11 +511,11 @@ export class ObservationRecord {
       end = range[1]
     }
 
-    let prevDatetime = Date.parse(dataX[start])
+    let prevDatetime = dataX[start]
 
     for (let i = start + 1; i < end; i++) {
       const curr = dataX[i]
-      const currDatetime = Date.parse(curr)
+      const currDatetime = curr
       const delta = currDatetime - prevDatetime // milliseconds
 
       if (delta > value * timeUnitMultipliers[unit] * 1000) {

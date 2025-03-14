@@ -156,10 +156,13 @@ onMounted(async () => {
       yMin = yData[startIdx]
       yMax = yData[endIdx]
 
+      // Could use Math.max and Math.min and spread operator, but this is more memory efficient
       for (let i = startIdx + 1; i < endIdx; i++) {
         if (yMin > yData[i]) {
           yMin = yData[i]
-        } else if (yMax < yData[i]) {
+        }
+
+        if (yMax < yData[i]) {
           yMax = yData[i]
         }
       }
