@@ -91,17 +91,18 @@ const { driftGapWidth, selectedDriftCorrectionMethod } =
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
-import { useDataSelection } from '@/composables/useDataSelection'
-const { selectedSeries } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'
+import { useDataSelection } from '@/composables/useDataSelection'
+const { clearSelected } = useDataSelection()
+const { selectedSeries, plotlyRef } = storeToRefs(usePlotlyStore())
 const { redraw } = usePlotlyStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
 const emit = defineEmits(['close'])
 
-const selectedGroups = computed(() => {
+const selectedGroups = computed((): number[][] => {
   if (!selectedData.value?.length) {
-    return
+    return []
   }
 
   let groups: number[][] = [[]]
@@ -136,18 +137,17 @@ const onDriftCorrection = async () => {
 
   await selectedSeries.value.data.dispatch(actions)
 
-  // brushSelections.value = []
-  // selectedData.value = {}
+  await clearSelected()
   redraw()
   emit('close')
 }
 
 const getDotTooltip = (group: number[]) => {
-  return ''
-  // const start = formatDate(
-  //   new Date(selectedSeries.value.data.dataFrame.get_datetime_at(group[0]))
-  // )
-  // return `${group.length} Points starting at ${start}`
+  const xData = plotlyRef.value?.data[0].x
+
+  const start = formatDate(new Date(xData[group[0]]))
+
+  return `${group.length} Points starting at ${start}`
 }
 </script>
 

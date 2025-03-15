@@ -41,14 +41,12 @@
 import { InterpolationMethods, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
-const { selectedData } = storeToRefs(useDataVisStore())
-// const { selectedIndex } = useDataSelection()
-const { selectedSeries } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'
-const { redraw } = usePlotlyStore()
 
+const { selectedData } = storeToRefs(useDataVisStore())
+const { selectedSeries } = storeToRefs(usePlotlyStore())
+const { redraw } = usePlotlyStore()
 const { selectedInterpolationMethod } = storeToRefs(usePyStore())
 
 const emit = defineEmits(['close'])
@@ -57,7 +55,6 @@ const onInterpolate = async () => {
   if (!selectedData.value?.length) {
     return
   }
-  // TODO: value error when interpolating values lesser than 1
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.INTERPOLATE,
     selectedData.value

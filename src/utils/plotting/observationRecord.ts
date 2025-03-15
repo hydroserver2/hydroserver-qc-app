@@ -381,7 +381,18 @@ export class ObservationRecord {
    * @param value The drift amount
    */
   private _driftCorrection(start: number, end: number, value: number) {
-    // this.dataFrame.drift_correction(start, end, value)
+    const xData = this.dataset.source.x
+    const yData = this.dataset.source.y
+
+    const startDatetime = xData[start]
+    const endDatetime = xData[end]
+    const extent = endDatetime - startDatetime
+
+    for (let i = start; i < end; i++) {
+      // y_n = y_0 + G(x_i / extent)
+      this.dataset.source.y[i] =
+        yData[i] + value * ((xData[i] - startDatetime) / extent)
+    }
   }
 
   /** Traverses the index array and returns groups of consecutive values.

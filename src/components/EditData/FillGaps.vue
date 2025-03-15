@@ -125,24 +125,24 @@ const onFillGaps = async () => {
 }
 
 const startDateString = computed(() => {
-  let dateStr = selectedSeries.value.data.beginTime
+  let datetime = selectedSeries.value.data.beginTime
   if (selectedData.value) {
     const startIndex = selectedData.value[0]
-    dateStr =
+    datetime =
       plotlyRef?.data[0].x[startIndex] || selectedSeries.value.data.beginTime
   }
 
-  return formatDate(new Date(Date.parse(dateStr)))
+  return formatDate(new Date(datetime))
 })
 
 const endDateString = computed(() => {
-  let dateStr = selectedSeries.value.data.endTime
+  let datetime = selectedSeries.value.data.endTime
   if (selectedData.value) {
     const endIndex = selectedData.value[selectedData.value.length - 1]
-    dateStr =
+    datetime =
       plotlyRef?.data[0].x[endIndex] || selectedSeries.value.data.endTime
   }
 
-  return formatDate(new Date(Date.parse(dateStr)))
+  return formatDate(new Date(datetime))
 })
 </script>
