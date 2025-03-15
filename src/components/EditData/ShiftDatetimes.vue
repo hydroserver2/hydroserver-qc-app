@@ -45,7 +45,7 @@ import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
 
 const { selectedData } = storeToRefs(useDataVisStore())
-const { selectedSeries } = storeToRefs(usePlotlyStore())
+const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { selectedShiftUnit, shiftAmount } = storeToRefs(usePyStore())
 const { redraw } = usePlotlyStore()
 const { shiftUnits } = usePyStore()
@@ -57,16 +57,21 @@ const onShiftDatetimes = async () => {
     return
   }
 
-  await selectedSeries.value.data.dispatch(
-    EnumEditOperations.SHIFT_DATETIMES,
-    selectedData.value,
-    +shiftAmount.value,
-    // @ts-ignore
-    TimeUnit[selectedShiftUnit.value]
-  )
+  isUpdating.value = true
 
-  redraw()
+  setTimeout(async () => {
+    await selectedSeries.value.data.dispatch(
+      EnumEditOperations.SHIFT_DATETIMES,
+      selectedData.value,
+      +shiftAmount.value,
+      // @ts-ignore
+      TimeUnit[selectedShiftUnit.value]
+    )
 
-  emit('close')
+    await redraw()
+
+    isUpdating.value = false
+    emit('close')
+  })
 }
 </script>

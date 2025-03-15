@@ -45,7 +45,7 @@ import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
 
 const { selectedData } = storeToRefs(useDataVisStore())
-const { selectedSeries } = storeToRefs(usePlotlyStore())
+const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { redraw } = usePlotlyStore()
 const { selectedInterpolationMethod } = storeToRefs(usePyStore())
 
@@ -55,12 +55,18 @@ const onInterpolate = async () => {
   if (!selectedData.value?.length) {
     return
   }
-  await selectedSeries.value.data.dispatch(
-    EnumEditOperations.INTERPOLATE,
-    selectedData.value
-  )
 
-  redraw()
-  emit('close')
+  isUpdating.value = true
+
+  setTimeout(async () => {
+    await selectedSeries.value.data.dispatch(
+      EnumEditOperations.INTERPOLATE,
+      selectedData.value
+    )
+
+    await redraw()
+    isUpdating.value = false
+    emit('close')
+  })
 }
 </script>

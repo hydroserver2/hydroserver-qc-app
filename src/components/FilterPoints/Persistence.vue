@@ -50,59 +50,37 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-
-const times = ref(2)
-
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
-import { computed } from 'vue'
-import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
-
-const { selectedSeries } = storeToRefs(usePlotlyStore())
-const { selectedData } = storeToRefs(useDataVisStore())
 import { usePlotlyStore } from '@/store/plotly'
-const { redraw, plotlyRef } = usePlotlyStore()
-const { applySelection } = useDataSelection()
+
+const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
+const { selectedData } = storeToRefs(useDataVisStore())
+const { dispatchSelection, startDateString, endDateString } = useDataSelection()
 
 const emit = defineEmits(['close'])
+const times = ref(2)
 const onPersistence = async () => {
-  const selection = await selectedSeries.value.data.dispatchFilter(
-    EnumFilterOperations.PERSISTENCE,
-    times.value,
-    selectedData.value
-      ? [
-          selectedData.value[0],
-          selectedData.value[selectedData.value.length - 1],
-        ]
-      : undefined
-  )
+  isUpdating.value = true
 
-  console.log(selection)
-  applySelection(selection)
-  emit('close')
+  setTimeout(async () => {
+    const selection = await selectedSeries.value.data.dispatchFilter(
+      EnumFilterOperations.PERSISTENCE,
+      times.value,
+      selectedData.value
+        ? [
+            selectedData.value[0],
+            selectedData.value[selectedData.value.length - 1],
+          ]
+        : undefined
+    )
+
+    await dispatchSelection(selection)
+
+    isUpdating.value = false
+    emit('close')
+  })
 }
-
-const startDateString = computed(() => {
-  let dateStr = selectedSeries.value.data.beginTime
-  if (selectedData.value) {
-    const startIndex = selectedData.value[0]
-    dateStr =
-      plotlyRef?.data[0].x[startIndex] || selectedSeries.value.data.beginTime
-  }
-
-  return formatDate(new Date(Date.parse(dateStr)))
-})
-
-const endDateString = computed(() => {
-  let dateStr = selectedSeries.value.data.endTime
-  if (selectedData.value) {
-    const endIndex = selectedData.value[selectedData.value.length - 1]
-    dateStr =
-      plotlyRef?.data[0].x[endIndex] || selectedSeries.value.data.endTime
-  }
-
-  return formatDate(new Date(Date.parse(dateStr)))
-})
 </script>

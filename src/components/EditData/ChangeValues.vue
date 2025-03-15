@@ -78,7 +78,7 @@ import { useDataSelection } from '@/composables/useDataSelection'
 
 import { usePlotlyStore } from '@/store/plotly'
 const { redraw } = usePlotlyStore()
-const { selectedSeries } = storeToRefs(usePlotlyStore())
+const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 const { operators } = usePyStore()
 const { selectedOperator, operationValue } = storeToRefs(usePyStore())
@@ -93,16 +93,19 @@ const onChangeValues = async () => {
 
   const operator = Operator[operators[selectedOperator.value] as Operator]
 
-  await selectedSeries.value.data.dispatch(
-    EnumEditOperations.CHANGE_VALUES,
-    selectedData.value,
-    operator,
-    +operationValue.value
-  )
+  isUpdating.value = true
+  setTimeout(async () => {
+    await selectedSeries.value.data.dispatch(
+      EnumEditOperations.CHANGE_VALUES,
+      selectedData.value,
+      operator,
+      +operationValue.value
+    )
 
-  await clearSelected()
-  redraw()
-
-  emit('close')
+    await clearSelected()
+    await redraw()
+    isUpdating.value = false
+    emit('close')
+  })
 }
 </script>

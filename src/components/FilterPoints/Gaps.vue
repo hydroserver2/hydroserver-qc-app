@@ -58,61 +58,42 @@
 import { TimeUnit, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { computed } from 'vue'
-import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
 
 const { gapUnits } = usePyStore()
 const { gapAmount, selectedGapUnit } = storeToRefs(usePyStore())
-const { selectedSeries } = storeToRefs(usePlotlyStore())
+const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
-const { applySelection } = useDataSelection()
-const { plotlyRef } = usePlotlyStore()
+const { dispatchSelection, startDateString, endDateString } = useDataSelection()
 
 const emit = defineEmits(['close'])
 
 const onFindGaps = async () => {
-  const gaps: [number, number][] =
-    await selectedSeries.value.data.dispatchFilter(
-      EnumFilterOperations.FIND_GAPS,
-      +gapAmount.value,
-      // @ts-ignore
-      TimeUnit[selectedGapUnit.value],
-      selectedData.value
-        ? [
-            selectedData.value[0],
-            selectedData.value[selectedData.value.length - 1],
-          ]
-        : undefined
-    )
+  isUpdating.value = true
 
-  const selection = [...new Set(gaps.flat())]
+  setTimeout(async () => {
+    const gaps: [number, number][] =
+      await selectedSeries.value.data.dispatchFilter(
+        EnumFilterOperations.FIND_GAPS,
+        +gapAmount.value,
+        // @ts-ignore
+        TimeUnit[selectedGapUnit.value],
+        selectedData.value
+          ? [
+              selectedData.value[0],
+              selectedData.value[selectedData.value.length - 1],
+            ]
+          : undefined
+      )
 
-  applySelection(selection)
-  emit('close')
+    const selection = [...new Set(gaps.flat())]
+
+    await dispatchSelection(selection)
+
+    isUpdating.value = false
+    emit('close')
+  })
 }
-
-const startDateString = computed(() => {
-  let dateStr = selectedSeries.value.data.beginTime
-  if (selectedData.value) {
-    const startIndex = selectedData.value[0]
-    dateStr =
-      plotlyRef?.data[0].x[startIndex] || selectedSeries.value.data.beginTime
-  }
-
-  return formatDate(new Date(Date.parse(dateStr)))
-})
-
-const endDateString = computed(() => {
-  let dateStr = selectedSeries.value.data.endTime
-  if (selectedData.value) {
-    const endIndex = selectedData.value[selectedData.value.length - 1]
-    dateStr =
-      plotlyRef?.data[0].x[endIndex] || selectedSeries.value.data.endTime
-  }
-
-  return formatDate(new Date(Date.parse(dateStr)))
-})
 </script>

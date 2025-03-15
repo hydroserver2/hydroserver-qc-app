@@ -1,16 +1,16 @@
 import { useDataVisStore } from '@/store/dataVisualization'
 import { usePlotlyStore } from '@/store/plotly'
+import { formatDate } from '@/utils/formatDate'
 import { storeToRefs } from 'pinia'
+
 // @ts-ignore no type definitions
 import Plotly from 'plotly.js-dist'
+import { computed } from 'vue'
 
 export function useDataSelection() {
   const { plotlyRef } = storeToRefs(usePlotlyStore())
-
-  /** Applies and dispatches the selection from an iterable object */
-  const applySelection = (selection: number[]) => {
-    dispatchSelection(selection)
-  }
+  const { selectedSeries } = storeToRefs(usePlotlyStore())
+  const { selectedData } = storeToRefs(useDataVisStore())
 
   /** Dispatch selection  */
   const dispatchSelection = async (selection: number[]) => {
@@ -53,9 +53,34 @@ export function useDataSelection() {
     selectedData.value = []
   }
 
+  const startDateString = computed(() => {
+    let datetime = selectedSeries.value.data.beginTime
+    if (selectedData.value) {
+      const startIndex = selectedData.value[0]
+      datetime =
+        plotlyRef.value?.data[0].x[startIndex] ||
+        selectedSeries.value.data.beginTime
+    }
+
+    return formatDate(new Date(datetime))
+  })
+
+  const endDateString = computed(() => {
+    let datetime = selectedSeries.value.data.endTime
+    if (selectedData.value) {
+      const endIndex = selectedData.value[selectedData.value.length - 1]
+      datetime =
+        plotlyRef.value?.data[0].x[endIndex] ||
+        selectedSeries.value.data.endTime
+    }
+
+    return formatDate(new Date(datetime))
+  })
+
   return {
-    applySelection,
     dispatchSelection,
     clearSelected,
+    startDateString,
+    endDateString,
   }
 }

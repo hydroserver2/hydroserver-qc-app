@@ -75,20 +75,16 @@
 import { onMounted, reactive, Ref } from 'vue'
 import type { MaskInputOptions } from 'maska'
 
-const { selectedSeries } = storeToRefs(usePlotlyStore())
+const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { redraw } = usePlotlyStore()
-
-const { selectedData } = storeToRefs(useDataVisStore())
 
 import { vMaska } from 'maska/vue'
 import { ref } from 'vue'
 import { dateTimeFormat, required, requiredNumber } from '@/utils/rules'
 import { VForm } from 'vuetify/lib/components/index.mjs'
 import { storeToRefs } from 'pinia'
-import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
-const { isUpdating } = storeToRefs(usePlotlyStore())
 
 const form = ref<InstanceType<typeof VForm>>()
 

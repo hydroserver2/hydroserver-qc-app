@@ -89,60 +89,38 @@ const {
 } = storeToRefs(usePyStore())
 
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
-import { computed } from 'vue'
-import { formatDate } from '@/utils/formatDate'
 import { useDataSelection } from '@/composables/useDataSelection'
 
 import { usePlotlyStore } from '@/store/plotly'
 const { redraw } = usePlotlyStore()
-const { selectedSeries } = storeToRefs(usePlotlyStore())
+const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
-const { plotlyRef } = usePlotlyStore()
-const { clearSelected } = useDataSelection()
-
-// const { selectedIndex, selectedRange } = useDataSelection()
+const { clearSelected, startDateString, endDateString } = useDataSelection()
 
 const emit = defineEmits(['close'])
 const onFillGaps = async () => {
-  await selectedSeries.value.data.dispatch(
-    EnumEditOperations.FILL_GAPS,
-    // @ts-ignore
-    [+gapAmount.value, TimeUnit[selectedGapUnit.value]],
-    // @ts-ignore
-    [+fillAmount.value, TimeUnit[selectedFillUnit.value]],
-    interpolateValues.value,
-    selectedData.value
-      ? [
-          selectedData.value[0],
-          selectedData.value[selectedData.value.length - 1],
-        ]
-      : undefined
-  )
+  isUpdating.value = true
 
-  await clearSelected()
-  redraw()
-  emit('close')
+  setTimeout(async () => {
+    await selectedSeries.value.data.dispatch(
+      EnumEditOperations.FILL_GAPS,
+      // @ts-ignore
+      [+gapAmount.value, TimeUnit[selectedGapUnit.value]],
+      // @ts-ignore
+      [+fillAmount.value, TimeUnit[selectedFillUnit.value]],
+      interpolateValues.value,
+      selectedData.value
+        ? [
+            selectedData.value[0],
+            selectedData.value[selectedData.value.length - 1],
+          ]
+        : undefined
+    )
+
+    await clearSelected()
+    await redraw()
+    isUpdating.value = false
+    emit('close')
+  })
 }
-
-const startDateString = computed(() => {
-  let datetime = selectedSeries.value.data.beginTime
-  if (selectedData.value) {
-    const startIndex = selectedData.value[0]
-    datetime =
-      plotlyRef?.data[0].x[startIndex] || selectedSeries.value.data.beginTime
-  }
-
-  return formatDate(new Date(datetime))
-})
-
-const endDateString = computed(() => {
-  let datetime = selectedSeries.value.data.endTime
-  if (selectedData.value) {
-    const endIndex = selectedData.value[selectedData.value.length - 1]
-    datetime =
-      plotlyRef?.data[0].x[endIndex] || selectedSeries.value.data.endTime
-  }
-
-  return formatDate(new Date(datetime))
-})
 </script>

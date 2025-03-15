@@ -94,7 +94,7 @@ import { formatDate } from '@/utils/formatDate'
 import { usePlotlyStore } from '@/store/plotly'
 import { useDataSelection } from '@/composables/useDataSelection'
 const { clearSelected } = useDataSelection()
-const { selectedSeries, plotlyRef } = storeToRefs(usePlotlyStore())
+const { selectedSeries, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
 const { redraw } = usePlotlyStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
@@ -124,29 +124,32 @@ const selectedGroups = computed((): number[][] => {
 
 const onDriftCorrection = async () => {
   const actions: [EnumEditOperations, ...any][] = []
-  selectedGroups.value?.forEach(async (g) => {
-    const start = g[0]
-    const end = g[g.length - 1]
-    actions.push([
-      EnumEditOperations.DRIFT_CORRECTION,
-      start,
-      end,
-      +driftGapWidth.value,
-    ])
+
+  isUpdating.value = true
+
+  setTimeout(async () => {
+    selectedGroups.value?.forEach(async (g) => {
+      const start = g[0]
+      const end = g[g.length - 1]
+      actions.push([
+        EnumEditOperations.DRIFT_CORRECTION,
+        start,
+        end,
+        +driftGapWidth.value,
+      ])
+    })
+
+    await selectedSeries.value.data.dispatch(actions)
+    await clearSelected()
+    await redraw()
+    isUpdating.value = false
+    emit('close')
   })
-
-  await selectedSeries.value.data.dispatch(actions)
-
-  await clearSelected()
-  redraw()
-  emit('close')
 }
 
 const getDotTooltip = (group: number[]) => {
   const xData = plotlyRef.value?.data[0].x
-
   const start = formatDate(new Date(xData[group[0]]))
-
   return `${group.length} Points starting at ${start}`
 }
 </script>
