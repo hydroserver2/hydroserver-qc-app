@@ -24,6 +24,7 @@ export const usePlotlyStore = defineStore('Plotly', () => {
 
   const showLegend = ref(true)
   const showTooltip = ref(false)
+  const isUpdating = ref(false)
 
   const graphSeriesArray = ref<GraphSeries[]>([])
   /** The index of the series that represents the datastream selected for quality control */
@@ -188,5 +189,6 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     fetchGraphSeriesData,
     plotlyOptions,
     plotlyRef,
+    isUpdating,
   }
 })

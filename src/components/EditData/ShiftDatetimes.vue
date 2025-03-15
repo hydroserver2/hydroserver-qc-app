@@ -42,16 +42,13 @@ import { TimeUnit, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { usePlotlyStore } from '@/store/plotly'
 
-import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedSeries } = storeToRefs(usePlotlyStore())
-import { usePlotlyStore } from '@/store/plotly'
-const { redraw } = usePlotlyStore()
-
-const { shiftUnits } = usePyStore()
 const { selectedShiftUnit, shiftAmount } = storeToRefs(usePyStore())
-// const { selectedIndex } = useDataSelection()
+const { redraw } = usePlotlyStore()
+const { shiftUnits } = usePyStore()
 
 const emit = defineEmits(['close'])
 
@@ -62,13 +59,12 @@ const onShiftDatetimes = async () => {
 
   await selectedSeries.value.data.dispatch(
     EnumEditOperations.SHIFT_DATETIMES,
-    selectedData.value.points.map((p) => p.pointIndex),
-    shiftAmount.value,
+    selectedData.value,
+    +shiftAmount.value,
     // @ts-ignore
     TimeUnit[selectedShiftUnit.value]
   )
-  // brushSelections.value = []
-  // selectedData.value = {}
+
   redraw()
 
   emit('close')

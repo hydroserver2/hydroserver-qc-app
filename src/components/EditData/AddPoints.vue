@@ -12,7 +12,7 @@
 
       <v-card-text>
         <div class="mt-4">
-          <v-row v-for="(point, index) of dataPoints">
+          <v-row v-for="(point, index) of dataPoints" :key="index">
             <v-col cols="1"
               ><v-badge
                 class="mt-4"
@@ -88,6 +88,7 @@ import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
+const { isUpdating } = storeToRefs(usePlotlyStore())
 
 const form = ref<InstanceType<typeof VForm>>()
 
@@ -117,11 +118,9 @@ const onAddDataPoints = async () => {
 
   // Convert input localized datetimes to UTC
   const transformedDataPoints: [
-    string,
     number,
-    Partial<{
-      resultQualifiers: string[]
-    }>,
+    number,
+    Partial<{ resultQualifiers: string[] }>,
   ][] = dataPoints.value.map((point) => {
     const matches = point[0].match(
       /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/
@@ -133,22 +132,26 @@ const onAddDataPoints = async () => {
       const hour = parseInt(matches[4])
       const minute = parseInt(matches[5])
       const second = parseInt(matches[6])
-      const date = new Date(year, month, day, hour, minute, second)
-      return [date.toISOString().substring(0, 19) + 'Z', point[1], point[2]]
+      const date = new Date(year, month, day, hour, minute, second).getTime()
+      return [date, point[1], point[2]]
+      // return [date.toISOString().substring(0, 19) + 'Z', point[1], point[2]]
     } else {
       throw new Error('Invalid date format.')
     }
   })
 
-  await selectedSeries.value.data.dispatch(
-    EnumEditOperations.ADD_POINTS,
-    transformedDataPoints
-  )
-  // brushSelections.value = []
-  // selectedData.value = {}
-  redraw()
+  isUpdating.value = true
 
-  emit('close')
+  setTimeout(async () => {
+    await selectedSeries.value.data.dispatch(
+      EnumEditOperations.ADD_POINTS,
+      transformedDataPoints
+    )
+
+    await redraw()
+    isUpdating.value = false
+    emit('close')
+  })
 }
 
 onMounted(() => {

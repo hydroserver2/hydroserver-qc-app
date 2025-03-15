@@ -26,12 +26,14 @@
               color="blue"
               variant="plain"
               title="Reload at this stage"
+              :disabled="isUpdating"
               @click="onReload"
             ></v-btn>
           </div>
         </v-timeline-item>
         <v-timeline-item
           v-for="(entry, index) of editHistory"
+          :key="index"
           :size="index < editHistory.length - 1 ? 'small' : 'large'"
           :icon="entry.icon"
           :fill-dot="index < editHistory.length - 1"
@@ -47,9 +49,9 @@
                 <v-expansion-panel-text>
                   <div class="text-caption mb-2">Arguments:</div>
                   <ul class="text-caption px-2">
-                    <template v-for="arg of entry.args">
-                      <li>{{ arg }}</li>
-                    </template>
+                    <li v-for="(arg, index) of entry.args" :key="index">
+                      {{ arg }}
+                    </li>
                   </ul>
                 </v-expansion-panel-text>
               </v-expansion-panel>
@@ -61,6 +63,7 @@
                 icon="mdi-reload"
                 color="blue"
                 variant="plain"
+                :disabled="isUpdating"
                 title="Reload at this stage"
                 @click="onReloadHistory(index)"
               ></v-btn>
@@ -69,6 +72,7 @@
                 color="red"
                 variant="plain"
                 title="Undo"
+                :disabled="isUpdating"
                 @click="onRemoveHistoryItem(index)"
               ></v-btn>
             </div>
@@ -81,29 +85,44 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-
-const { editHistory, selectedSeries } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'
+import { useDataSelection } from '@/composables/useDataSelection'
+
+const { editHistory, selectedSeries, isUpdating } =
+  storeToRefs(usePlotlyStore())
 const { redraw } = usePlotlyStore()
+const { clearSelected } = useDataSelection()
 
 const onReload = async () => {
-  await selectedSeries.value.data.reload()
-  // selectedSeries.value.data.generateDataset()
-  editHistory.value = []
-  await redraw()
+  isUpdating.value = true
+  setTimeout(async () => {
+    await selectedSeries.value.data.reload()
+    editHistory.value = []
+    await clearSelected()
+    await redraw()
+    isUpdating.value = false
+  })
 }
 
 const onReloadHistory = async (index: number) => {
   if (index < editHistory.value.length - 1) {
-    await selectedSeries.value.data.reloadHistory(index)
-    await redraw()
+    isUpdating.value = true
+    setTimeout(async () => {
+      await selectedSeries.value.data.reloadHistory(index)
+      await redraw()
+      isUpdating.value = false
+    })
   }
 }
 
 const onRemoveHistoryItem = async (index: number) => {
-  console.log('onRemoveHistoryItem')
-  await selectedSeries.value.data.removeHistoryItem(index)
-  await redraw()
+  isUpdating.value = true
+
+  setTimeout(async () => {
+    await selectedSeries.value.data.removeHistoryItem(index)
+    await redraw()
+    isUpdating.value = false
+  })
 }
 
 // TODO: ADD CONFIRMATION DIALOGS TO HISTORY OPERATIONS

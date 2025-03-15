@@ -10,6 +10,12 @@
           hide-details
         />
 
+        <v-progress-circular
+          v-if="isUpdating"
+          color="primary"
+          indeterminate
+        ></v-progress-circular>
+
         <!-- <v-text-field
           type="number"
           label="Disable tooltips after"
@@ -64,12 +70,11 @@ import {
 import { isEqual } from 'lodash-es'
 
 const plot = ref<HTMLDivElement>()
-const { plotlyOptions, plotlyRef } = storeToRefs(usePlotlyStore())
+const { plotlyOptions, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 const areTooltipsEnabled = ref(true)
 const isLargeDataset = ref(true)
 const tooltipsMaxDataPoints = ref(10 * 1000)
-const isUpdating = ref(false)
 const visiblePoints: Ref<number> = ref(0)
 
 onMounted(async () => {
@@ -87,7 +92,6 @@ onMounted(async () => {
     let high = xData.length
     while (low < high) {
       const mid = (low + high) >>> 1
-      // if (Date.parse(xData[mid]) < target) {
       if (xData[mid] < target) {
         low = mid + 1
       } else high = mid
@@ -113,92 +117,102 @@ onMounted(async () => {
 
     isUpdating.value = true
 
-    try {
-      let yMin = 0
-      let yMax = 0
-      let xMin = 0
-      let xMax = 0
+    setTimeout(async () => {
+      try {
+        let yMin = 0
+        let yMax = 0
+        let xMin = 0
+        let xMax = 0
 
-      const layoutUpdates = { ...plotlyOptions.value.layout }
-      // Plotly will rewrite timestamps as datestrings. We need to convert them back to timestamps.
-      if (typeof layoutUpdates.xaxis.range[0] == 'string') {
-        layoutUpdates.xaxis.range[0] = Date.parse(layoutUpdates.xaxis.range[0])
-        layoutUpdates.xaxis.range[1] = Date.parse(layoutUpdates.xaxis.range[1])
-      }
+        const layoutUpdates = { ...plotlyOptions.value.layout }
+        // Plotly will rewrite timestamps as datestrings. We need to convert them back to timestamps.
+        if (typeof layoutUpdates.xaxis.range[0] == 'string') {
+          layoutUpdates.xaxis.range[0] = Date.parse(
+            layoutUpdates.xaxis.range[0]
+          )
+          layoutUpdates.xaxis.range[1] = Date.parse(
+            layoutUpdates.xaxis.range[1]
+          )
+        }
 
-      const currentRange = plotlyRef.value?.layout.xaxis.range.map(
-        (d: string) => {
-          if (typeof d == 'string') {
-            return Date.parse(d)
+        const currentRange = plotlyRef.value?.layout.xaxis.range.map(
+          (d: string) => {
+            if (typeof d == 'string') {
+              return Date.parse(d)
+            }
+            return d
           }
-          return d
+        )
+
+        layoutUpdates.xaxis.range = [
+          Math.max(currentRange[0], layoutUpdates.xaxis.range[0]),
+          Math.min(currentRange[1], layoutUpdates.xaxis.range[1]),
+        ]
+
+        xMin = layoutUpdates.xaxis.range[0]
+        xMax = layoutUpdates.xaxis.range[1]
+
+        // Find visible points count using binary search
+        // Plotly does not return the indexes. We must find them using binary seach
+        const startIdx = findLowerBound(xMin)
+        const endIdx = findLowerBound(xMax)
+
+        // auto scale y axis using data from the first trace
+        const traceData = plotlyRef.value?.data[0]
+        const yData = traceData.y as number[]
+
+        // Find all y-values within the current x-axis range
+        yMin = yData[startIdx]
+        yMax = yData[endIdx - 1]
+
+        // Could use Math.max and Math.min and spread operator, but this is more memory efficient
+        for (let i = startIdx; i < endIdx; i++) {
+          if (yMin > yData[i]) {
+            yMin = yData[i]
+          }
+
+          if (yMax < yData[i]) {
+            yMax = yData[i]
+          }
         }
-      )
 
-      layoutUpdates.xaxis.range = [
-        Math.max(currentRange[0], layoutUpdates.xaxis.range[0]),
-        Math.min(currentRange[1], layoutUpdates.xaxis.range[1]),
-      ]
+        visiblePoints.value = endIdx - startIdx
 
-      xMin = layoutUpdates.xaxis.range[0]
-      xMax = layoutUpdates.xaxis.range[1]
+        // Calculate new y-axis range with padding
+        if (visiblePoints.value && yMax !== yMin) {
+          const padding = (yMax - yMin) * 0.1 // 10% padding
 
-      // Find visible points count using binary search
-      // Plotly does not return the indexes. We must find them using binary seach
-      const startIdx = findLowerBound(xMin)
-      const endIdx = findLowerBound(xMax)
-
-      // auto scale y axis using data from the first trace
-      const traceData = plotlyRef.value?.data[0]
-      const yData = traceData.y as number[]
-
-      // Find all y-values within the current x-axis range
-      yMin = yData[startIdx]
-      yMax = yData[endIdx]
-
-      // Could use Math.max and Math.min and spread operator, but this is more memory efficient
-      for (let i = startIdx + 1; i < endIdx; i++) {
-        if (yMin > yData[i]) {
-          yMin = yData[i]
+          layoutUpdates.yaxis = {
+            ...plotlyOptions.value.layout.yaxis,
+            range: [yMin - padding, yMax + padding],
+            autorange: false,
+          }
         }
 
-        if (yMax < yData[i]) {
-          yMax = yData[i]
+        // Update axis range
+        await Plotly.update(plotlyRef.value, {}, layoutUpdates)
+
+        // Threshold check
+        const newHoverState =
+          visiblePoints.value > tooltipsMaxDataPoints.value ? 'skip' : 'x+y'
+        isLargeDataset.value = newHoverState === 'skip'
+
+        // Only update if state changed
+        if (plotlyRef.value?.data[0].hoverinfo !== newHoverState) {
+          if (newHoverState === 'x+y' && !areTooltipsEnabled.value) {
+            return
+          }
+
+          await Plotly.restyle(
+            plotlyRef.value,
+            { hoverinfo: [newHoverState] },
+            0
+          )
         }
+      } finally {
+        isUpdating.value = false
       }
-
-      visiblePoints.value = endIdx - startIdx
-
-      // Calculate new y-axis range with padding
-      if (visiblePoints.value && yMax !== yMin) {
-        const padding = (yMax - yMin) * 0.1 // 10% padding
-
-        layoutUpdates.yaxis = {
-          ...plotlyOptions.value.layout.yaxis,
-          range: [yMin - padding, yMax + padding],
-          autorange: false,
-        }
-      }
-
-      // Update axis range
-      await Plotly.update(plotlyRef.value, {}, layoutUpdates)
-
-      // Threshold check
-      const newHoverState =
-        visiblePoints.value > tooltipsMaxDataPoints.value ? 'skip' : 'x+y'
-      isLargeDataset.value = newHoverState === 'skip'
-
-      // Only update if state changed
-      if (plotlyRef.value?.data[0].hoverinfo !== newHoverState) {
-        if (newHoverState === 'x+y' && !areTooltipsEnabled.value) {
-          return
-        }
-
-        await Plotly.restyle(plotlyRef.value, { hoverinfo: [newHoverState] }, 0)
-      }
-    } finally {
-      isUpdating.value = false
-    }
+    })
   }
 
   handleRelayout(null)

@@ -1,17 +1,11 @@
 import { Datastream, EnumDictionary } from '@/types'
-import { FilterOperation, Operator, TimeUnit, usePyStore } from '@/store/py'
+import { FilterOperation, Operator, TimeUnit } from '@/store/py'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
 
 import { useObservationStore } from '@/store/observations'
-
-import {
-  fetchObservationsParallel,
-  fetchObservationsSync,
-} from '@/utils/observationsUtils'
 import { usePlotlyStore } from '@/store/plotly'
-// @ts-ignore no type definitions
-import Plotly from 'plotly.js-dist'
+import { timeUnitMultipliers } from '../formatDate'
 
 export enum EnumEditOperations {
   ADD_POINTS = 'ADD_POINTS',
@@ -30,24 +24,6 @@ export enum EnumFilterOperations {
   VALUE_THRESHOLD = 'VALUE_THRESHOLD',
 }
 
-const SECOND = 1
-const MINUTE = SECOND * 60
-const HOUR = MINUTE * 60
-const DAY = HOUR * 24
-const WEEK = DAY * 7
-const MONTH = HOUR * 30
-const YEAR = DAY * 365
-
-const timeUnitMultipliers: EnumDictionary<TimeUnit, number> = {
-  [TimeUnit.SECOND]: SECOND,
-  [TimeUnit.MINUTE]: MINUTE,
-  [TimeUnit.HOUR]: HOUR,
-  [TimeUnit.DAY]: DAY,
-  [TimeUnit.WEEK]: WEEK,
-  [TimeUnit.MONTH]: MONTH,
-  [TimeUnit.YEAR]: YEAR,
-}
-
 const components = ['date', 'value', 'qualifier']
 
 export class ObservationRecord {
@@ -56,10 +32,7 @@ export class ObservationRecord {
   /** The generated dataset to be used for plotting */
   dataset: { dimensions: string[]; source: { [key: string]: number[] } } = {
     dimensions: components,
-    source: {
-      x: [],
-      y: [],
-    },
+    source: { x: [], y: [] },
   }
   history: { method: EnumEditOperations; args?: any[]; icon: string }[]
   isLoading: boolean
@@ -187,9 +160,6 @@ export class ObservationRecord {
       console.log(e)
     }
 
-    // TODO: trigger graph redraw
-    // const { plotlyRef } = storeToRefs(usePlotlyStore())
-    // await Plotly.update(plotlyRef.value, {}, {}, 0)
     return response
   }
 
@@ -299,13 +269,25 @@ export class ObservationRecord {
 
   /**
    * Shifts the selected indexes by a constant
-   * @param index The index list of entries to shift
+   * @param index The index of the elements to shift
    * @param amount Number of {@link TimeUnit}
    * @param unit {@link TimeUnit}
    * @returns
    */
   private _shift(index: number[], amount: number, unit: TimeUnit) {
-    // this.dataFrame.shift_points(index, amount, unit)
+    const xData = this.dataset.source.x
+    index.forEach((i) => {
+      const currentDate = new Date(xData[i])
+      if (unit === TimeUnit.MONTH) {
+        currentDate.setMonth(currentDate.getMonth() + amount)
+        xData[i] = currentDate.getTime()
+      } else if (unit === TimeUnit.YEAR) {
+        currentDate.setFullYear(currentDate.getFullYear() + 1)
+        xData[i] = currentDate.getTime()
+      } else {
+        xData[i] = xData[i] + amount * timeUnitMultipliers[unit] * 1000
+      }
+    })
   }
 
   /**
@@ -334,6 +316,8 @@ export class ObservationRecord {
       const rightDatetime = right
 
       const fillPoints = []
+      // TODO: number of seconds in a year or month is not constant
+      // Use setMonth and setFullYear instead
       const fillDelta = fill[0] * timeUnitMultipliers[fill[1]] * 1000
       let nextFillDatetime = leftDatetime + fillDelta
 
@@ -376,7 +360,7 @@ export class ObservationRecord {
 
   /**
    *
-   * @param index The index list of entries to shift
+   * @param index The index list of entries to delete
    */
   private _deleteDataPoints(index: number[]) {
     const groups = this._getConsecutiveGroups(index)
@@ -428,15 +412,29 @@ export class ObservationRecord {
    * @param dataPoints
    */
   private _addDataPoints(
-    dataPoints: [
-      string,
-      number,
-      Partial<{
-        resultQualifiers: string[]
-      }>,
-    ][]
+    dataPoints: [number, number, Partial<{ resultQualifiers: string[] }>][]
   ) {
-    // this.dataFrame.add_points(dataPoints)
+    dataPoints.sort((a, b) => b[1] - a[1])
+    dataPoints.forEach((d) => {
+      const insertIndex = this._findLowerBound(d[0])
+      this.dataset.source.x.splice(insertIndex, 0, d[0])
+      this.dataset.source.y.splice(insertIndex, 0, d[1])
+    })
+  }
+
+  private _findLowerBound(target: number) {
+    const xData = this.dataset.source.x
+    let low = 0
+    let high = xData.length
+    while (low < high) {
+      const mid = (low + high) >>> 1
+      if (xData[mid] < target) {
+        low = mid + 1
+      } else {
+        high = mid
+      }
+    }
+    return low
   }
 
   // =======================
