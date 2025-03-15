@@ -1,11 +1,12 @@
 <template>
   <v-card>
-    <v-card-title>Filter by persistent values</v-card-title>
+    <v-card-title class="text-body-1">Find persistent values</v-card-title>
 
     <v-divider></v-divider>
 
     <v-card-text>
       <v-timeline
+        v-if="selectedData?.length"
         direction="horizontal"
         align="center"
         side="start"
@@ -41,9 +42,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded="xl" variant="outlined" @click="onPersistence"
-        >Filter</v-btn
-      >
+      <v-btn @click="onPersistence">Filter</v-btn>
     </v-card-actions>
   </v-card>
 </template>

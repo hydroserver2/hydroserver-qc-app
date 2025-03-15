@@ -32,7 +32,7 @@
           label="Search"
           hide-details
           density="compact"
-          rounded="xl"
+          rounded
         />
 
         <v-spacer />
@@ -41,7 +41,7 @@
 
         <v-btn
           variant="outlined"
-          rounded="xl"
+          rounded
           @click="showOnlySelected = !showOnlySelected"
         >
           {{ showOnlySelected ? 'Show All' : 'Show Selected' }}

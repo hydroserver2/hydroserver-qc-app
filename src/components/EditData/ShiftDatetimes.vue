@@ -30,7 +30,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded="xl" variant="outlined" @click="onShiftDatetimes"
+      <v-btn rounded variant="outlined" @click="onShiftDatetimes"
         >Shift Datetimes</v-btn
       >
     </v-card-actions>
@@ -38,17 +38,17 @@
 </template>
 
 <script setup lang="ts">
-import { TimeUnit, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
+import { useUIStore, TimeUnit } from '@/store/userInterface'
 
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
-const { selectedShiftUnit, shiftAmount } = storeToRefs(usePyStore())
+const { selectedShiftUnit, shiftAmount } = storeToRefs(useUIStore())
 const { redraw } = usePlotlyStore()
-const { shiftUnits } = usePyStore()
+const { shiftUnits } = useUIStore()
 
 const emit = defineEmits(['close'])
 
@@ -68,9 +68,8 @@ const onShiftDatetimes = async () => {
       TimeUnit[selectedShiftUnit.value]
     )
 
-    await redraw()
-
     isUpdating.value = false
+    await redraw()
     emit('close')
   })
 }

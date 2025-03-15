@@ -62,7 +62,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded="xl" variant="outlined" @click="onChangeValues"
+      <v-btn rounded variant="outlined" @click="onChangeValues"
         >Change Values</v-btn
       >
     </v-card-actions>
@@ -70,19 +70,19 @@
 </template>
 
 <script setup lang="ts">
-import { Operator, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
 
 import { usePlotlyStore } from '@/store/plotly'
+import { Operator, useUIStore } from '@/store/userInterface'
 const { redraw } = usePlotlyStore()
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
-const { operators } = usePyStore()
-const { selectedOperator, operationValue } = storeToRefs(usePyStore())
 const { clearSelected } = useDataSelection()
+const { operators } = useUIStore()
+const { selectedOperator, operationValue } = storeToRefs(useUIStore())
 
 const emit = defineEmits(['close'])
 
@@ -103,8 +103,8 @@ const onChangeValues = async () => {
     )
 
     await clearSelected()
-    await redraw()
     isUpdating.value = false
+    await redraw()
     emit('close')
   })
 }

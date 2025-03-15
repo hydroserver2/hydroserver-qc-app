@@ -14,7 +14,7 @@
       <v-empty-state
         v-if="editHistory.length === 0"
         icon="mdi-clock"
-        text="Edit your data and manage your checkpoints here."
+        text="Edit your data and manage your changes here."
         title="Edit History"
       />
       <v-timeline v-else side="end" hide-opposite density="compact">
@@ -99,8 +99,8 @@ const onReload = async () => {
     await selectedSeries.value.data.reload()
     editHistory.value = []
     await clearSelected()
-    await redraw()
     isUpdating.value = false
+    await redraw()
   })
 }
 
@@ -109,8 +109,8 @@ const onReloadHistory = async (index: number) => {
     isUpdating.value = true
     setTimeout(async () => {
       await selectedSeries.value.data.reloadHistory(index)
-      await redraw()
       isUpdating.value = false
+      await redraw()
     })
   }
 }
@@ -120,8 +120,8 @@ const onRemoveHistoryItem = async (index: number) => {
 
   setTimeout(async () => {
     await selectedSeries.value.data.removeHistoryItem(index)
-    await redraw()
     isUpdating.value = false
+    await redraw()
   })
 }
 

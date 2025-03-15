@@ -14,24 +14,16 @@ import Notifications from '@/components/base/Notifications.vue'
 import FullScreenLoader from '@/components/base/FullScreenLoader.vue'
 
 import { setupRouteGuards } from '@/router/router'
-import { usePyStore } from '@/store/py'
 import { api } from '@/services/api'
 import { ref } from 'vue'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
 
 // Use stores
-const { $initialized } = usePyStore()
 const isLoading = ref(true)
-// const hasPyScriptInitialized = ref(false)
 
 const { things, processingLevels, observedProperties, datastreams } =
   storeToRefs(useDataVisStore())
-
-const initializedSub = $initialized.subscribe(() => {
-  // hasPyScriptInitialized.value = true
-  initializedSub.unsubscribe()
-})
 
 const initializeHydroServer = async () => {
   const [

@@ -30,7 +30,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded="xl" variant="outlined" @click="onInterpolate"
+      <v-btn rounded variant="outlined" @click="onInterpolate"
         >Interpolate</v-btn
       >
     </v-card-actions>
@@ -38,16 +38,16 @@
 </template>
 
 <script setup lang="ts">
-import { InterpolationMethods, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
+import { InterpolationMethods, useUIStore } from '@/store/userInterface'
 
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { redraw } = usePlotlyStore()
-const { selectedInterpolationMethod } = storeToRefs(usePyStore())
+const { selectedInterpolationMethod } = storeToRefs(useUIStore())
 
 const emit = defineEmits(['close'])
 
@@ -64,8 +64,8 @@ const onInterpolate = async () => {
       selectedData.value
     )
 
-    await redraw()
     isUpdating.value = false
+    await redraw()
     emit('close')
   })
 }

@@ -13,8 +13,5 @@ app.use(store)
 app.use(router)
 app.use(vuetify)
 app.mount('#app')
-;(window as _Window).someFunction = (message: string) => {
-  alert(message)
-}
 
 export default app

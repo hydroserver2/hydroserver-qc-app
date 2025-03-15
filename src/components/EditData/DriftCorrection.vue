@@ -71,7 +71,7 @@
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
       <v-btn
         :disabled="selectedGroups.length == 0"
-        rounded="xl"
+        rounded
         variant="outlined"
         @click="onDriftCorrection"
         >Apply Drift Correction</v-btn
@@ -81,20 +81,18 @@
 </template>
 
 <script setup lang="ts">
-import { DriftCorrectionMethods, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-
-const { driftGapWidth, selectedDriftCorrectionMethod } =
-  storeToRefs(usePyStore())
-
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
 import { usePlotlyStore } from '@/store/plotly'
 import { useDataSelection } from '@/composables/useDataSelection'
+import { useUIStore, DriftCorrectionMethods } from '@/store/userInterface'
 const { clearSelected } = useDataSelection()
 const { selectedSeries, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
+const { driftGapWidth, selectedDriftCorrectionMethod } =
+  storeToRefs(useUIStore())
 const { redraw } = usePlotlyStore()
 
 const { selectedData } = storeToRefs(useDataVisStore())
@@ -141,8 +139,8 @@ const onDriftCorrection = async () => {
 
     await selectedSeries.value.data.dispatch(actions)
     await clearSelected()
-    await redraw()
     isUpdating.value = false
+    await redraw()
     emit('close')
   })
 }

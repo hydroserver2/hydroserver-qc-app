@@ -10,11 +10,7 @@
           hide-details
         />
 
-        <v-progress-circular
-          v-if="isUpdating"
-          color="primary"
-          indeterminate
-        ></v-progress-circular>
+        <v-progress-circular v-if="isUpdating" color="primary" indeterminate />
 
         <!-- <v-text-field
           type="number"

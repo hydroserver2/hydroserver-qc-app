@@ -1,11 +1,12 @@
 <template>
   <v-card>
-    <v-card-title>Select Gaps</v-card-title>
+    <v-card-title class="text-body-1">Find time gaps in the data</v-card-title>
 
     <v-divider></v-divider>
 
     <v-card-text>
       <v-timeline
+        v-if="selectedData?.length"
         direction="horizontal"
         align="center"
         side="start"
@@ -47,24 +48,21 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded="xl" variant="outlined" @click="onFindGaps"
-        >Find Gaps</v-btn
-      >
+      <v-btn :disabled="isUpdating" @click="onFindGaps">Find Gaps</v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
 <script setup lang="ts">
-import { TimeUnit, usePyStore } from '@/store/py'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
+import { TimeUnit, useUIStore } from '@/store/userInterface'
 
-const { gapUnits } = usePyStore()
-const { gapAmount, selectedGapUnit } = storeToRefs(usePyStore())
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
+const { gapAmount, gapUnits, selectedGapUnit } = storeToRefs(useUIStore())
 const { selectedData } = storeToRefs(useDataVisStore())
 const { dispatchSelection, startDateString, endDateString } = useDataSelection()
 

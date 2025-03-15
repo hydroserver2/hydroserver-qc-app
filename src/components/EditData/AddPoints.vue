@@ -60,7 +60,7 @@
         <v-spacer />
         <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
         <v-btn
-          rounded="xl"
+          rounded
           variant="outlined"
           @click="onAddDataPoints"
           :disabled="!form?.isValid"
@@ -144,8 +144,8 @@ const onAddDataPoints = async () => {
       transformedDataPoints
     )
 
-    await redraw()
     isUpdating.value = false
+    await redraw()
     emit('close')
   })
 }

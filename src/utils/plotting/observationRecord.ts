@@ -1,5 +1,12 @@
 import { Datastream, EnumDictionary } from '@/types'
-import { FilterOperation, Operator, TimeUnit } from '@/store/py'
+import {
+  FilterOperation,
+  FilterOperationFn,
+  Operator,
+  RateOfChangeComparator,
+  RateOfChangeOperation,
+  TimeUnit,
+} from '@/store/userInterface'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
 
@@ -306,7 +313,7 @@ export class ObservationRecord {
     const gaps = this._findGaps(gap[0], gap[1], range)
     const dataX = this.dataset.source.x
     const dataY = this.dataset.source.y
-    const collection: any = {}
+    const collection: { [key: number]: [number, number][] } = {}
 
     for (let i = 0; i < gaps.length; i++) {
       const currentGap = gaps[i]
@@ -315,7 +322,7 @@ export class ObservationRecord {
       const leftDatetime = left
       const rightDatetime = right
 
-      const fillPoints = []
+      const fillPoints: [number, number][] = []
       // TODO: number of seconds in a year or month is not constant
       // Use setMonth and setFullYear instead
       const fillDelta = fill[0] * timeUnitMultipliers[fill[1]] * 1000
@@ -339,7 +346,7 @@ export class ObservationRecord {
       collection[currentGap[0]] = fillPoints
     }
 
-    const keys = Object.keys(collection)
+    const keys = Object.keys(collection).map((key) => +key)
 
     // insert in reverse order so we don't alter the array indexes
     for (let i = keys.length - 1; i >= 0; i--) {
@@ -462,28 +469,12 @@ export class ObservationRecord {
 
     this.dataset.source.y.forEach((value: number, index: number) => {
       if (
-        appliedFilters.hasOwnProperty(FilterOperation.E) &&
-        value == appliedFilters[FilterOperation.E]
-      ) {
-        selection.push(index)
-      } else if (
-        appliedFilters.hasOwnProperty(FilterOperation.GT) &&
-        value > appliedFilters[FilterOperation.GT]
-      ) {
-        selection.push(index)
-      } else if (
-        appliedFilters.hasOwnProperty(FilterOperation.GTE) ||
-        value >= appliedFilters[FilterOperation.GTE]
-      ) {
-        selection.push(index)
-      } else if (
-        appliedFilters.hasOwnProperty(FilterOperation.LT) &&
-        value < appliedFilters[FilterOperation.LT]
-      ) {
-        selection.push(index)
-      } else if (
-        appliedFilters.hasOwnProperty(FilterOperation.LTE) &&
-        value <= appliedFilters[FilterOperation.LTE]
+        Object.keys(appliedFilters).some((key) => {
+          return FilterOperationFn[key as FilterOperation]?.(
+            value,
+            appliedFilters[key]
+          )
+        })
       ) {
         selection.push(index)
       }
@@ -498,7 +489,24 @@ export class ObservationRecord {
    * @returns
    */
   private _rateOfChange(comparator: string, value: number) {
-    // return this.dataFrame.rate_of_change(comparator, value)
+    const selection: number[] = []
+    const dataY = this.dataset.source.y
+
+    for (let i = 0 + 1; i < dataY.length; i++) {
+      const prev = dataY[i - 1]
+      const curr = dataY[i]
+      const rate = (curr - prev) / Math.abs(prev)
+
+      if (
+        RateOfChangeComparator[comparator as RateOfChangeOperation]?.(
+          rate,
+          value
+        )
+      ) {
+        selection.push(i)
+      }
+    }
+    return selection
   }
 
   /**

@@ -18,7 +18,7 @@
                   :class="{ 'v-list-item--active': selected === item }"
                   density="compact"
                   class="my-1"
-                  rounded="xl"
+                  rounded
                 >
                   <v-list-item-title>{{ item }}</v-list-item-title>
                   <v-divider />
@@ -169,7 +169,7 @@ const filterPoints = [
     },
   },
   {
-    title: 'Select gaps',
+    title: 'Find gaps',
     props: {
       prependIcon: 'mdi-keyboard-space',
     },

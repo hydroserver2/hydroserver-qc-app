@@ -1,7 +1,7 @@
 <template>
-  <v-card rounded="xl" min-height="300">
+  <v-card rounded min-width="600">
     <v-card-title class="text-body-1">
-      Filter by value thresholds
+      Filter by values
       <v-badge
         v-if="Object.keys(appliedFilters).length"
         :content="Object.keys(appliedFilters).length"
@@ -18,48 +18,60 @@
             variant="outlined"
             closable
             color="blue"
-            v-for="key of Object.keys(appliedFilters)"
-            :key="key"
+            v-for="(key, index) of Object.keys(appliedFilters)"
+            :key="index"
             @click:close="removeFilter(key)"
             >{{ key }}: {{ appliedFilters[key] }}</v-chip
           >
         </div>
         <v-spacer></v-spacer>
-        <v-btn @click="clearFilters" variant="outlined" rounded>Clear</v-btn>
+        <v-btn
+          color="blue-grey-lighten-1"
+          :disabled="isUpdating"
+          @click="clearFilters"
+          variant="outlined"
+          rounded
+          >Clear</v-btn
+        >
       </v-card-text>
-
       <v-divider></v-divider>
     </template>
 
     <v-card-text>
-      <div class="d-flex gap-1">
-        <v-select
-          label="Operation"
-          :items="filterOperators"
-          v-model="selectedFilter"
-        ></v-select>
-        <v-text-field
-          label="Value"
-          v-model="filterValue"
-          step="0.1"
-          type="number"
-          width="30"
-        >
-        </v-text-field>
-        <v-btn
-          color="blue-grey-lighten-1"
-          @click="onAddFilter(selectedFilter, filterValue)"
-          prepend-icon="mdi-plus"
-          >Add Filter</v-btn
-        >
-      </div>
+      <v-label class="mb-4">Select points where the values are</v-label>
+
+      <v-select
+        :items="filterOperators"
+        class="mb-6"
+        v-model="selectedFilter"
+        return-object
+        hide-details
+      ></v-select>
+      <v-text-field
+        label="Value"
+        v-model="filterValue"
+        step="0.1"
+        type="number"
+        hide-details
+      >
+      </v-text-field>
     </v-card-text>
+    <v-card-actions>
+      <v-spacer />
+      <v-btn-cancel @click="$emit('close')">Close</v-btn-cancel>
+      <v-btn
+        @click="onAddFilter(selectedFilter.title, filterValue)"
+        :disabled="isUpdating || (!filterValue && filterValue !== 0)"
+        prepend-icon="mdi-plus"
+        >Add Filter</v-btn
+      >
+    </v-card-actions>
   </v-card>
 </template>
 
 <script setup lang="ts">
 import { Ref, ref } from 'vue'
-import { FilterOperation } from '@/store/py'
+import { FilterOperation } from '@/store/userInterface'
 import { storeToRefs } from 'pinia'
 import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
@@ -69,15 +81,20 @@ const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { dispatchSelection, clearSelected } = useDataSelection()
 const emit = defineEmits(['filter', 'close'])
 
-// TODO: move these to store
-
 // FILTERS
-const filterOperators = [...Object.keys(FilterOperation)]
+const filterOperators = [
+  ...Object.keys(FilterOperation).map((key) => ({
+    value: key,
+    // @ts-ignore
+    title: FilterOperation[key],
+  })),
+]
 const selectedFilter = ref(filterOperators[2])
 const filterValue = ref(0)
 const appliedFilters: Ref<{ [key: string]: number }> = ref({})
 
 const clearFilters = async () => {
+  console.log('clearFilters')
   appliedFilters.value = {}
   isUpdating.value = true
   setTimeout(async () => {
@@ -111,8 +128,8 @@ const _addFilter = async (key: string, value: number) => {
 
 const removeFilter = async (key: string) => {
   isUpdating.value = true
+  delete appliedFilters.value[key]
   setTimeout(async () => {
-    delete appliedFilters.value[key]
     const selection = await selectedSeries.value.data.dispatchFilter(
       EnumFilterOperations.VALUE_THRESHOLD,
       appliedFilters.value

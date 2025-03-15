@@ -67,27 +67,23 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded="xl" variant="outlined" @click="onFillGaps"
-        >Fill Gaps</v-btn
-      >
+      <v-btn rounded variant="outlined" @click="onFillGaps">Fill Gaps</v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
 <script setup lang="ts">
-import { TimeUnit, usePyStore } from '@/store/py'
+import { TimeUnit, useUIStore } from '@/store/userInterface'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-
-const { fillUnits, gapUnits } = usePyStore()
+const { fillUnits, gapUnits } = useUIStore()
 const {
   interpolateValues,
   gapAmount,
   selectedGapUnit,
   selectedFillUnit,
   fillAmount,
-} = storeToRefs(usePyStore())
-
+} = storeToRefs(useUIStore())
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
 
@@ -118,8 +114,8 @@ const onFillGaps = async () => {
     )
 
     await clearSelected()
-    await redraw()
     isUpdating.value = false
+    await redraw()
     emit('close')
   })
 }

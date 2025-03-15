@@ -1,4 +1,4 @@
-import { TimeUnit } from '@/store/py'
+import { TimeUnit } from '@/store/userInterface'
 import { EnumDictionary } from '@/types'
 
 export const formatDate = (date: Date) => {

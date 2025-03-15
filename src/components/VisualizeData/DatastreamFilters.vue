@@ -4,7 +4,7 @@
       color="primary-lighten-2"
       @click="clearFilters"
       variant="outlined"
-      rounded="xl"
+      rounded
       append-icon="mdi-close"
       >Clear filters</v-btn
     >

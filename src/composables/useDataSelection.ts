@@ -26,10 +26,7 @@ export function useDataSelection() {
       0
     )
 
-    // If the selection is empty, Plotly wont trigger relayout. We must cleanup the selection array.
-    if (!selection.length) {
-      selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
-    }
+    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
   }
 
   /** Call this method after operations that change the order of elements or remove elements in the data */

@@ -24,7 +24,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded="xl" variant="outlined" @click="onDeleteDataPoints"
+      <v-btn rounded variant="outlined" @click="onDeleteDataPoints"
         >Delete Data Points</v-btn
       >
     </v-card-actions>
@@ -59,9 +59,9 @@ const onDeleteDataPoints = async () => {
     )
 
     await clearSelected()
+    isUpdating.value = false
     await redraw()
 
-    isUpdating.value = false
     emit('close')
   })
 }
