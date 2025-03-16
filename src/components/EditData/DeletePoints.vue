@@ -24,7 +24,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded variant="outlined" @click="onDeleteDataPoints"
+      <v-btn :disabled="isUpdating" @click="onDeleteDataPoints"
         >Delete Data Points</v-btn
       >
     </v-card-actions>

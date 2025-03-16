@@ -30,7 +30,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded variant="outlined" @click="onShiftDatetimes"
+      <v-btn :disabled="isUpdating" @click="onShiftDatetimes"
         >Shift Datetimes</v-btn
       >
     </v-card-actions>

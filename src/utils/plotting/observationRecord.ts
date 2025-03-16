@@ -12,7 +12,7 @@ import { storeToRefs } from 'pinia'
 
 import { useObservationStore } from '@/store/observations'
 import { usePlotlyStore } from '@/store/plotly'
-import { timeUnitMultipliers } from '../formatDate'
+import { shiftDatetime, timeUnitMultipliers } from '../formatDate'
 
 export enum EnumEditOperations {
   ADD_POINTS = 'ADD_POINTS',
@@ -275,26 +275,24 @@ export class ObservationRecord {
   }
 
   /**
-   * Shifts the selected indexes by a constant
+   * Shifts the selected indexes by specified amount of units. Elements are reinserted according to their datetime.
    * @param index The index of the elements to shift
    * @param amount Number of {@link TimeUnit}
    * @param unit {@link TimeUnit}
    * @returns
    */
   private _shift(index: number[], amount: number, unit: TimeUnit) {
+    console.log('_shift')
     const xData = this.dataset.source.x
-    index.forEach((i) => {
-      const currentDate = new Date(xData[i])
-      if (unit === TimeUnit.MONTH) {
-        currentDate.setMonth(currentDate.getMonth() + amount)
-        xData[i] = currentDate.getTime()
-      } else if (unit === TimeUnit.YEAR) {
-        currentDate.setFullYear(currentDate.getFullYear() + 1)
-        xData[i] = currentDate.getTime()
-      } else {
-        xData[i] = xData[i] + amount * timeUnitMultipliers[unit] * 1000
-      }
-    })
+    const yData = this.dataset.source.y
+
+    // Collection that will be re-added using `_addDataPoints`
+    const collection: [number, number][] = index.map((i) => [
+      shiftDatetime(xData[i], amount, unit),
+      yData[i],
+    ])
+    this._deleteDataPoints(index)
+    this._addDataPoints(collection)
   }
 
   /**
@@ -313,16 +311,14 @@ export class ObservationRecord {
     const gaps = this._findGaps(gap[0], gap[1], range)
     const dataX = this.dataset.source.x
     const dataY = this.dataset.source.y
-    const collection: { [key: number]: [number, number][] } = {}
 
-    for (let i = 0; i < gaps.length; i++) {
+    for (let i = gaps.length - 1; i >= 0; i--) {
       const currentGap = gaps[i]
-      const left = dataX[currentGap[0]]
-      const right = dataX[currentGap[1]]
-      const leftDatetime = left
-      const rightDatetime = right
+      const leftDatetime = dataX[currentGap[0]]
+      const rightDatetime = dataX[currentGap[1]]
+      const fillX: number[] = []
+      const fillY: number[] = []
 
-      const fillPoints: [number, number][] = []
       // TODO: number of seconds in a year or month is not constant
       // Use setMonth and setFullYear instead
       const fillDelta = fill[0] * timeUnitMultipliers[fill[1]] * 1000
@@ -339,29 +335,13 @@ export class ObservationRecord {
             )
           : -9999
 
-        fillPoints.push([nextFillDatetime, val])
+        fillX.push(nextFillDatetime)
+        fillY.push(val)
         nextFillDatetime += fillDelta
       }
 
-      collection[currentGap[0]] = fillPoints
-    }
-
-    const keys = Object.keys(collection).map((key) => +key)
-
-    // insert in reverse order so we don't alter the array indexes
-    for (let i = keys.length - 1; i >= 0; i--) {
-      const insertIndex = +keys[i]
-
-      this.dataset.source.x.splice(
-        insertIndex + 1,
-        0,
-        ...collection[keys[i]].map((a) => a[0])
-      )
-      this.dataset.source.y.splice(
-        insertIndex + 1,
-        0,
-        ...collection[keys[i]].map((a) => a[1])
-      )
+      dataX.splice(currentGap[0] + 1, 0, ...fillX)
+      dataY.splice(currentGap[0] + 1, 0, ...fillY)
     }
   }
 
@@ -427,17 +407,34 @@ export class ObservationRecord {
   }
 
   /**
+   * Adds data points. Their insert index is determined using `_findLowerBound` in the x-axis.
    * @param dataPoints
    */
-  private _addDataPoints(
-    dataPoints: [number, number, Partial<{ resultQualifiers: string[] }>][]
-  ) {
-    dataPoints.sort((a, b) => b[1] - a[1])
-    dataPoints.forEach((d) => {
-      const insertIndex = this._findLowerBound(d[0])
-      this.dataset.source.x.splice(insertIndex, 0, d[0])
-      this.dataset.source.y.splice(insertIndex, 0, d[1])
-    })
+  private _addDataPoints(dataPoints: [number, number][]) {
+    dataPoints.sort((a, b) => b[0] - a[0])
+
+    let lowerBound = this._findLowerBound(dataPoints[0][0])
+    const toInsertX: number[] = []
+    const toInsertY: number[] = []
+
+    /** Iterate through the points to add and find their insert index. Minimize the number of splice operations because they are costly. */
+    for (let i = 0; i < dataPoints.length; i++) {
+      const d = dataPoints[i]
+      if (lowerBound > d[0]) {
+        // lowerBound crossed, insert the collected items
+        this.dataset.source.x.splice(lowerBound, 0, ...toInsertX)
+        this.dataset.source.y.splice(lowerBound, 0, ...toInsertY)
+        toInsertX.length = 0
+        toInsertY.length = 0
+        lowerBound = this._findLowerBound(dataPoints[i][0])
+      }
+
+      toInsertX.splice(0, 0, d[0])
+      toInsertY.splice(0, 0, d[1])
+    }
+    // Leftovers in last iteration
+    this.dataset.source.x.splice(lowerBound, 0, ...toInsertX)
+    this.dataset.source.y.splice(lowerBound, 0, ...toInsertY)
   }
 
   private _findLowerBound(target: number) {

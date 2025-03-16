@@ -113,28 +113,26 @@ const onAddDataPoints = async () => {
   }
 
   // Convert input localized datetimes to UTC
-  const transformedDataPoints: [
-    number,
-    number,
-    Partial<{ resultQualifiers: string[] }>,
-  ][] = dataPoints.value.map((point) => {
-    const matches = point[0].match(
-      /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/
-    )
-    if (matches) {
-      const year = parseInt(matches[1])
-      const month = parseInt(matches[2]) - 1
-      const day = parseInt(matches[3])
-      const hour = parseInt(matches[4])
-      const minute = parseInt(matches[5])
-      const second = parseInt(matches[6])
-      const date = new Date(year, month, day, hour, minute, second).getTime()
-      return [date, point[1], point[2]]
-      // return [date.toISOString().substring(0, 19) + 'Z', point[1], point[2]]
-    } else {
-      throw new Error('Invalid date format.')
+  const transformedDataPoints: [number, number][] = dataPoints.value.map(
+    (point) => {
+      const matches = point[0].match(
+        /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/
+      )
+      if (matches) {
+        const year = parseInt(matches[1])
+        const month = parseInt(matches[2]) - 1
+        const day = parseInt(matches[3])
+        const hour = parseInt(matches[4])
+        const minute = parseInt(matches[5])
+        const second = parseInt(matches[6])
+        const date = new Date(year, month, day, hour, minute, second).getTime()
+        return [date, point[1]]
+        // return [date.toISOString().substring(0, 19) + 'Z', point[1], point[2]]
+      } else {
+        throw new Error('Invalid date format.')
+      }
     }
-  })
+  )
 
   isUpdating.value = true
 

@@ -67,7 +67,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded variant="outlined" @click="onFillGaps">Fill Gaps</v-btn>
+      <v-btn :disabled="isUpdating" @click="onFillGaps">Fill Gaps</v-btn>
     </v-card-actions>
   </v-card>
 </template>

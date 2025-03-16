@@ -5,7 +5,7 @@ import { fetchObservationsSync } from '@/utils/observationsUtils'
 import { ObservationRecord } from '@/utils/plotting/observationRecord'
 
 export const useObservationStore = defineStore('observations', () => {
-  const observations = ref<Record<string, ObservationRecord>>({})
+  const observations = ref<Record<string, ObservationRecord>>({}) // TODO: make persistent
 
   /**
    * Fetches requested observations that aren't currently in the pinia store,
