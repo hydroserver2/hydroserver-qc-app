@@ -96,7 +96,6 @@ onMounted(async () => {
   }
 
   const handleRelayout = async (eventData: any) => {
-    console.log('handleRelayout')
     selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
 
     // Plotly fires the relayout event for basically everything.
@@ -114,6 +113,7 @@ onMounted(async () => {
     isUpdating.value = true
 
     setTimeout(async () => {
+      console.log('handleRelayout')
       try {
         let yMin = 0
         let yMax = 0

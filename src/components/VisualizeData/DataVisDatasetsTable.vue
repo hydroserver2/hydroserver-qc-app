@@ -203,8 +203,8 @@ const isSelected = (ds: Datastream) => ds.id === qcDatastream.value?.id
 const search = ref()
 const headers = reactive([
   { title: '', key: 'status', visible: true, width: 1 },
-  { title: 'Plot', key: 'plot', visible: true },
-  { title: 'Select', key: 'select', visible: true },
+  { title: 'Plot', key: 'plot', visible: true, width: 1 },
+  { title: 'Select', key: 'select', visible: true, width: 1 },
   {
     title: 'Site code',
     key: 'siteCodeName',
