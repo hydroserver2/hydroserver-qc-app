@@ -121,6 +121,10 @@ export const usePlotlyStore = defineStore('Plotly', () => {
       fetchObservedPropertyPromise,
     ])
 
+    if (!data.dataset.source.x.length) {
+      await data.reload()
+    }
+
     const yAxisLabel =
       observedProperty && unit
         ? `${observedProperty.name} (${unit.symbol})`

@@ -3,11 +3,10 @@
     permanent
     :width="350"
     elevation="1"
-    class="bg-navbar"
+    class=""
     theme="dark"
   >
-    <!-- <DataVisualizationControls /> -->
-    <v-list class="pb-2" density="compact">
+    <!-- <v-list class="pb-2" density="compact">
       <v-list-subheader> View </v-list-subheader>
       <v-list-item
         @click="showLegend = !showLegend"
@@ -31,12 +30,12 @@
           v-model="selectedQualifier"
         />
       </v-list-item>
-    </v-list>
+    </v-list> -->
 
     <v-divider />
 
     <v-list class="pb-6">
-      <v-list-subheader>Time filters</v-list-subheader>
+      <v-list-subheader class="text-uppercase">Time filters</v-list-subheader>
       <v-list-item>
         <DataVisTimeFilters />
       </v-list-item>
@@ -45,9 +44,13 @@
     <v-divider />
 
     <v-list class="pb-0">
-      <v-list-subheader>Datastream filters</v-list-subheader>
+      <v-list-subheader class="text-uppercase"
+        >Datastream filters</v-list-subheader
+      >
+      <v-list-item>
+        <DatastreamFilters />
+      </v-list-item>
     </v-list>
-    <DatastreamFilters />
   </v-navigation-drawer>
 </template>
 

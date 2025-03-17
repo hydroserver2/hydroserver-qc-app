@@ -12,9 +12,7 @@ export const useObservationStore = defineStore(
 
     /**
      * Fetches requested observations that aren't currently in the pinia store,
-     * updates the store, then returns the requested observations.
-     * TODO: this method performs too many iterations over the dataset.
-     * TODO: only fetch observations when plotting the series
+     * updates the store, then returns the corresponding `ObservationRecord`.
      */
     const fetchObservationsInRange = async (
       datastream: Datastream,
@@ -33,25 +31,34 @@ export const useObservationStore = defineStore(
       let beginDataPromise: Promise<any[]> = Promise.resolve([])
       let endDataPromise: Promise<any[]> = Promise.resolve([])
 
-      if (existingRecord.beginTime && existingRecord.endTime) {
+      if (observationsRaw.value[id]?.length) {
+        const rawBeginDatetime: Date = new Date(
+          Date.parse(observationsRaw.value[id][0][0])
+        )
+        const rawEndDatetime: Date = new Date(
+          Date.parse(
+            observationsRaw.value[id][observationsRaw.value[id].length - 1][0]
+          )
+        )
+
         // Check if new data before the stored data is needed
-        if (beginTime < existingRecord.beginTime) {
+        if (beginTime < rawBeginDatetime) {
           beginDataPromise = fetchObservationsSync(
             datastream,
             beginTime,
-            existingRecord.beginTime
+            rawBeginDatetime
           )
         }
 
         // Check if new data after the stored data is needed
-        if (endTime > existingRecord.endTime) {
-          const temp = existingRecord.endTime
+        if (endTime > rawEndDatetime) {
+          const temp = rawEndDatetime
           temp.setSeconds(temp.getSeconds() + 1)
 
           endDataPromise = fetchObservationsSync(datastream, temp, endTime)
         }
       } else {
-        // Record has no data at all. Fetch the full range.
+        // There is no raw data for this dataset. Fetch the whole range
         beginDataPromise = fetchObservationsSync(datastream, beginTime, endTime)
       }
 
@@ -73,12 +80,7 @@ export const useObservationStore = defineStore(
         observationsRaw.value[id] = [...observationsRaw.value[id], ...endData]
       }
 
-      // If the data has changed, renegerate the dataset
-      if (beginData.length > 0 || endData.length > 0) {
-        existingRecord.loadData(observationsRaw.value[id])
-      }
-
-      return observations.value[id]
+      return existingRecord
     }
 
     return {

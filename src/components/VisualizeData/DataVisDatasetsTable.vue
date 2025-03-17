@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex flex-column">
-    <div class="d-flex align-center justify-space-between my-2">
+    <div class="d-flex align-center justify-space-between my-2 table-title">
       <h5 class="text-h5">Datastreams</h5>
 
       <v-select
@@ -16,14 +16,14 @@
         hide-details
         max-width="200"
       >
-        <template v-slot:selection="{ item, index }">
+        <template #selection="{ item, index }">
           <!-- Leave blank so nothing appears in the v-select box -->
         </template>
       </v-select>
     </div>
 
     <v-card class="flex-grow-1 d-flex flex-column">
-      <v-toolbar flat color="secondary-lighten-2">
+      <v-toolbar flat color="blue-grey-lighten-4">
         <v-text-field
           class="mx-2"
           clearable
@@ -37,18 +37,17 @@
 
         <v-spacer />
 
-        <v-btn @click="clearSelected"> Clear Selected </v-btn>
+        <v-btn :disabled="!plottedDatastreams.length" @click="clearSelected">
+          Clear Selected
+        </v-btn>
 
-        <v-btn
-          variant="outlined"
-          rounded
-          @click="showOnlySelected = !showOnlySelected"
-        >
+        <v-btn @click="showOnlySelected = !showOnlySelected">
           {{ showOnlySelected ? 'Show All' : 'Show Selected' }}
         </v-btn>
 
         <v-btn
           :loading="downloading"
+          :disabled="!plottedDatastreams.length"
           prepend-icon="mdi-download"
           @click="downloadPlotted(plottedDatastreams)"
           >Download Selected</v-btn
@@ -72,7 +71,7 @@
         <template #item.status="{ item }">
           <template v-if="!!observationsRaw[item.id]">
             <v-icon
-              color="green"
+              color="primary"
               :title="`${observationsRaw[item.id].length} observation(s)`"
               >mdi-database-check</v-icon
             >
@@ -121,7 +120,7 @@ import DatastreamInformationCard from './DatastreamInformationCard.vue'
 import { downloadPlottedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
 import { usePlotlyStore } from '@/store/plotly'
 import { useObservationStore } from '@/store/observations'
-const { observations, observationsRaw } = storeToRefs(useObservationStore())
+const { observationsRaw } = storeToRefs(useObservationStore())
 
 const { updateOptions } = usePlotlyStore()
 const {
@@ -235,7 +234,7 @@ const headers = reactive([
 
 const selectableHeaders = computed(() => {
   return headers.filter(
-    (header) => header.key !== 'plot' && header.key !== 'select'
+    (header) => !['plot', 'select', 'status'].includes(header.key)
   )
 })
 
@@ -319,5 +318,9 @@ function updateSelectedDatastream(datastream: Datastream) {
 <style scoped lang="scss">
 :deep(.v-table .v-data-table__tr:nth-child(even) td) {
   background: #f7f7f7;
+}
+
+.table-title :deep(.v-field__input[data-no-activator]) {
+  display: none;
 }
 </style>

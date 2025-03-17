@@ -1,5 +1,5 @@
 <template>
-  <v-row align="center" justify="center" class="no-wrap">
+  <v-row align="center" class="no-wrap">
     <v-col cols="auto">
       <v-btn-toggle
         v-model="selectedDateBtnId"

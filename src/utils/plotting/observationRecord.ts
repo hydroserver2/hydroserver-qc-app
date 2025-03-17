@@ -157,11 +157,15 @@ export class ObservationRecord {
       if (Array.isArray(action)) {
         for (let i = 0; i < action.length; i++) {
           const method = action[i][0]
-          const args = action[i].slice(1, action[i].length)
-          const res = await actions[method].apply(this, args)
+          const actionArgs = action[i].slice(1, action[i].length)
+          const res = await actions[method].apply(this, actionArgs)
 
           response.push(res)
-          this.history.push({ method, args, icon: editIcons[method] })
+          this.history.push({
+            method,
+            args: actionArgs,
+            icon: editIcons[method],
+          })
         }
         editHistory.value = [...this.history]
       } else {
