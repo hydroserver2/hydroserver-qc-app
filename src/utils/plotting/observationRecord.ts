@@ -33,6 +33,9 @@ export enum EnumFilterOperations {
 
 const components = ['date', 'value', 'qualifier']
 
+// TODO: try these operations with https://danfo.jsdata.org/api-reference/dataframe/danfo.dataframe.query
+// Assess if they are faster
+
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   /** The generated dataset to be used for plotting */
@@ -434,21 +437,21 @@ export class ObservationRecord {
     /** Iterate through the points to add and find their insert index. Minimize the number of splice operations because they are costly. */
     for (let i = 0; i < dataPoints.length; i++) {
       const d = dataPoints[i]
-      if (lowerBound > d[0]) {
+      if (this.dataset.source.x[lowerBound] > d[0]) {
         // lowerBound crossed, insert the collected items
-        this.dataset.source.x.splice(lowerBound, 0, ...toInsertX)
-        this.dataset.source.y.splice(lowerBound, 0, ...toInsertY)
+        this.dataset.source.x.splice(lowerBound + 1, 0, ...toInsertX)
+        this.dataset.source.y.splice(lowerBound + 1, 0, ...toInsertY)
         toInsertX.length = 0
         toInsertY.length = 0
-        lowerBound = this._findLowerBound(dataPoints[i][0])
+        lowerBound = this._findLowerBound(d[0])
       }
 
       toInsertX.splice(0, 0, d[0])
       toInsertY.splice(0, 0, d[1])
     }
     // Leftovers in last iteration
-    this.dataset.source.x.splice(lowerBound, 0, ...toInsertX)
-    this.dataset.source.y.splice(lowerBound, 0, ...toInsertY)
+    this.dataset.source.x.splice(lowerBound + 1, 0, ...toInsertX)
+    this.dataset.source.y.splice(lowerBound + 1, 0, ...toInsertY)
   }
 
   private _findLowerBound(target: number) {

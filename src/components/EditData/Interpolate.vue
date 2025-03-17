@@ -30,9 +30,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded variant="outlined" @click="onInterpolate"
-        >Interpolate</v-btn
-      >
+      <v-btn @click="onInterpolate">Interpolate</v-btn>
     </v-card-actions>
   </v-card>
 </template>

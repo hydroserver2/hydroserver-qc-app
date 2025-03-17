@@ -62,7 +62,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn rounded variant="outlined" @click="onChangeValues"
+      <v-btn :disabled="isUpdating" @click="onChangeValues"
         >Change Values</v-btn
       >
     </v-card-actions>

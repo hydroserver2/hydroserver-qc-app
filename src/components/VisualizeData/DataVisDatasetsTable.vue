@@ -69,7 +69,13 @@
         hover
       >
         <template #item.status="{ item }">
-          <template v-if="!!observationsRaw[item.id]">
+          <v-progress-circular
+            v-if="loadingStates.get(item.id)"
+            color="primary"
+            size="small"
+            indeterminate
+          ></v-progress-circular>
+          <template v-else-if="!!observationsRaw[item.id]">
             <v-icon
               color="primary"
               :title="`${observationsRaw[item.id].length} observation(s)`"
@@ -90,10 +96,12 @@
           />
         </template>
         <template v-slot:item.select="{ item }">
-          <!-- TODO: disable when the dataset is loading -->
           <v-checkbox
             :model-value="isSelected(item)"
-            :disabled="plottedDatastreams.length >= 5 && !isChecked(item)"
+            :disabled="
+              (plottedDatastreams.length >= 5 && !isChecked(item)) ||
+              loadingStates.get(item.id)
+            "
             class="d-flex align-self-center"
             density="compact"
             @change="() => updateSelectedDatastream(item)"
@@ -121,6 +129,7 @@ import { downloadPlottedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
 import { usePlotlyStore } from '@/store/plotly'
 import { useObservationStore } from '@/store/observations'
 const { observationsRaw } = storeToRefs(useObservationStore())
+const { loadingStates } = storeToRefs(useDataVisStore())
 
 const { updateOptions } = usePlotlyStore()
 const {

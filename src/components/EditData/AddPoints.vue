@@ -59,11 +59,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-        <v-btn
-          rounded
-          variant="outlined"
-          @click="onAddDataPoints"
-          :disabled="!form?.isValid"
+        <v-btn @click="onAddDataPoints" :disabled="!form?.isValid"
           >Add Data Points</v-btn
         >
       </v-card-actions>

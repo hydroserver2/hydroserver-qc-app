@@ -69,11 +69,7 @@
     <v-card-actions>
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-      <v-btn
-        :disabled="selectedGroups.length == 0"
-        rounded
-        variant="outlined"
-        @click="onDriftCorrection"
+      <v-btn :disabled="selectedGroups.length == 0" @click="onDriftCorrection"
         >Apply Drift Correction</v-btn
       >
     </v-card-actions>

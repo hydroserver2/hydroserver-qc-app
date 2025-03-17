@@ -77,10 +77,16 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
 
     yaxis[`yaxis${index > 0 ? index + 1 : ''}`] = {
       title: { text: s.yAxisLabel },
-      fixedrange: true,
+      // fixedrange: true,
       // autorange: true,
     }
   })
+
+  const iconRescaleY = {
+    width: 500,
+    height: 600,
+    path: 'M182.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L128 109.3l0 293.5L86.6 361.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l96 96c12.5 12.5 32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 402.7l0-293.5 41.4 41.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-96-96z',
+  }
 
   const newPlotlyOptions = {
     traces,
@@ -101,6 +107,14 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       scrollZoom: true,
       responsive: true,
       doubleClick: false,
+      modeBarButtonsToAdd: [
+        {
+          name: 'Autoscale Y axis',
+          icon: iconRescaleY,
+          direction: 'up',
+          click: handleYaxisScale,
+        },
+      ],
       // plotGlPixelRatio: 1,
     },
   }
@@ -176,4 +190,101 @@ export const handleDoubleClick = async () => {
 
   const { selectedData } = storeToRefs(useDataVisStore())
   selectedData.value = []
+}
+
+// Binary search
+const findLowerBound = (target: number) => {
+  const { plotlyRef } = storeToRefs(usePlotlyStore())
+  const xData = plotlyRef.value?.data[0].x
+  let low = 0
+  let high = xData.length
+  while (low < high) {
+    const mid = (low + high) >>> 1
+    if (xData[mid] < target) {
+      low = mid + 1
+    } else high = mid
+  }
+  return low
+}
+
+const handleYaxisScale = async (eventData: any) => {
+  const { plotlyOptions, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
+
+  // Plotly fires the relayout event for basically everything.
+  // We only need to handle it when panning or zooming
+  // if (
+  //   isUpdating.value ||
+  //   eventData?.dragmode || // Changing selected tool
+  //   eventData?.selections || // Selecting points
+  //   eventData?.['selections[0].x0'] || // Moving a selected area
+  //   isEqual(eventData, {}) // Double click using pan tool
+  // ) {
+  //   return
+  // }
+
+  isUpdating.value = true
+
+  setTimeout(async () => {
+    console.log('handleYaxisScale')
+    try {
+      let yMin = 0
+      let yMax = 0
+      let xMin = 0
+      let xMax = 0
+
+      const layoutUpdates: any = {}
+
+      const currentRange = plotlyRef.value?.layout.xaxis.range.map(
+        (d: string) => {
+          if (typeof d == 'string') {
+            return Date.parse(d)
+          }
+          return d
+        }
+      )
+
+      xMin = currentRange[0]
+      xMax = currentRange[1]
+
+      // Find visible points count using binary search
+      // Plotly does not return the indexes. We must find them using binary seach
+      const startIdx = findLowerBound(xMin)
+      const endIdx = findLowerBound(xMax)
+
+      // auto scale y axis using data from the first trace
+      const traceData = plotlyRef.value?.data[0]
+      const yData = traceData.y as number[]
+
+      // Find all y-values within the current x-axis range
+      yMin = yData[startIdx]
+      yMax = yData[endIdx - 1]
+
+      // Could use Math.max and Math.min and spread operator, but this is more memory efficient
+      for (let i = startIdx; i < endIdx; i++) {
+        if (yMin > yData[i]) {
+          yMin = yData[i]
+        }
+
+        if (yMax < yData[i]) {
+          yMax = yData[i]
+        }
+      }
+
+      // Calculate new y-axis range with padding
+      if (endIdx - startIdx != 0 && yMax !== yMin) {
+        const padding = (yMax - yMin) * 0.1 // 10% padding
+
+        layoutUpdates.yaxis = {
+          ...plotlyOptions.value.layout.yaxis,
+          range: [yMin - padding, yMax + padding],
+          autorange: false,
+        }
+      }
+
+      // Update axis range
+      await Plotly.update(plotlyRef.value, {}, layoutUpdates)
+    } finally {
+      isUpdating.value = false
+    }
+  })
 }

@@ -99,7 +99,7 @@ onMounted(async () => {
     selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
 
     // Plotly fires the relayout event for basically everything.
-    // We only need to handle it when panning or zooming
+    // We only need to handle it when panning or zooming.
     if (
       isUpdating.value ||
       eventData?.dragmode || // Changing selected tool
@@ -115,8 +115,6 @@ onMounted(async () => {
     setTimeout(async () => {
       console.log('handleRelayout')
       try {
-        let yMin = 0
-        let yMax = 0
         let xMin = 0
         let xMax = 0
 
@@ -153,40 +151,7 @@ onMounted(async () => {
         const startIdx = findLowerBound(xMin)
         const endIdx = findLowerBound(xMax)
 
-        // auto scale y axis using data from the first trace
-        const traceData = plotlyRef.value?.data[0]
-        const yData = traceData.y as number[]
-
-        // Find all y-values within the current x-axis range
-        yMin = yData[startIdx]
-        yMax = yData[endIdx - 1]
-
-        // Could use Math.max and Math.min and spread operator, but this is more memory efficient
-        for (let i = startIdx; i < endIdx; i++) {
-          if (yMin > yData[i]) {
-            yMin = yData[i]
-          }
-
-          if (yMax < yData[i]) {
-            yMax = yData[i]
-          }
-        }
-
         visiblePoints.value = endIdx - startIdx
-
-        // Calculate new y-axis range with padding
-        if (visiblePoints.value && yMax !== yMin) {
-          const padding = (yMax - yMin) * 0.1 // 10% padding
-
-          layoutUpdates.yaxis = {
-            ...plotlyOptions.value.layout.yaxis,
-            range: [yMin - padding, yMax + padding],
-            autorange: false,
-          }
-        }
-
-        // Update axis range
-        await Plotly.update(plotlyRef.value, {}, layoutUpdates)
 
         // Threshold check
         const newHoverState =
