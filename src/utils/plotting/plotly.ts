@@ -226,6 +226,7 @@ const handleYaxisScale = async (eventData: any) => {
 
   setTimeout(async () => {
     console.log('handleYaxisScale')
+    // TODO: should only consider points inside the visible area determined by both axes
     try {
       let yMin = 0
       let yMax = 0
@@ -234,17 +235,17 @@ const handleYaxisScale = async (eventData: any) => {
 
       const layoutUpdates: any = {}
 
-      const currentRange = plotlyRef.value?.layout.xaxis.range.map(
-        (d: string) => {
-          if (typeof d == 'string') {
-            return Date.parse(d)
-          }
-          return d
+      const xRange = plotlyRef.value?.layout.xaxis.range.map((d: string) => {
+        if (typeof d == 'string') {
+          return Date.parse(d)
         }
-      )
+        return d
+      })
 
-      xMin = currentRange[0]
-      xMax = currentRange[1]
+      const yRange = plotlyRef.value?.layout.yaxis.range
+
+      xMin = xRange[0]
+      xMax = xRange[1]
 
       // Find visible points count using binary search
       // Plotly does not return the indexes. We must find them using binary seach
@@ -256,17 +257,18 @@ const handleYaxisScale = async (eventData: any) => {
       const yData = traceData.y as number[]
 
       // Find all y-values within the current x-axis range
-      yMin = yData[startIdx]
-      yMax = yData[endIdx - 1]
+      yMin = Infinity
+      yMax = -Infinity
 
       // Could use Math.max and Math.min and spread operator, but this is more memory efficient
       for (let i = startIdx; i < endIdx; i++) {
-        if (yMin > yData[i]) {
-          yMin = yData[i]
+        const val = yData[i]
+        if (yMin > val && val > yRange[0]) {
+          yMin = val
         }
 
-        if (yMax < yData[i]) {
-          yMax = yData[i]
+        if (yMax < val && val < yRange[1]) {
+          yMax = val
         }
       }
 
