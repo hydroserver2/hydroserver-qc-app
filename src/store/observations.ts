@@ -4,65 +4,55 @@ import { Datastream } from '@/types'
 import { fetchObservationsSync } from '@/utils/observationsUtils'
 import { ObservationRecord } from '@/utils/plotting/observationRecord'
 
-export const useObservationStore = defineStore('observations', () => {
-  const observations = ref<Record<string, ObservationRecord>>({}) // TODO: make persistent
+export const useObservationStore = defineStore(
+  'observations',
+  () => {
+    const observations = ref<Record<string, ObservationRecord>>({}) // TODO: make persistent
+    const observationsRaw = ref<Record<string, [string, number, any][]>>({})
 
-  /**
-   * Fetches requested observations that aren't currently in the pinia store,
-   * updates the store, then returns the requested observations.
-   * TODO: this method performs too many iterations over the dataset.
-   * TODO: only fetch observations when plotting the series
-   */
-  const fetchObservationsInRange = async (
-    datastream: Datastream,
-    beginTime: Date,
-    endTime: Date
-  ): Promise<ObservationRecord> => {
-    console.log('fetchObservationsInRange')
-    const id = datastream.id
+    /**
+     * Fetches requested observations that aren't currently in the pinia store,
+     * updates the store, then returns the requested observations.
+     * TODO: this method performs too many iterations over the dataset.
+     * TODO: only fetch observations when plotting the series
+     */
+    const fetchObservationsInRange = async (
+      datastream: Datastream,
+      beginTime: Date,
+      endTime: Date
+    ): Promise<ObservationRecord> => {
+      console.log('fetchObservationsInRange')
+      const id = datastream.id
 
-    // If nothing is stored yet, create a new record and fetch the data in range
-    if (!observations.value[id]?.dataset) {
-      // TODO: handle error
-      const fetchedData = await fetchObservationsSync(
-        datastream,
-        beginTime,
-        endTime
-      )
+      // If nothing is stored yet, create a new record
+      if (!observations.value[id]) {
+        observations.value[id] = new ObservationRecord(datastream)
+      }
 
-      // Loading the data is an asynchronous operation that cannot be awaited in the constructor
-      observations.value[id] = new ObservationRecord(datastream)
-      // We implicitly call `loadData` here to await it
-      await observations.value[id].loadData(fetchedData)
-      // observations.value[id].generateDataset()
-
-      // Return the ObservationRecord
-      return observations.value[id]
-    } else {
       const existingRecord = observations.value[id]
       let beginDataPromise: Promise<any[]> = Promise.resolve([])
       let endDataPromise: Promise<any[]> = Promise.resolve([])
 
-      // Check if new data before the stored data is needed
-      if (beginTime < existingRecord.beginTime) {
-        beginDataPromise = fetchObservationsSync(
-          datastream,
-          beginTime,
-          existingRecord.beginTime
-        )
-      }
+      if (existingRecord.beginTime && existingRecord.endTime) {
+        // Check if new data before the stored data is needed
+        if (beginTime < existingRecord.beginTime) {
+          beginDataPromise = fetchObservationsSync(
+            datastream,
+            beginTime,
+            existingRecord.beginTime
+          )
+        }
 
-      // Check if new data after the stored data is needed
-      if (endTime > existingRecord.endTime) {
-        const temp = existingRecord.endTime
-        temp.setSeconds(temp.getSeconds() + 1)
+        // Check if new data after the stored data is needed
+        if (endTime > existingRecord.endTime) {
+          const temp = existingRecord.endTime
+          temp.setSeconds(temp.getSeconds() + 1)
 
-        endDataPromise = fetchObservationsSync(
-          datastream,
-          // TODO: is inclusive. We need to increase by one second
-          temp,
-          endTime
-        )
+          endDataPromise = fetchObservationsSync(datastream, temp, endTime)
+        }
+      } else {
+        // Record has no data at all. Fetch the full range.
+        beginDataPromise = fetchObservationsSync(datastream, beginTime, endTime)
       }
 
       // Fetch and update in parallel if needed
@@ -71,40 +61,35 @@ export const useObservationStore = defineStore('observations', () => {
         endDataPromise,
       ])
 
+      if (!observationsRaw.value[id]) {
+        observationsRaw.value[id] = []
+      }
+
       if (beginData.length > 0) {
-        observations.value[id].dataArray = [
-          ...beginData,
-          ...observations.value[id].dataArray,
-        ]
+        observationsRaw.value[id] = [...beginData, ...observationsRaw.value[id]]
       }
 
       if (endData.length > 0) {
-        observations.value[id].dataArray = [
-          ...observations.value[id].dataArray,
-          ...endData,
-        ]
+        observationsRaw.value[id] = [...observationsRaw.value[id], ...endData]
       }
 
       // If the data has changed, renegerate the dataset
-      // if (beginData.length > 0 || endData.length > 0) {
-      //   existingRecord.generateDataset()
-      // }
+      if (beginData.length > 0 || endData.length > 0) {
+        existingRecord.loadData(observationsRaw.value[id])
+      }
 
-      existingRecord.isLoading = false
-
-      // Return only the data within the requested range
-      // TODO: set a data frame date filter using beginTime and endTime
-      // TODO: add to current filter in store
-      // observations.value[id].dataFrame.set_filter({
-      //   [FilterOperation.START]: beginTime.getTime(),
-      //   [FilterOperation.END]: endTime.getTime(),
-      // })
       return observations.value[id]
     }
-  }
 
-  return {
-    observations,
-    fetchObservationsInRange,
+    return {
+      observations,
+      observationsRaw,
+      fetchObservationsInRange,
+    }
+  },
+  {
+    persist: {
+      pick: ['observationsRaw'],
+    },
   }
-})
+)

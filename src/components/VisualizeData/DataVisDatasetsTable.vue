@@ -69,6 +69,15 @@
         @click:row="onRowClick"
         hover
       >
+        <template #item.status="{ item }">
+          <template v-if="!!observationsRaw[item.id]">
+            <v-icon
+              color="green"
+              :title="`${observationsRaw[item.id].length} observation(s)`"
+              >mdi-database-check</v-icon
+            >
+          </template>
+        </template>
         <template v-slot:item.plot="{ item }">
           <v-checkbox
             :model-value="isChecked(item)"
@@ -111,6 +120,8 @@ import { computed, reactive, ref } from 'vue'
 import DatastreamInformationCard from './DatastreamInformationCard.vue'
 import { downloadPlottedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
 import { usePlotlyStore } from '@/store/plotly'
+import { useObservationStore } from '@/store/observations'
+const { observations, observationsRaw } = storeToRefs(useObservationStore())
 
 const { updateOptions } = usePlotlyStore()
 const {
@@ -192,6 +203,7 @@ const isSelected = (ds: Datastream) => ds.id === qcDatastream.value?.id
 
 const search = ref()
 const headers = reactive([
+  { title: '', key: 'status', visible: true, width: 1 },
   { title: 'Plot', key: 'plot', visible: true },
   { title: 'Select', key: 'select', visible: true },
   {
@@ -303,3 +315,9 @@ function updateSelectedDatastream(datastream: Datastream) {
   updateOptions()
 }
 </script>
+
+<style scoped lang="scss">
+:deep(.v-table .v-data-table__tr:nth-child(even) td) {
+  background: #f7f7f7;
+}
+</style>

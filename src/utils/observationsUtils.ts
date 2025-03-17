@@ -7,53 +7,6 @@ export function subtractHours(timestamp: string, hours: number): string {
   return date.toISOString()
 }
 
-export const fetchObservationsParallel = async (
-  datastream: Datastream,
-  startTime?: Date,
-  endTime?: Date
-): Promise<any[]> => {
-  const { id, phenomenonBeginTime, phenomenonEndTime, valueCount } = datastream
-  if (!phenomenonBeginTime || !phenomenonEndTime) return []
-
-  const pageSize = 50_000
-  const endpoints: string[] = []
-  let skipCount = 0
-  while (skipCount < valueCount) {
-    endpoints.push(
-      getObservationsEndpoint({
-        id,
-        pageSize,
-        startTime: startTime?.toISOString() ?? phenomenonBeginTime,
-        endTime: endTime?.toISOString() ?? phenomenonEndTime,
-        skipCount,
-        addResultQualifiers: true,
-      })
-    )
-    skipCount += pageSize
-  }
-
-  try {
-    const results = await Promise.all(
-      endpoints.map((endpoint) => api.fetchObservations(endpoint))
-    )
-
-    // return results.reduce((acc, data) => {
-    //   if (data?.value?.length > 0 && data.value[0].dataArray) {
-    //     return acc.concat(data.value[0].dataArray)
-    //   }
-    //   return acc
-    // }, [])
-
-    // TODO: format qualifier
-    // qualifiers.resultQualifiers.map((q) => q.code),
-
-    return results.map((r) => r.value[0]?.dataArray || []).flat()
-  } catch (error) {
-    console.error('Error fetching data:', error)
-    return Promise.reject(error)
-  }
-}
-
 export const fetchObservationsSync = async (
   datastream: Datastream,
   startTime?: Date,

@@ -15,14 +15,14 @@
     <v-card-text>
       <v-row>
         <v-col>
+          <v-text-field label="Amount" type="number" v-model="shiftAmount" />
+        </v-col>
+        <v-col>
           <v-select
             label="Time Unit"
             :items="shiftUnits"
             v-model="selectedShiftUnit"
           />
-        </v-col>
-        <v-col>
-          <v-text-field label="Amount" type="number" v-model="shiftAmount" />
         </v-col>
       </v-row>
     </v-card-text>

@@ -35,7 +35,6 @@ const components = ['date', 'value', 'qualifier']
 
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
-  dataArray: [string, number, any][] = [] // Source of truth
   /** The generated dataset to be used for plotting */
   dataset: { dimensions: string[]; source: { [key: string]: number[] } } = {
     dimensions: components,
@@ -46,19 +45,25 @@ export class ObservationRecord {
   ds: Datastream
 
   constructor(ds: Datastream) {
+    const { observationsRaw } = storeToRefs(useObservationStore())
+
     this.history = []
     this.ds = ds
     this.isLoading = true
+
+    this.loadData(observationsRaw.value[this.ds.id])
   }
 
   loadData(dataArray: [string, number, any][]) {
-    this.dataArray = dataArray
-
+    if (!dataArray) {
+      return
+    }
     // Clear the array
     this.dataset.source.x.length = 0
     this.dataset.source.y.length = 0
+    this.history.length = 0
 
-    this.dataArray.forEach((row, _index) => {
+    dataArray.forEach((row, _index) => {
       if (!isNaN(row[1])) {
         this.dataset.source.x.push(Date.parse(row[0]))
         this.dataset.source.y.push(row[1])
@@ -75,12 +80,11 @@ export class ObservationRecord {
     console.log('reload')
     const { beginDate, endDate } = storeToRefs(useDataVisStore())
     const { fetchObservationsInRange } = useObservationStore()
+    const { observationsRaw } = storeToRefs(useObservationStore())
 
     await fetchObservationsInRange(this.ds, beginDate.value, endDate.value)
 
-    this.loadData(this.dataArray)
-
-    this.history = []
+    this.loadData(observationsRaw.value[this.ds.id])
   }
 
   /**
@@ -106,12 +110,18 @@ export class ObservationRecord {
     await this.dispatch(newHistory.map((h) => [h.method, ...(h.args || [])]))
   }
 
-  get beginTime() {
-    return new Date(Date.parse(this.dataArray[0][0]))
+  get beginTime(): Date | null {
+    if (!this.dataset.source.x.length) {
+      return null
+    }
+    return new Date(this.dataset.source.x[0])
   }
 
-  get endTime() {
-    return new Date(Date.parse(this.dataArray[this.dataArray.length - 1][0]))
+  get endTime(): Date | null {
+    if (!this.dataset.source.x.length) {
+      return null
+    }
+    return new Date(this.dataset.source.x[this.dataset.source.x.length - 1])
   }
 
   /** Dispatch an operation and log its signature in hisotry */

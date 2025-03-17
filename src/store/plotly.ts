@@ -2,15 +2,10 @@ import { Datastream, GraphSeries } from '@/types'
 import { defineStore, storeToRefs } from 'pinia'
 import { computed, ComputedRef, Ref, ref, watch } from 'vue'
 
-import { Snackbar } from '@/utils/notifications'
 import { api } from '@/services/api'
 // import { preProcessData } from '@/utils/observationsUtils'
-import { useObservationStore } from '@/store/observations'
 import { useDataVisStore } from './dataVisualization'
-import {
-  EnumEditOperations,
-  ObservationRecord,
-} from '@/utils/plotting/observationRecord'
+import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 // @ts-ignore no type definitions
 import Plotly from 'plotly.js-dist'
 
@@ -18,10 +13,9 @@ import Plotly from 'plotly.js-dist'
 // import dataSample from '@/utils/custom-down-sample'
 import { createPlotlyOption } from '@/utils/plotting/plotly'
 import { LineColors } from '@/utils/materialColors'
+import { useObservationStore } from './observations'
 
 export const usePlotlyStore = defineStore('Plotly', () => {
-  const { fetchObservationsInRange } = useObservationStore()
-
   const showLegend = ref(true)
   const showTooltip = ref(false)
   const isUpdating = ref(false)
@@ -102,37 +96,14 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     // )
   }
 
-  const fetchGraphSeriesData = async (
-    datastream: Datastream,
-    start: Date,
-    end: Date
-  ): Promise<ObservationRecord | null> => {
-    console.log('fetchGraphSeriesData')
-    const obsRecord = await fetchObservationsInRange(
-      datastream,
-      start,
-      end
-    ).catch((error) => {
-      Snackbar.error('Failed to fetch observations')
-      console.error('Failed to fetch observations:', error)
-      return null
-    })
-
-    // qualifiers.resultQualifiers.map((q) => q.code).join(', ')
-
-    return obsRecord
-
-    // TODO: try to avoid this pre processing
-    // return preProcessData(observations, datastream)
-  }
-
   const fetchGraphSeries = async (
     datastream: Datastream,
     start: Date,
     end: Date
   ) => {
     console.log('fetchGraphSeries')
-    const observationsPromise = fetchGraphSeriesData(datastream, start, end)
+    const { fetchObservationsInRange } = useObservationStore()
+    const observationsPromise = fetchObservationsInRange(datastream, start, end)
     const fetchUnitPromise = api.getUnit(datastream.unitId).catch((error) => {
       console.error('Failed to fetch Unit:', error)
       return null
@@ -186,7 +157,6 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     redraw,
     clearChartState,
     fetchGraphSeries,
-    fetchGraphSeriesData,
     plotlyOptions,
     plotlyRef,
     isUpdating,

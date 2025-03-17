@@ -2,6 +2,8 @@ import { Datastream, ObservedProperty, ProcessingLevel, Thing } from '@/types'
 import { defineStore, storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { usePlotlyStore } from './plotly'
+import { useObservationStore } from './observations'
+import { Snackbar } from '@/utils/notifications'
 
 export const useDataVisStore = defineStore('dataVisualization', () => {
   const {
@@ -9,8 +11,8 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     updateOptions,
     clearChartState,
     fetchGraphSeries,
-    fetchGraphSeriesData,
   } = usePlotlyStore()
+  const { fetchObservationsInRange } = useObservationStore()
 
   const { graphSeriesArray } = storeToRefs(usePlotlyStore())
 
@@ -196,7 +198,15 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
       if (seriesIndex >= 0) {
         // Update the existing graph series with new data
-        const obsRecord = await fetchGraphSeriesData(datastream, start, end)
+        const obsRecord = await fetchObservationsInRange(
+          datastream,
+          start,
+          end
+        ).catch((error) => {
+          Snackbar.error('Failed to fetch observations')
+          console.error('Failed to fetch observations:', error)
+          return null
+        })
         if (obsRecord) {
           graphSeriesArray.value[seriesIndex].data = obsRecord
         }
