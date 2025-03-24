@@ -369,12 +369,66 @@ export class ObservationRecord {
   private _deleteDataPoints(index: number[]) {
     const groups = this._getConsecutiveGroups(index)
 
+    /**
+     * Splice operations are very expensive for large arrays.
+     * We try to get around this by:
+     *  1. Extracting the subarray where the operation will take place.
+     *  2. Performing the operation in the subarray.
+     *  3. Reinserting the subarray back into the original array.
+     */
+    const left = index[0]
+    const right = index[index.length - 1]
+    const length = right - left + 1 // Length of subArray to extract
+    const isSubArray = length < this.dataset.source.x.length
+
+    const subArrayX = isSubArray
+      ? this.dataset.source.x.splice(left, length)
+      : this.dataset.source.x
+
+    const subArrayY = isSubArray
+      ? this.dataset.source.y.splice(left, length)
+      : this.dataset.source.y
+
+    if (groups.length <= 1) {
+      // There was only one group and it we spliced it above
+      return
+    }
+
+    // Splice each group in the subarray.This is where the actual deletion happens.
     for (let i = groups.length - 1; i >= 0; i--) {
       const group = groups[i]
-      const start = group[0]
+      const start = isSubArray ? group[0] - left : group[0]
 
-      this.dataset.source.x.splice(start, group.length)
-      this.dataset.source.y.splice(start, group.length)
+      subArrayX.splice(start, group.length)
+      subArrayY.splice(start, group.length)
+    }
+
+    // Insert the remaining back
+    if (isSubArray) {
+      // TODO: JavaScript engine has an argument limit of 65536 (actually 60k in practice)
+      // Which means our splice method can only insert back elements by 60k at a time
+      // https://bugs.webkit.org/show_bug.cgi?id=80797
+      // https://stackoverflow.com/a/22747272
+      // TODO: this is still too slow
+      const ARG_LIMIT = 60000
+
+      let offset = left
+      while (subArrayX.length > ARG_LIMIT) {
+        const chunk = subArrayX.splice(0, ARG_LIMIT)
+        this.dataset.source.x.splice(offset, 0, ...chunk)
+        offset += chunk.length
+      }
+      // Append remainder
+      this.dataset.source.x.splice(offset, 0, ...subArrayX)
+
+      offset = left
+      while (subArrayY.length > ARG_LIMIT) {
+        const chunk = subArrayY.splice(0, ARG_LIMIT)
+        this.dataset.source.y.splice(offset, 0, ...chunk)
+        offset += chunk.length
+      }
+      // Append remainder
+      this.dataset.source.y.splice(offset, 0, ...subArrayY)
     }
   }
 
