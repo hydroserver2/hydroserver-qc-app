@@ -60,7 +60,7 @@ const onDeleteDataPoints = async () => {
 
     await clearSelected()
     isUpdating.value = false
-    await redraw()
+    await redraw(true)
 
     emit('close')
   })

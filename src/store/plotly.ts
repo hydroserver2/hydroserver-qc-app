@@ -11,7 +11,7 @@ import Plotly from 'plotly.js-dist'
 
 // Register custom data sampler
 // import dataSample from '@/utils/custom-down-sample'
-import { createPlotlyOption } from '@/utils/plotting/plotly'
+import { createPlotlyOption, cropXaxisRange } from '@/utils/plotting/plotly'
 import { LineColors } from '@/utils/materialColors'
 import { useObservationStore } from './observations'
 
@@ -80,13 +80,17 @@ export const usePlotlyStore = defineStore('Plotly', () => {
 
   /**
    * Use this function to update the chart after the data has mutated.
+   * @param recomputeXaxisRange Useful for when an operation can add or delete elements in the array and the axis range needs to be updated.
    */
-  async function redraw() {
+  async function redraw(recomputeXaxisRange?: boolean) {
     console.log('redraw')
 
     updateOptions()
 
     await Plotly.redraw(plotlyRef.value, [0])
+    if (recomputeXaxisRange) {
+      await cropXaxisRange()
+    }
 
     // TODO: this updates range, but breaks selection controls
     // await Plotly.react(

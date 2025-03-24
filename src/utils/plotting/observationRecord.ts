@@ -405,31 +405,33 @@ export class ObservationRecord {
 
     // Insert the remaining back
     if (isSubArray) {
-      // TODO: JavaScript engine has an argument limit of 65536 (actually 60k in practice)
-      // Which means our splice method can only insert back elements by 60k at a time
-      // https://bugs.webkit.org/show_bug.cgi?id=80797
-      // https://stackoverflow.com/a/22747272
-      // TODO: this is still too slow
-      const ARG_LIMIT = 60000
-
-      let offset = left
-      while (subArrayX.length > ARG_LIMIT) {
-        const chunk = subArrayX.splice(0, ARG_LIMIT)
-        this.dataset.source.x.splice(offset, 0, ...chunk)
-        offset += chunk.length
-      }
-      // Append remainder
-      this.dataset.source.x.splice(offset, 0, ...subArrayX)
-
-      offset = left
-      while (subArrayY.length > ARG_LIMIT) {
-        const chunk = subArrayY.splice(0, ARG_LIMIT)
-        this.dataset.source.y.splice(offset, 0, ...chunk)
-        offset += chunk.length
-      }
-      // Append remainder
-      this.dataset.source.y.splice(offset, 0, ...subArrayY)
+      this._pagedInsert(this.dataset.source.x, subArrayX, left)
+      this._pagedInsert(this.dataset.source.y, subArrayY, left)
     }
+  }
+
+  /**
+   * TODO: JavaScript engine has an argument limit of 65536 (actually 60k in practice)
+    Which means our splice method can only insert back elements by 60k at a time
+    https://bugs.webkit.org/show_bug.cgi?id=80797
+    https://stackoverflow.com/a/22747272
+    TODO: this is still too slow
+    https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.splice
+
+   * @param target 
+   * @param elements 
+   * @param start 
+   */
+  private _pagedInsert(target: any[], elements: any[], start: number) {
+    const ARG_LIMIT = 60000
+
+    while (elements.length > ARG_LIMIT) {
+      const chunk = elements.splice(0, ARG_LIMIT)
+      target.splice(start, 0, ...chunk)
+      start += chunk.length
+    }
+    // Append remainder
+    target.splice(start, 0, ...elements)
   }
 
   /**

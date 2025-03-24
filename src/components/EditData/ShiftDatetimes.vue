@@ -69,7 +69,7 @@ const onShiftDatetimes = async () => {
     )
 
     isUpdating.value = false
-    await redraw()
+    await redraw(true)
     emit('close')
   })
 }
