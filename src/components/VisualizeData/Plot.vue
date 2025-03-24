@@ -115,9 +115,6 @@ onMounted(async () => {
     setTimeout(async () => {
       console.log('handleRelayout')
       try {
-        let xMin = 0
-        let xMax = 0
-
         const layoutUpdates = { ...plotlyOptions.value.layout }
         // Plotly will rewrite timestamps as datestrings. We need to convert them back to timestamps.
         if (typeof layoutUpdates.xaxis.range[0] == 'string') {
@@ -129,13 +126,8 @@ onMounted(async () => {
           )
         }
 
-        const currentRange = plotlyRef.value?.layout.xaxis.range.map(
-          (d: string) => {
-            if (typeof d == 'string') {
-              return Date.parse(d)
-            }
-            return d
-          }
+        const currentRange = plotlyRef.value?.layout.xaxis.range.map((d) =>
+          typeof d == 'string' ? Date.parse(d) : d
         )
 
         layoutUpdates.xaxis.range = [
@@ -143,13 +135,10 @@ onMounted(async () => {
           Math.min(currentRange[1], layoutUpdates.xaxis.range[1]),
         ]
 
-        xMin = layoutUpdates.xaxis.range[0]
-        xMax = layoutUpdates.xaxis.range[1]
-
-        // Find visible points count using binary search
+        // Find visible points count
         // Plotly does not return the indexes. We must find them using binary seach
-        const startIdx = findLowerBound(xMin)
-        const endIdx = findLowerBound(xMax)
+        const startIdx = findLowerBound(layoutUpdates.xaxis.range[0])
+        const endIdx = findLowerBound(layoutUpdates.xaxis.range[1])
 
         visiblePoints.value = endIdx - startIdx
 
@@ -170,6 +159,8 @@ onMounted(async () => {
             0
           )
         }
+
+        await Plotly.update(plotlyRef.value, {}, layoutUpdates)
       } finally {
         isUpdating.value = false
       }
