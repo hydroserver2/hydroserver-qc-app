@@ -80,7 +80,6 @@ export class ObservationRecord {
    * Reloads the dataset
    */
   async reload() {
-    console.log('reload')
     const { beginDate, endDate } = storeToRefs(useDataVisStore())
     const { fetchObservationsInRange } = useObservationStore()
     const { observationsRaw } = storeToRefs(useObservationStore())
@@ -251,7 +250,6 @@ export class ObservationRecord {
   }
 
   private _interpolate(index: number[]) {
-    console.log('_interpolate')
     const groups = this._getConsecutiveGroups(index)
 
     groups.forEach((g) => {
@@ -299,7 +297,6 @@ export class ObservationRecord {
    * @returns
    */
   private _shift(index: number[], amount: number, unit: TimeUnit) {
-    console.log('_shift')
     const xData = this.dataset.source.x
     const yData = this.dataset.source.y
 
@@ -413,10 +410,10 @@ export class ObservationRecord {
   /**
    * TODO: JavaScript engine has an argument limit of 65536 (actually 60k in practice)
     Which means our splice method can only insert back elements by 60k at a time
-    https://bugs.webkit.org/show_bug.cgi?id=80797
-    https://stackoverflow.com/a/22747272
+    @see https://bugs.webkit.org/show_bug.cgi?id=80797
+    @see https://stackoverflow.com/a/22747272
+    @see https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.splice
     TODO: this is still too slow
-    https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.splice
 
    * @param target 
    * @param elements 
@@ -554,8 +551,9 @@ export class ObservationRecord {
   }
 
   /**
-   * Filter by applying a set of logical operations
-   * @param appliedFilters
+   *
+   * @param comparator
+   * @param value
    * @returns
    */
   private _rateOfChange(comparator: string, value: number) {
