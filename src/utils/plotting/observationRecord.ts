@@ -39,9 +39,12 @@ const components = ['date', 'value', 'qualifier']
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   /** The generated dataset to be used for plotting */
-  dataset: { dimensions: string[]; source: { [key: string]: number[] } } = {
+  dataset: {
+    dimensions: string[]
+    source: { x: BigInt64Array<ArrayBuffer>; y: Float32Array<ArrayBuffer> }
+  } = {
     dimensions: components,
-    source: { x: [], y: [] },
+    source: { x: new BigInt64Array(), y: new Float32Array() },
   }
   history: { method: EnumEditOperations; args?: any[]; icon: string }[]
   isLoading: boolean
@@ -61,15 +64,17 @@ export class ObservationRecord {
     if (!dataArray) {
       return
     }
-    // Clear the array
-    this.dataset.source.x.length = 0
-    this.dataset.source.y.length = 0
+    // TODO: Clear the array
+    this.dataset.source.x = new BigInt64Array(dataArray.length)
+    this.dataset.source.y = new Float32Array(dataArray.length)
     this.history.length = 0
 
-    dataArray.forEach((row, _index) => {
+    dataArray.forEach((row, index) => {
+      this.dataset.source.x[index] = BigInt(Date.parse(row[0])) // TODO: Plotly can't parse BigInt values right
       if (!isNaN(row[1])) {
-        this.dataset.source.x.push(Date.parse(row[0]))
-        this.dataset.source.y.push(row[1])
+        this.dataset.source.y[index] = row[1]
+      } else {
+        this.dataset.source.y[index] = -9999
       }
     })
 
@@ -413,14 +418,15 @@ export class ObservationRecord {
   /**
    * TODO: JavaScript engine has an argument limit of 65536 (actually 60k in practice)
     Which means our splice method can only insert back elements by 60k at a time
-    https://bugs.webkit.org/show_bug.cgi?id=80797
-    https://stackoverflow.com/a/22747272
-    TODO: this is still too slow
-    https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.splice
+    @see https://bugs.webkit.org/show_bug.cgi?id=80797
+    @see https://stackoverflow.com/a/22747272
+    @see https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.splice
 
-   * @param target 
-   * @param elements 
-   * @param start 
+    TODO: this is still too slow
+
+   * @param target The array to operate on
+   * @param elements The elements to insert
+   * @param start The index to insert at
    */
   private _pagedInsert(target: any[], elements: any[], start: number) {
     const ARG_LIMIT = 60000
