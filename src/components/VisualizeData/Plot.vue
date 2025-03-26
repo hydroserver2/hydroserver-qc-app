@@ -58,6 +58,7 @@ import { usePlotlyStore } from '@/store/plotly'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import {
+  findLowerBound,
   handleClick,
   handleDeselect,
   handleDoubleClick,
@@ -81,24 +82,10 @@ onMounted(async () => {
     plotlyOptions.value.config
   )
 
-  // Binary search
-  const findLowerBound = (target: number) => {
-    const xData = plotlyRef.value?.data[0].x
-    let low = 0
-    let high = xData.length
-    while (low < high) {
-      const mid = (low + high) >>> 1
-      if (xData[mid] < target) {
-        low = mid + 1
-      } else high = mid
-    }
-    return low
-  }
-
   const handleRelayout = async (eventData: any) => {
     selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
 
-    // Plotly fires the relayout event for basically everything.
+    // Plotly fires the relayout event for practically everything.
     // We only need to handle it when panning or zooming.
     if (
       isUpdating.value ||

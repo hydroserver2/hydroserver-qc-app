@@ -36,7 +36,7 @@
 import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
 import { RateOfChangeOperation } from '@/store/userInterface'
-import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
+import { EnumFilterOperations } from '@/utils/plotting/observationRecordV2'
 import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())

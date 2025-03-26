@@ -38,29 +38,31 @@ const selectorOptions = {
 }
 
 export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
-  const traces: any[] = seriesArray.map((s, index) => ({
-    x: s.data?.dataset.source.x,
-    y: s.data?.dataset.source.y,
-    xaxis: `x${index + 1}`,
-    yaxis: `y${index + 1}`,
-    type: 'scattergl',
-    mode: 'lines+markers',
-    // https://github.com/plotly/plotly.js/issues/5927
-    hoverinfo: 'skip', // Fixes performance issues, but disables tooltips
-    // hoverinfo: 'x+y',
-    name: s.name,
-    selected: {
-      marker: {
-        color: 'red',
+  const traces: any[] = seriesArray.map((s, index) => {
+    return {
+      x: s.data?.dataset['datetimes']['values'],
+      y: s.data?.dataset['values']['values'],
+      xaxis: `x${index + 1}`,
+      yaxis: `y${index + 1}`,
+      type: 'scattergl',
+      mode: 'lines+markers',
+      // https://github.com/plotly/plotly.js/issues/5927
+      hoverinfo: 'skip', // Fixes performance issues, but disables tooltips
+      // hoverinfo: 'x+y',
+      name: s.name,
+      selected: {
+        marker: {
+          color: 'red',
+        },
       },
-    },
-  }))
+    }
+  })
 
   const xaxis: any = {}
   const yaxis: any = {}
 
   seriesArray.forEach((s, index) => {
-    const xData = s.data?.dataset.source.x
+    const xData = s.data?.dataX
     const maxDatetime = xData[xData.length - 1]
     const minDatetime = xData[0]
 
@@ -193,7 +195,7 @@ export const handleDoubleClick = async () => {
 }
 
 // Binary search
-const findLowerBound = (target: number) => {
+export const findLowerBound = (target: number) => {
   const { plotlyRef } = storeToRefs(usePlotlyStore())
   const xData = plotlyRef.value?.data[0].x
   let low = 0
@@ -226,8 +228,8 @@ export const cropXaxisRange = async () => {
         layoutUpdates.xaxis.range[1] = Date.parse(layoutUpdates.xaxis.range[1])
       }
 
-      const currentRange = plotlyRef.value?.layout.xaxis.range.map((d) =>
-        typeof d == 'string' ? Date.parse(d) : d
+      const currentRange = plotlyRef.value?.layout.xaxis.range.map(
+        (d: string | number) => (typeof d == 'string' ? Date.parse(d) : d)
       )
 
       layoutUpdates.xaxis.range = [

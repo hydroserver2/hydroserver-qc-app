@@ -84,7 +84,7 @@ const {
   selectedFillUnit,
   fillAmount,
 } = storeToRefs(useUIStore())
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations } from '@/utils/plotting/observationRecordV2'
 import { useDataSelection } from '@/composables/useDataSelection'
 
 import { usePlotlyStore } from '@/store/plotly'

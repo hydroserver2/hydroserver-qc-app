@@ -91,9 +91,7 @@ const isUpdating = computed(() =>
 )
 
 const isDataAvailable = computed(() => {
-  return !!graphSeriesArray.value.some(
-    (series) => series.data?.dataset?.source.x?.length > 0
-  )
+  return !!graphSeriesArray.value.some((series) => series.data?.dataset)
 })
 </script>
 
