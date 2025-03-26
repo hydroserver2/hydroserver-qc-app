@@ -41,7 +41,7 @@ export class ObservationRecord {
   /** The generated dataset to be used for plotting */
   dataset: { dimensions: string[]; source: { [key: string]: number[] } } = {
     dimensions: components,
-    source: { x: [], y: [] },
+    source: {},
   }
   history: { method: EnumEditOperations; args?: any[]; icon: string }[]
   isLoading: boolean
@@ -61,16 +61,22 @@ export class ObservationRecord {
     if (!dataArray) {
       return
     }
-    // Clear the array
-    this.dataset.source.x.length = 0
-    this.dataset.source.y.length = 0
+    if (!this.dataset.source.x) {
+      // First time loading data. Preallocating array size to improve performance.
+      this.dataset.source.x = new Array(dataArray.length)
+      this.dataset.source.y = new Array(dataArray.length)
+    } else {
+      this.dataset.source.x.length = dataArray.length
+      this.dataset.source.y.length = dataArray.length
+    }
+
     this.history.length = 0
 
-    dataArray.forEach((row, _index) => {
-      if (!isNaN(row[1])) {
-        this.dataset.source.x.push(Date.parse(row[0]))
-        this.dataset.source.y.push(row[1])
-      }
+    dataArray.forEach((row, index) => {
+      this.dataset.source.x[index] = Date.parse(row[0])
+      !isNaN(row[1])
+        ? (this.dataset.source.y[index] = row[1])
+        : (this.dataset.source.y[index] = -9999)
     })
 
     this.isLoading = false
