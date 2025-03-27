@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations } from '@/utils/plotting/observationRecordV2'
 import { useDataSelection } from '@/composables/useDataSelection'
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'

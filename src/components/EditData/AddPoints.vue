@@ -79,7 +79,7 @@ import { ref } from 'vue'
 import { dateTimeFormat, required, requiredNumber } from '@/utils/rules'
 import { VForm } from 'vuetify/lib/components/index.mjs'
 import { storeToRefs } from 'pinia'
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations } from '@/utils/plotting/observationRecordV2'
 import { usePlotlyStore } from '@/store/plotly'
 
 const form = ref<InstanceType<typeof VForm>>()

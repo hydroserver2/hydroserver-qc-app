@@ -11,9 +11,10 @@ export const fetchObservationsSync = async (
   datastream: Datastream,
   startTime?: Date,
   endTime?: Date
-): Promise<any[]> => {
+): Promise<{ datetimes: number[]; dataValues: number[] }> => {
   const { id, phenomenonBeginTime, phenomenonEndTime, valueCount } = datastream
-  if (!phenomenonBeginTime || !phenomenonEndTime) return []
+  if (!phenomenonBeginTime || !phenomenonEndTime)
+    return { datetimes: [], dataValues: [] }
 
   const pageSize = 50_000
   const endpoints: string[] = []
@@ -40,7 +41,43 @@ export const fetchObservationsSync = async (
       results.push(result)
     }
 
-    return results.map((r) => r.value[0]?.dataArray || []).flat()
+    // return (
+    //   results
+    //     // TODO: Unsertain how to map result qualifiers. Ommiting for now.
+
+    //     .map(
+    //       (r) =>
+    //         r.value[0]?.dataArray.map((row: [string, number, any]) => [
+    //           row[0],
+    //           row[1],
+    //         ]) || []
+    //     )
+    //     .flat()
+    // )
+
+    // TODO: We transform the dataArray into multiple arrays for each column.
+    // Danfo.js and Plotly.js both require data columns
+    const datetimes: number[] = []
+    const dataValues: number[] = []
+
+    results.forEach((r) => {
+      const dataArray: [string, number, any][] = r.value[0]?.dataArray
+
+      // const qualifers = new Array(dataArray.length)
+
+      if (dataArray) {
+        for (const row of dataArray) {
+          datetimes.push(Date.parse(row[0]))
+          dataValues.push(row[1])
+          // qualifers[i] = dataArray[i][2]
+        }
+      }
+    })
+
+    return {
+      datetimes,
+      dataValues,
+    }
   } catch (error) {
     console.error('Error fetching data:', error)
     return Promise.reject(error)

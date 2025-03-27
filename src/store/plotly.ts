@@ -5,7 +5,7 @@ import { computed, ComputedRef, Ref, ref, watch } from 'vue'
 import { api } from '@/services/api'
 // import { preProcessData } from '@/utils/observationsUtils'
 import { useDataVisStore } from './dataVisualization'
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations } from '@/utils/plotting/observationRecordV2'
 // @ts-ignore no type definitions
 import Plotly from 'plotly.js-dist'
 
@@ -87,17 +87,19 @@ export const usePlotlyStore = defineStore('Plotly', () => {
 
     updateOptions()
 
-    await Plotly.redraw(plotlyRef.value, [0])
+    // TODO: After a DataFrame operation the array would have changed and this redraw has no effect
+    // await Plotly.redraw(plotlyRef.value, [0])
+
+    // TODO: this updates range, but breaks selection controls
+    await Plotly.react(
+      plotlyRef.value,
+      plotlyOptions.value.traces,
+      plotlyOptions.value.layout
+    )
+
     if (recomputeXaxisRange) {
       await cropXaxisRange()
     }
-
-    // TODO: this updates range, but breaks selection controls
-    // await Plotly.react(
-    //   plotlyRef.value,
-    //   plotlyOptions.value.traces,
-    //   plotlyOptions.value.layout
-    // )
   }
 
   const fetchGraphSeries = async (
@@ -125,7 +127,7 @@ export const usePlotlyStore = defineStore('Plotly', () => {
       fetchObservedPropertyPromise,
     ])
 
-    if (!data.dataset.source.x?.length) {
+    if (!data.dataset) {
       await data.reload()
     }
 

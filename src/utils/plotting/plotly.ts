@@ -38,29 +38,31 @@ const selectorOptions = {
 }
 
 export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
-  const traces: any[] = seriesArray.map((s, index) => ({
-    x: s.data?.dataset.source.x,
-    y: s.data?.dataset.source.y,
-    xaxis: `x${index + 1}`,
-    yaxis: `y${index + 1}`,
-    type: 'scattergl',
-    mode: 'lines+markers',
-    // https://github.com/plotly/plotly.js/issues/5927
-    hoverinfo: 'skip', // Fixes performance issues, but disables tooltips
-    // hoverinfo: 'x+y',
-    name: s.name,
-    selected: {
-      marker: {
-        color: 'red',
+  const traces: any[] = seriesArray.map((s, index) => {
+    return {
+      x: s.data?.dataset['datetimes']['values'],
+      y: s.data?.dataset['dataValues']['values'],
+      xaxis: `x${index + 1}`,
+      yaxis: `y${index + 1}`,
+      type: 'scattergl',
+      mode: 'lines+markers',
+      // https://github.com/plotly/plotly.js/issues/5927
+      hoverinfo: 'skip', // Fixes performance issues, but disables tooltips
+      // hoverinfo: 'x+y',
+      name: s.name,
+      selected: {
+        marker: {
+          color: 'red',
+        },
       },
-    },
-  }))
+    }
+  })
 
   const xaxis: any = {}
   const yaxis: any = {}
 
   seriesArray.forEach((s, index) => {
-    const xData = s.data?.dataset.source.x
+    const xData = s.data?.dataX
     const maxDatetime = xData[xData.length - 1]
     const minDatetime = xData[0]
 
@@ -193,7 +195,7 @@ export const handleDoubleClick = async () => {
 }
 
 // Binary search
-const findLowerBound = (target: number) => {
+export const findLowerBound = (target: number) => {
   const { plotlyRef } = storeToRefs(usePlotlyStore())
   const xData = plotlyRef.value?.data[0].x
   let low = 0
@@ -210,9 +212,6 @@ const findLowerBound = (target: number) => {
 export const cropXaxisRange = async () => {
   const { plotlyOptions, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
 
-  if (isUpdating.value) {
-    return
-  }
   console.log('cropXaxisRange')
 
   isUpdating.value = true
@@ -226,8 +225,8 @@ export const cropXaxisRange = async () => {
         layoutUpdates.xaxis.range[1] = Date.parse(layoutUpdates.xaxis.range[1])
       }
 
-      const currentRange = plotlyRef.value?.layout.xaxis.range.map((d) =>
-        typeof d == 'string' ? Date.parse(d) : d
+      const currentRange = plotlyRef.value?.layout.xaxis.range.map(
+        (d: string | number) => (typeof d == 'string' ? Date.parse(d) : d)
       )
 
       layoutUpdates.xaxis.range = [
@@ -252,59 +251,57 @@ export const cropYaxisRange = async (_eventData: any) => {
   isUpdating.value = true
   console.log('cropYaxisRange')
 
-  setTimeout(async () => {
-    try {
-      const layoutUpdates: any = {}
+  try {
+    const layoutUpdates: any = {}
 
-      const xRange = plotlyRef.value?.layout.xaxis.range.map((d: string) => {
-        if (typeof d == 'string') {
-          return Date.parse(d)
-        }
-        return d
-      })
+    const xRange = plotlyRef.value?.layout.xaxis.range.map((d: string) => {
+      if (typeof d == 'string') {
+        return Date.parse(d)
+      }
+      return d
+    })
 
-      const yRange = plotlyRef.value?.layout.yaxis.range
+    const yRange = plotlyRef.value?.layout.yaxis.range
 
-      // Find visible points count
-      // Plotly does not return the indexes of current axis range. We must find them using binary seach
-      const startIdx = findLowerBound(xRange[0])
-      const endIdx = findLowerBound(xRange[1])
+    // Find visible points count
+    // Plotly does not return the indexes of current axis range. We must find them using binary seach
+    const startIdx = findLowerBound(xRange[0])
+    const endIdx = findLowerBound(xRange[1])
 
-      // auto scale y axis using data from the first trace
-      const traceData = plotlyRef.value?.data[0]
-      const yData = traceData.y as number[]
+    // auto scale y axis using data from the first trace
+    const traceData = plotlyRef.value?.data[0]
+    const yData = traceData.y as number[]
 
-      // Find all y-values within the current x-axis range
-      let yMin = Infinity
-      let yMax = -Infinity
+    // Find all y-values within the current x-axis range
+    let yMin = Infinity
+    let yMax = -Infinity
 
-      // Could use Math.max and Math.min and spread operator, but this is more memory efficient
-      for (let i = startIdx; i < endIdx; i++) {
-        const val = yData[i]
-        if (yMin > val && val > yRange[0]) {
-          yMin = val
-        }
-
-        if (yMax < val && val < yRange[1]) {
-          yMax = val
-        }
+    // Could use Math.max and Math.min and spread operator, but this is more memory efficient
+    for (let i = startIdx; i < endIdx; i++) {
+      const val = yData[i]
+      if (yMin > val && val > yRange[0]) {
+        yMin = val
       }
 
-      // Calculate new y-axis range with padding
-      if (endIdx - startIdx != 0 && yMax !== yMin) {
-        const padding = (yMax - yMin) * 0.1 // 10% padding
-
-        layoutUpdates.yaxis = {
-          ...plotlyOptions.value.layout.yaxis,
-          range: [yMin - padding, yMax + padding],
-          autorange: false,
-        }
+      if (yMax < val && val < yRange[1]) {
+        yMax = val
       }
-
-      // Update axis range
-      await Plotly.update(plotlyRef.value, {}, layoutUpdates)
-    } finally {
-      isUpdating.value = false
     }
-  })
+
+    // Calculate new y-axis range with padding
+    if (endIdx - startIdx != 0 && yMax !== yMin) {
+      const padding = (yMax - yMin) * 0.1 // 10% padding
+
+      layoutUpdates.yaxis = {
+        ...plotlyOptions.value.layout.yaxis,
+        range: [yMin - padding, yMax + padding],
+        autorange: false,
+      }
+    }
+
+    // Update axis range
+    await Plotly.update(plotlyRef.value, {}, layoutUpdates)
+  } finally {
+    isUpdating.value = false
+  }
 }

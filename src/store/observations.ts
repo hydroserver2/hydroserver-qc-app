@@ -2,13 +2,15 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Datastream } from '@/types'
 import { fetchObservationsSync } from '@/utils/observationsUtils'
-import { ObservationRecord } from '@/utils/plotting/observationRecord'
+import { ObservationRecord } from '@/utils/plotting/observationRecordV2'
 
 export const useObservationStore = defineStore(
   'observations',
   () => {
     const observations = ref<Record<string, ObservationRecord>>({}) // TODO: make persistent
-    const observationsRaw = ref<Record<string, [string, number, any][]>>({})
+    const observationsRaw = ref<
+      Record<string, { datetimes: number[]; dataValues: number[] }>
+    >({})
 
     /**
      * Fetches requested observations that aren't currently in the pinia store,
@@ -28,17 +30,23 @@ export const useObservationStore = defineStore(
       }
 
       const existingRecord = observations.value[id]
-      let beginDataPromise: Promise<any[]> = Promise.resolve([])
-      let endDataPromise: Promise<any[]> = Promise.resolve([])
+      let beginDataPromise: Promise<{
+        datetimes: number[]
+        dataValues: number[]
+      }> = Promise.resolve({ datetimes: [], dataValues: [] })
+      let endDataPromise: Promise<{
+        datetimes: number[]
+        dataValues: number[]
+      }> = Promise.resolve({ datetimes: [], dataValues: [] })
 
-      if (observationsRaw.value[id]?.length) {
+      if (observationsRaw.value[id]?.dataValues.length) {
         const rawBeginDatetime: Date = new Date(
-          Date.parse(observationsRaw.value[id][0][0])
+          observationsRaw.value[id].datetimes[0]
         )
         const rawEndDatetime: Date = new Date(
-          Date.parse(
-            observationsRaw.value[id][observationsRaw.value[id].length - 1][0]
-          )
+          observationsRaw.value[id].datetimes[
+            observationsRaw.value[id].datetimes.length - 1
+          ]
         )
 
         // Check if new data before the stored data is needed
@@ -69,15 +77,34 @@ export const useObservationStore = defineStore(
       ])
 
       if (!observationsRaw.value[id]) {
-        observationsRaw.value[id] = []
+        observationsRaw.value[id] = { datetimes: [], dataValues: [] }
+        // observationsRaw.value[id].datetimes = []
       }
 
-      if (beginData.length > 0) {
-        observationsRaw.value[id] = [...beginData, ...observationsRaw.value[id]]
+      if (beginData.dataValues.length > 0) {
+        observationsRaw.value[id] = {
+          datetimes: [
+            ...beginData.datetimes,
+            ...observationsRaw.value[id].datetimes,
+          ],
+          dataValues: [
+            ...beginData.dataValues,
+            ...observationsRaw.value[id].dataValues,
+          ],
+        }
       }
 
-      if (endData.length > 0) {
-        observationsRaw.value[id] = [...observationsRaw.value[id], ...endData]
+      if (endData.dataValues.length > 0) {
+        observationsRaw.value[id] = {
+          datetimes: [
+            ...observationsRaw.value[id].datetimes,
+            ...endData.datetimes,
+          ],
+          dataValues: [
+            ...observationsRaw.value[id].dataValues,
+            ...endData.dataValues,
+          ],
+        }
       }
 
       return existingRecord
