@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Datastream } from '@/types'
 import { fetchObservationsSync } from '@/utils/observationsUtils'
-import { ObservationRecord } from '@/utils/plotting/observationRecordV2'
+import { ObservationRecord } from '@/utils/plotting/observationRecord'
 
 export const useObservationStore = defineStore(
   'observations',
@@ -118,7 +118,10 @@ export const useObservationStore = defineStore(
   },
   {
     persist: {
-      pick: ['observationsRaw'],
+      pick: [
+        // TODO: enable only in development mode
+        'observationsRaw',
+      ],
     },
   }
 )

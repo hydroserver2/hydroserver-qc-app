@@ -47,7 +47,9 @@ const components = [
 
 // TODO: try these operations with https://danfo.jsdata.org/api-reference/dataframe/danfo.dataframe.query
 // Assess if they are faster
-
+/**
+ * @deprecated Danfo.js operations not significantly faster
+ */
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   /** The generated dataset to be used for plotting */

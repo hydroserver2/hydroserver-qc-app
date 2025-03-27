@@ -5,7 +5,7 @@ import { computed, ComputedRef, Ref, ref, watch } from 'vue'
 import { api } from '@/services/api'
 // import { preProcessData } from '@/utils/observationsUtils'
 import { useDataVisStore } from './dataVisualization'
-import { EnumEditOperations } from '@/utils/plotting/observationRecordV2'
+import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 // @ts-ignore no type definitions
 import Plotly from 'plotly.js-dist'
 
@@ -127,7 +127,7 @@ export const usePlotlyStore = defineStore('Plotly', () => {
       fetchObservedPropertyPromise,
     ])
 
-    if (!data.dataset) {
+    if (!data.dataset.source.x) {
       await data.reload()
     }
 

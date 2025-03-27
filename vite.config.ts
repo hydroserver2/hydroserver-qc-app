@@ -26,6 +26,10 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     port: 1203,
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
   },
   resolve: {
     extensions: ['.js', '.json', '.vue', '.less', '.scss', '.ts'],

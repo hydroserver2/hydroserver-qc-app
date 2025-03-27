@@ -40,8 +40,8 @@ const selectorOptions = {
 export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
   const traces: any[] = seriesArray.map((s, index) => {
     return {
-      x: s.data?.dataset['datetimes']['values'],
-      y: s.data?.dataset['dataValues']['values'],
+      x: s.data?.dataX,
+      y: s.data?.dataY,
       xaxis: `x${index + 1}`,
       yaxis: `y${index + 1}`,
       type: 'scattergl',

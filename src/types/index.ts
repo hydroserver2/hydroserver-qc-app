@@ -1,4 +1,4 @@
-import { ObservationRecord } from '@/utils/plotting/observationRecordV2'
+import { ObservationRecord } from '@/utils/plotting/observationRecord'
 
 export type EnumDictionary<T extends string | symbol | number, U> = {
   [K in T]: U

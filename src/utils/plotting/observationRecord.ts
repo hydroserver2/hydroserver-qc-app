@@ -33,8 +33,40 @@ export enum EnumFilterOperations {
 
 const components = ['date', 'value', 'qualifier']
 
-// TODO: try these operations with https://danfo.jsdata.org/api-reference/dataframe/danfo.dataframe.query
-// Assess if they are faster
+// ====================================
+// Testing shared array buffers and worker multithreading
+const workers: Worker[] = []
+const data = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+const MAX_ITEMS = 100 // Arbitrarily large number
+const buffer = new SharedArrayBuffer(10 * Uint32Array.BYTES_PER_ELEMENT, {
+  maxByteLength: MAX_ITEMS * Uint32Array.BYTES_PER_ELEMENT,
+})
+buffer.grow(12 * Uint32Array.BYTES_PER_ELEMENT) // Allocates more memory
+const dv = new Uint32Array(buffer)
+const sub = dv.subarray(0, 8) // Keeps the same buffer
+dv.set(data) // Also affects sub because uses the same buffer
+
+if (window.Worker) {
+  for (let i = 0; i < navigator.hardwareConcurrency; i++) {
+    const worker = new Worker(new URL('worker.ts', import.meta.url))
+    worker.addEventListener(
+      'message',
+      function (e) {
+        // Log the workers message.
+        handleWorkerMessage(e, i)
+      },
+      false
+    )
+    worker.postMessage({ data: dv.buffer, index: i }) // Send this to the worker script.
+    workers.push(worker)
+  }
+}
+// ====================================
+
+function handleWorkerMessage(message: MessageEvent, workerID: number) {
+  // console.log(workerID)
+  // console.log(dv)
+}
 
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
@@ -57,29 +89,39 @@ export class ObservationRecord {
     this.loadData(observationsRaw.value[this.ds.id])
   }
 
-  loadData(dataArray: [string, number, any][]) {
-    if (!dataArray) {
+  loadData(dataArrays: { datetimes: number[]; dataValues: number[] }) {
+    if (!dataArrays) {
       return
     }
+
     if (!this.dataset.source.x) {
-      // First time loading data. Preallocating array size to improve performance.
-      this.dataset.source.x = new Array(dataArray.length)
-      this.dataset.source.y = new Array(dataArray.length)
+      // First time loading data. Just copy the data arrays.
+      this.dataset.source.x = [...dataArrays.datetimes]
+      this.dataset.source.y = [...dataArrays.dataValues]
     } else {
-      this.dataset.source.x.length = dataArray.length
-      this.dataset.source.y.length = dataArray.length
+      // Otherwise preserve the same array
+      this.dataset.source.x.length = dataArrays.datetimes.length
+      this.dataset.source.y.length = dataArrays.dataValues.length
     }
 
     this.history.length = 0
 
-    dataArray.forEach((row, index) => {
-      this.dataset.source.x[index] = Date.parse(row[0])
-      !isNaN(row[1])
-        ? (this.dataset.source.y[index] = row[1])
+    dataArrays.datetimes.forEach((_row, index) => {
+      this.dataset.source.x[index] = dataArrays.datetimes[index]
+      !isNaN(dataArrays.dataValues[index])
+        ? (this.dataset.source.y[index] = dataArrays.dataValues[index])
         : (this.dataset.source.y[index] = -9999)
     })
 
     this.isLoading = false
+  }
+
+  get dataX() {
+    return this.dataset.source.x
+  }
+
+  get dataY() {
+    return this.dataset.source.y
   }
 
   /**
@@ -141,7 +183,7 @@ export class ObservationRecord {
     const actions: EnumDictionary<EnumEditOperations, Function> = {
       [EnumEditOperations.ADD_POINTS]: this._addDataPoints,
       [EnumEditOperations.CHANGE_VALUES]: this._changeValues,
-      [EnumEditOperations.DELETE_POINTS]: this._deleteDataPointsV2,
+      [EnumEditOperations.DELETE_POINTS]: this._deleteDataPointsV5,
       [EnumEditOperations.DRIFT_CORRECTION]: this._driftCorrection,
       [EnumEditOperations.INTERPOLATE]: this._interpolate,
       [EnumEditOperations.SHIFT_DATETIMES]: this._shift,
@@ -394,25 +436,59 @@ export class ObservationRecord {
   }
 
   private _deleteDataPointsV2(deleteIndices: number[]) {
-    const dataX = this.dataset.source.x
-    const dataY = this.dataset.source.y
-
-    for (let i = 0; i < deleteIndices.length; i++) {
-      // @ts-ignore
-      dataX[deleteIndices[i]] = undefined
+    if (!deleteIndices.length) {
+      return
     }
 
-    let offset = 0
+    for (let i = 0; i < deleteIndices.length; i++) {
+      delete this.dataset.source.x[deleteIndices[i]] // Does not change array length, but makes the array sparse
+    }
 
-    for (let i = 0; i < dataX.length; i++) {
-      if (dataX[i] !== undefined) {
-        dataX[offset] = dataX[i]
-        dataY[offset] = dataY[i]
+    let offset = deleteIndices[0]
+
+    for (let i = deleteIndices[0]; i < this.dataset.source.x.length; i++) {
+      if (this.dataset.source.x.hasOwnProperty(i)) {
+        this.dataset.source.x[offset] = this.dataset.source.x[i]
+        this.dataset.source.y[offset] = this.dataset.source.y[i]
         offset++
       }
     }
-    dataX.length = offset
-    dataY.length = offset
+    this.dataset.source.x.length = offset
+    this.dataset.source.y.length = offset
+  }
+
+  private _deleteDataPointsV5(deleteIndices: number[]) {
+    if (!deleteIndices.length) {
+      return
+    }
+
+    const deleteInPlaceTasks = []
+    const delta =
+      Math.floor(deleteIndices.length / navigator.hardwareConcurrency) || 1
+    let start = 0
+    while (start < deleteIndices.length) {
+      deleteInPlaceTasks.push([
+        start,
+        Math.min(deleteIndices.length - 1, start + delta - 1),
+      ])
+      start += delta
+    }
+
+    // for (let i = 0; i < deleteIndices.length; i++) {
+    //   delete this.dataset.source.x[deleteIndices[i]] // Does not change array length, but makes the array sparse
+    // }
+
+    // let offset = deleteIndices[0]
+
+    // for (let i = deleteIndices[0]; i < this.dataset.source.x.length; i++) {
+    //   if (this.dataset.source.x.hasOwnProperty(i)) {
+    //     this.dataset.source.x[offset] = this.dataset.source.x[i]
+    //     this.dataset.source.y[offset] = this.dataset.source.y[i]
+    //     offset++
+    //   }
+    // }
+    // this.dataset.source.x.length = offset
+    // this.dataset.source.y.length = offset
   }
 
   /**
