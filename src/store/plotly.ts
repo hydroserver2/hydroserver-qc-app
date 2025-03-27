@@ -87,17 +87,19 @@ export const usePlotlyStore = defineStore('Plotly', () => {
 
     updateOptions()
 
-    await Plotly.redraw(plotlyRef.value, [0])
+    // TODO: After a DataFrame operation the array would have changed and this redraw has no effect
+    // await Plotly.redraw(plotlyRef.value, [0])
+
+    // TODO: this updates range, but breaks selection controls
+    await Plotly.react(
+      plotlyRef.value,
+      plotlyOptions.value.traces,
+      plotlyOptions.value.layout
+    )
+
     if (recomputeXaxisRange) {
       await cropXaxisRange()
     }
-
-    // TODO: this updates range, but breaks selection controls
-    // await Plotly.react(
-    //   plotlyRef.value,
-    //   plotlyOptions.value.traces,
-    //   plotlyOptions.value.layout
-    // )
   }
 
   const fetchGraphSeries = async (

@@ -11,10 +11,10 @@ export const fetchObservationsSync = async (
   datastream: Datastream,
   startTime?: Date,
   endTime?: Date
-): Promise<{ datetimes: number[]; values: number[] }> => {
+): Promise<{ datetimes: number[]; dataValues: number[] }> => {
   const { id, phenomenonBeginTime, phenomenonEndTime, valueCount } = datastream
   if (!phenomenonBeginTime || !phenomenonEndTime)
-    return { datetimes: [], values: [] }
+    return { datetimes: [], dataValues: [] }
 
   const pageSize = 50_000
   const endpoints: string[] = []
@@ -58,7 +58,7 @@ export const fetchObservationsSync = async (
     // TODO: We transform the dataArray into multiple arrays for each column.
     // Danfo.js and Plotly.js both require data columns
     const datetimes: number[] = []
-    const values: number[] = []
+    const dataValues: number[] = []
 
     results.forEach((r) => {
       const dataArray: [string, number, any][] = r.value[0]?.dataArray
@@ -68,7 +68,7 @@ export const fetchObservationsSync = async (
       if (dataArray) {
         for (const row of dataArray) {
           datetimes.push(Date.parse(row[0]))
-          values.push(row[1])
+          dataValues.push(row[1])
           // qualifers[i] = dataArray[i][2]
         }
       }
@@ -76,7 +76,7 @@ export const fetchObservationsSync = async (
 
     return {
       datetimes,
-      values,
+      dataValues,
     }
   } catch (error) {
     console.error('Error fetching data:', error)

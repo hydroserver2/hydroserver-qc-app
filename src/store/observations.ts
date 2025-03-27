@@ -9,7 +9,7 @@ export const useObservationStore = defineStore(
   () => {
     const observations = ref<Record<string, ObservationRecord>>({}) // TODO: make persistent
     const observationsRaw = ref<
-      Record<string, { datetimes: number[]; values: number[] }>
+      Record<string, { datetimes: number[]; dataValues: number[] }>
     >({})
 
     /**
@@ -30,12 +30,16 @@ export const useObservationStore = defineStore(
       }
 
       const existingRecord = observations.value[id]
-      let beginDataPromise: Promise<{ datetimes: number[]; values: number[] }> =
-        Promise.resolve({ datetimes: [], values: [] })
-      let endDataPromise: Promise<{ datetimes: number[]; values: number[] }> =
-        Promise.resolve({ datetimes: [], values: [] })
+      let beginDataPromise: Promise<{
+        datetimes: number[]
+        dataValues: number[]
+      }> = Promise.resolve({ datetimes: [], dataValues: [] })
+      let endDataPromise: Promise<{
+        datetimes: number[]
+        dataValues: number[]
+      }> = Promise.resolve({ datetimes: [], dataValues: [] })
 
-      if (observationsRaw.value[id]?.values.length) {
+      if (observationsRaw.value[id]?.dataValues.length) {
         const rawBeginDatetime: Date = new Date(
           observationsRaw.value[id].datetimes[0]
         )
@@ -73,27 +77,33 @@ export const useObservationStore = defineStore(
       ])
 
       if (!observationsRaw.value[id]) {
-        observationsRaw.value[id] = { datetimes: [], values: [] }
+        observationsRaw.value[id] = { datetimes: [], dataValues: [] }
         // observationsRaw.value[id].datetimes = []
       }
 
-      if (beginData.values.length > 0) {
+      if (beginData.dataValues.length > 0) {
         observationsRaw.value[id] = {
           datetimes: [
             ...beginData.datetimes,
             ...observationsRaw.value[id].datetimes,
           ],
-          values: [...beginData.values, ...observationsRaw.value[id].values],
+          dataValues: [
+            ...beginData.dataValues,
+            ...observationsRaw.value[id].dataValues,
+          ],
         }
       }
 
-      if (endData.values.length > 0) {
+      if (endData.dataValues.length > 0) {
         observationsRaw.value[id] = {
           datetimes: [
             ...observationsRaw.value[id].datetimes,
             ...endData.datetimes,
           ],
-          values: [...observationsRaw.value[id].values, ...endData.values],
+          dataValues: [
+            ...observationsRaw.value[id].dataValues,
+            ...endData.dataValues,
+          ],
         }
       }
 

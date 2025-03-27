@@ -41,7 +41,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
   const traces: any[] = seriesArray.map((s, index) => {
     return {
       x: s.data?.dataset['datetimes']['values'],
-      y: s.data?.dataset['values']['values'],
+      y: s.data?.dataset['dataValues']['values'],
       xaxis: `x${index + 1}`,
       yaxis: `y${index + 1}`,
       type: 'scattergl',
@@ -212,9 +212,6 @@ export const findLowerBound = (target: number) => {
 export const cropXaxisRange = async () => {
   const { plotlyOptions, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
 
-  if (isUpdating.value) {
-    return
-  }
   console.log('cropXaxisRange')
 
   isUpdating.value = true
@@ -254,59 +251,57 @@ export const cropYaxisRange = async (_eventData: any) => {
   isUpdating.value = true
   console.log('cropYaxisRange')
 
-  setTimeout(async () => {
-    try {
-      const layoutUpdates: any = {}
+  try {
+    const layoutUpdates: any = {}
 
-      const xRange = plotlyRef.value?.layout.xaxis.range.map((d: string) => {
-        if (typeof d == 'string') {
-          return Date.parse(d)
-        }
-        return d
-      })
+    const xRange = plotlyRef.value?.layout.xaxis.range.map((d: string) => {
+      if (typeof d == 'string') {
+        return Date.parse(d)
+      }
+      return d
+    })
 
-      const yRange = plotlyRef.value?.layout.yaxis.range
+    const yRange = plotlyRef.value?.layout.yaxis.range
 
-      // Find visible points count
-      // Plotly does not return the indexes of current axis range. We must find them using binary seach
-      const startIdx = findLowerBound(xRange[0])
-      const endIdx = findLowerBound(xRange[1])
+    // Find visible points count
+    // Plotly does not return the indexes of current axis range. We must find them using binary seach
+    const startIdx = findLowerBound(xRange[0])
+    const endIdx = findLowerBound(xRange[1])
 
-      // auto scale y axis using data from the first trace
-      const traceData = plotlyRef.value?.data[0]
-      const yData = traceData.y as number[]
+    // auto scale y axis using data from the first trace
+    const traceData = plotlyRef.value?.data[0]
+    const yData = traceData.y as number[]
 
-      // Find all y-values within the current x-axis range
-      let yMin = Infinity
-      let yMax = -Infinity
+    // Find all y-values within the current x-axis range
+    let yMin = Infinity
+    let yMax = -Infinity
 
-      // Could use Math.max and Math.min and spread operator, but this is more memory efficient
-      for (let i = startIdx; i < endIdx; i++) {
-        const val = yData[i]
-        if (yMin > val && val > yRange[0]) {
-          yMin = val
-        }
-
-        if (yMax < val && val < yRange[1]) {
-          yMax = val
-        }
+    // Could use Math.max and Math.min and spread operator, but this is more memory efficient
+    for (let i = startIdx; i < endIdx; i++) {
+      const val = yData[i]
+      if (yMin > val && val > yRange[0]) {
+        yMin = val
       }
 
-      // Calculate new y-axis range with padding
-      if (endIdx - startIdx != 0 && yMax !== yMin) {
-        const padding = (yMax - yMin) * 0.1 // 10% padding
-
-        layoutUpdates.yaxis = {
-          ...plotlyOptions.value.layout.yaxis,
-          range: [yMin - padding, yMax + padding],
-          autorange: false,
-        }
+      if (yMax < val && val < yRange[1]) {
+        yMax = val
       }
-
-      // Update axis range
-      await Plotly.update(plotlyRef.value, {}, layoutUpdates)
-    } finally {
-      isUpdating.value = false
     }
-  })
+
+    // Calculate new y-axis range with padding
+    if (endIdx - startIdx != 0 && yMax !== yMin) {
+      const padding = (yMax - yMin) * 0.1 // 10% padding
+
+      layoutUpdates.yaxis = {
+        ...plotlyOptions.value.layout.yaxis,
+        range: [yMin - padding, yMax + padding],
+        autorange: false,
+      }
+    }
+
+    // Update axis range
+    await Plotly.update(plotlyRef.value, {}, layoutUpdates)
+  } finally {
+    isUpdating.value = false
+  }
 }

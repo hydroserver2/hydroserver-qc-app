@@ -66,7 +66,7 @@ export class ObservationRecord {
     this.loadData(observationsRaw.value[this.ds.id])
   }
 
-  loadData(dataArrays: { datetimes: number[]; values: number[] }) {
+  loadData(dataArrays: { datetimes: number[]; dataValues: number[] }) {
     if (!dataArrays) {
       return
     }
@@ -133,7 +133,7 @@ export class ObservationRecord {
   }
 
   get dataY() {
-    return this.dataset['values']['values']
+    return this.dataset['dataValues']['values']
   }
 
   /** Dispatch an operation and log its signature in hisotry */
@@ -270,7 +270,7 @@ export class ObservationRecord {
       let upperIndex = Math.min(this.dataset.source.y.length - 1, end + 1)
 
       const xData = this.dataset.datetimes.values
-      const yData = this.dataset['values']['values']
+      const yData = this.dataset['dataValues']['values']
       for (let i = 0; i < g.length; i++) {
         this.dataset.source.y[g[i]] = this._interpolateLinear(
           xData[g[i]],
@@ -310,7 +310,7 @@ export class ObservationRecord {
    */
   private _shift(index: number[], amount: number, unit: TimeUnit) {
     const xData = this.dataset.datetimes.values
-    const yData = this.dataset['values']['values']
+    const yData = this.dataset['dataValues']['values']
 
     // Collection that will be re-added using `_addDataPoints`
     const collection: [number, number][] = index.map((i) => [
@@ -337,7 +337,7 @@ export class ObservationRecord {
   ) {
     const gaps = this._findGaps(gap[0], gap[1], range)
     const dataX = this.dataset.datetimes.values
-    const dataY = this.dataset['values']['values']
+    const dataY = this.dataset['dataValues']['values']
 
     for (let i = gaps.length - 1; i >= 0; i--) {
       const currentGap = gaps[i]
@@ -374,16 +374,16 @@ export class ObservationRecord {
 
   /**
    *
-   * @param index The index list of entries to delete
+   * @param index Array of indexes to be deleted
    */
-  private _deleteDataPoints(index: number[]) {
-    debugger
-    // TODO: dataframe index not recognizeed
-    this.dataset.drop({
-      // index: [0, 1, 2, 3, 4, 5, 6],
-      index: index,
+  private async _deleteDataPoints(index: number[]) {
+    console.log(new Date(Date.now()))
+    await this.dataset.drop({
+      index,
       inplace: true,
     })
+    await this.dataset.resetIndex({ inplace: true })
+    console.log(new Date(Date.now()))
   }
 
   /**
