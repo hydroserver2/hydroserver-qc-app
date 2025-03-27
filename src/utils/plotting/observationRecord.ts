@@ -141,7 +141,7 @@ export class ObservationRecord {
     const actions: EnumDictionary<EnumEditOperations, Function> = {
       [EnumEditOperations.ADD_POINTS]: this._addDataPoints,
       [EnumEditOperations.CHANGE_VALUES]: this._changeValues,
-      [EnumEditOperations.DELETE_POINTS]: this._deleteDataPoints,
+      [EnumEditOperations.DELETE_POINTS]: this._deleteDataPointsV2,
       [EnumEditOperations.DRIFT_CORRECTION]: this._driftCorrection,
       [EnumEditOperations.INTERPOLATE]: this._interpolate,
       [EnumEditOperations.SHIFT_DATETIMES]: this._shift,
@@ -366,12 +366,61 @@ export class ObservationRecord {
   }
 
   /**
-   *
+   * @deprecated
+   * @param deleteIndices
+   */
+  private _deleteDataPointsV3(deleteIndices: number[]) {
+    let writeIndex = deleteIndices[0]
+    let deletePointer = 0
+
+    for (let i = deleteIndices[0]; i < this.dataset.source.x.length; i++) {
+      // Check if current index should be deleted
+      if (
+        deletePointer < deleteIndices.length &&
+        i === deleteIndices[deletePointer]
+      ) {
+        deletePointer++ // Skip this element
+      } else {
+        // Move kept element to the current write position
+        this.dataset.source.x[writeIndex] = this.dataset.source.x[i]
+        this.dataset.source.y[writeIndex] = this.dataset.source.y[i]
+        writeIndex++
+      }
+    }
+
+    // Truncate the array to remove remaining elements
+    this.dataset.source.x.length = writeIndex
+    this.dataset.source.y.length = writeIndex
+  }
+
+  private _deleteDataPointsV2(deleteIndices: number[]) {
+    const dataX = this.dataset.source.x
+    const dataY = this.dataset.source.y
+
+    for (let i = 0; i < deleteIndices.length; i++) {
+      // @ts-ignore
+      dataX[deleteIndices[i]] = undefined
+    }
+
+    let offset = 0
+
+    for (let i = 0; i < dataX.length; i++) {
+      if (dataX[i] !== undefined) {
+        dataX[offset] = dataX[i]
+        dataY[offset] = dataY[i]
+        offset++
+      }
+    }
+    dataX.length = offset
+    dataY.length = offset
+  }
+
+  /**
+   * @deprecated
    * @param index The index list of entries to delete
    */
   private _deleteDataPoints(index: number[]) {
     const groups = this._getConsecutiveGroups(index)
-
     /**
      * Splice operations are very expensive for large arrays.
      * We try to get around this by:

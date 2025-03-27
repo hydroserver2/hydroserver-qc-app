@@ -53,10 +53,12 @@ const onDeleteDataPoints = async () => {
   isUpdating.value = true
 
   setTimeout(async () => {
+    console.log(new Date(Date.now()))
     await selectedSeries.value.data.dispatch(
       EnumEditOperations.DELETE_POINTS,
       selectedData.value
     )
+    console.log(new Date(Date.now()))
 
     await clearSelected()
     isUpdating.value = false
