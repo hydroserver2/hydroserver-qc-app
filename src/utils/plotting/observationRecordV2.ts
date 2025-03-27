@@ -86,6 +86,7 @@ export class ObservationRecord {
 
     await fetchObservationsInRange(this.ds, beginDate.value, endDate.value)
 
+    this.history.length = 0
     this.loadData(observationsRaw.value[this.ds.id])
   }
 
