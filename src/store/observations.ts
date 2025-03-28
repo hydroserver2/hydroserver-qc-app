@@ -29,7 +29,6 @@ export const useObservationStore = defineStore(
         observations.value[id] = new ObservationRecord(datastream)
       }
 
-      const existingRecord = observations.value[id]
       let beginDataPromise: Promise<{
         datetimes: number[]
         dataValues: number[]
@@ -107,7 +106,11 @@ export const useObservationStore = defineStore(
         }
       }
 
-      return existingRecord
+      if (beginData.dataValues.length || endData.dataValues.length) {
+        observations.value[id].loadData(observationsRaw.value[id])
+      }
+
+      return observations.value[id]
     }
 
     return {

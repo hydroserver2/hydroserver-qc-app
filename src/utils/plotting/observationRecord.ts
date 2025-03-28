@@ -9,7 +9,6 @@ import {
 } from '@/store/userInterface'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
-
 import { useObservationStore } from '@/store/observations'
 import { usePlotlyStore } from '@/store/plotly'
 import { shiftDatetime, timeUnitMultipliers } from '../formatDate'
@@ -31,8 +30,11 @@ export enum EnumFilterOperations {
   VALUE_THRESHOLD = 'VALUE_THRESHOLD',
 }
 
-const components = ['date', 'value', 'qualifier']
+export const MAX_DATA_POINTS = 400 * 1000
 
+const components = ['date', 'value', 'qualifier']
+// In case we need to avoid race conditions
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics
 // ====================================
 // Testing shared array buffers and worker multithreading
 const workers: Worker[] = []
@@ -61,19 +63,29 @@ if (window.Worker) {
     workers.push(worker)
   }
 }
-// ====================================
 
 function handleWorkerMessage(message: MessageEvent, workerID: number) {
   // console.log(workerID)
   // console.log(dv)
 }
+// ====================================
 
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
   /** The generated dataset to be used for plotting */
-  dataset: { dimensions: string[]; source: { [key: string]: number[] } } = {
+  dataset: {
+    dimensions: string[]
+    source: { x: number[]; y: Float32Array<SharedArrayBuffer> }
+  } = {
     dimensions: components,
-    source: {},
+    source: {
+      x: [],
+      y: new Float32Array(
+        new SharedArrayBuffer(0, {
+          maxByteLength: MAX_DATA_POINTS * Float32Array.BYTES_PER_ELEMENT, // Max size the array can reach
+        })
+      ),
+    },
   }
   history: { method: EnumEditOperations; args?: any[]; icon: string }[]
   isLoading: boolean
@@ -94,25 +106,40 @@ export class ObservationRecord {
       return
     }
 
-    if (!this.dataset.source.x) {
-      // First time loading data. Just copy the data arrays.
-      this.dataset.source.x = [...dataArrays.datetimes]
-      this.dataset.source.y = [...dataArrays.dataValues]
-    } else {
-      // Otherwise preserve the same array
-      this.dataset.source.x.length = dataArrays.datetimes.length
-      this.dataset.source.y.length = dataArrays.dataValues.length
+    const dataArrayByteSize =
+      dataArrays.dataValues.length * Float32Array.BYTES_PER_ELEMENT
+
+    if (dataArrayByteSize > this.dataset.source.y.buffer.maxByteLength) {
+      console.log('Edge case.')
+      // Edge case. If a dataset has more than the buffer's max length, use a larger buffer.
+      // TODO: Plotly reference to the data array will be invalidated. Must call Plotly.update which is undesirable.
+      this.dataset.source.y = new Float32Array(
+        new SharedArrayBuffer(dataArrayByteSize, {
+          maxByteLength:
+            (dataArrays.dataValues.length + MAX_DATA_POINTS) *
+            Float32Array.BYTES_PER_ELEMENT,
+        })
+      )
     }
 
-    this.history.length = 0
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer/grow
+    if (this.dataset.source.y.buffer.byteLength < dataArrayByteSize) {
+      this.dataset.source.y.buffer.grow(dataArrayByteSize)
+    }
 
+    // TypedArrays using SharedArrayBuffer can't shrink. Recreate the view to effectively resize it
+    this.dataset.source.y = new Float32Array(
+      this.dataset.source.y.buffer
+    ).subarray(0, dataArrays.dataValues.length)
+    this.dataset.source.y.set(dataArrays.dataValues)
+
+    // Set the values without changing the array reference
+    this.dataset.source.x.length = dataArrays.datetimes.length
     dataArrays.datetimes.forEach((_row, index) => {
       this.dataset.source.x[index] = dataArrays.datetimes[index]
-      !isNaN(dataArrays.dataValues[index])
-        ? (this.dataset.source.y[index] = dataArrays.dataValues[index])
-        : (this.dataset.source.y[index] = -9999)
     })
 
+    this.history.length = 0
     this.isLoading = false
   }
 
@@ -183,7 +210,7 @@ export class ObservationRecord {
     const actions: EnumDictionary<EnumEditOperations, Function> = {
       [EnumEditOperations.ADD_POINTS]: this._addDataPoints,
       [EnumEditOperations.CHANGE_VALUES]: this._changeValues,
-      [EnumEditOperations.DELETE_POINTS]: this._deleteDataPointsV5,
+      [EnumEditOperations.DELETE_POINTS]: this._deleteDataPoints,
       [EnumEditOperations.DRIFT_CORRECTION]: this._driftCorrection,
       [EnumEditOperations.INTERPOLATE]: this._interpolate,
       [EnumEditOperations.SHIFT_DATETIMES]: this._shift,
@@ -403,39 +430,11 @@ export class ObservationRecord {
       }
 
       dataX.splice(currentGap[0] + 1, 0, ...fillX)
-      dataY.splice(currentGap[0] + 1, 0, ...fillY)
+      dataY.set(fillY, currentGap[0] + 1)
     }
   }
 
-  /**
-   * @deprecated
-   * @param deleteIndices
-   */
-  private _deleteDataPointsV3(deleteIndices: number[]) {
-    let writeIndex = deleteIndices[0]
-    let deletePointer = 0
-
-    for (let i = deleteIndices[0]; i < this.dataset.source.x.length; i++) {
-      // Check if current index should be deleted
-      if (
-        deletePointer < deleteIndices.length &&
-        i === deleteIndices[deletePointer]
-      ) {
-        deletePointer++ // Skip this element
-      } else {
-        // Move kept element to the current write position
-        this.dataset.source.x[writeIndex] = this.dataset.source.x[i]
-        this.dataset.source.y[writeIndex] = this.dataset.source.y[i]
-        writeIndex++
-      }
-    }
-
-    // Truncate the array to remove remaining elements
-    this.dataset.source.x.length = writeIndex
-    this.dataset.source.y.length = writeIndex
-  }
-
-  private _deleteDataPointsV2(deleteIndices: number[]) {
+  private _deleteDataPoints(deleteIndices: number[]) {
     if (!deleteIndices.length) {
       return
     }
@@ -454,9 +453,11 @@ export class ObservationRecord {
       }
     }
     this.dataset.source.x.length = offset
-    this.dataset.source.y.length = offset
+    // this.dataset.source.y.buffer.grow(offset * Float32Array.BYTES_PER_ELEMENT) // TODO: can't shrink
+    this.dataset.source.y = this.dataset.source.y.subarray(0, offset)
   }
 
+  /** In progress. Using multithreading */
   private _deleteDataPointsV5(deleteIndices: number[]) {
     if (!deleteIndices.length) {
       return
@@ -489,77 +490,6 @@ export class ObservationRecord {
     // }
     // this.dataset.source.x.length = offset
     // this.dataset.source.y.length = offset
-  }
-
-  /**
-   * @deprecated
-   * @param index The index list of entries to delete
-   */
-  private _deleteDataPoints(index: number[]) {
-    const groups = this._getConsecutiveGroups(index)
-    /**
-     * Splice operations are very expensive for large arrays.
-     * We try to get around this by:
-     *  1. Extracting the subarray where the operation will take place.
-     *  2. Performing the operation in the subarray.
-     *  3. Reinserting the subarray back into the original array.
-     */
-    const left = index[0]
-    const right = index[index.length - 1]
-    const length = right - left + 1 // Length of subArray to extract
-    const isSubArray = length < this.dataset.source.x.length
-
-    const subArrayX = isSubArray
-      ? this.dataset.source.x.splice(left, length)
-      : this.dataset.source.x
-
-    const subArrayY = isSubArray
-      ? this.dataset.source.y.splice(left, length)
-      : this.dataset.source.y
-
-    if (groups.length <= 1) {
-      // There was only one group and it we spliced it above
-      return
-    }
-
-    // Splice each group in the subarray.This is where the actual deletion happens.
-    for (let i = groups.length - 1; i >= 0; i--) {
-      const group = groups[i]
-      const start = isSubArray ? group[0] - left : group[0]
-
-      subArrayX.splice(start, group.length)
-      subArrayY.splice(start, group.length)
-    }
-
-    // Insert the remaining back
-    if (isSubArray) {
-      this._pagedInsert(this.dataset.source.x, subArrayX, left)
-      this._pagedInsert(this.dataset.source.y, subArrayY, left)
-    }
-  }
-
-  /**
-   * TODO: JavaScript engine has an argument limit of 65536 (actually 60k in practice)
-    Which means our splice method can only insert back elements by 60k at a time
-    @see https://bugs.webkit.org/show_bug.cgi?id=80797
-    @see https://stackoverflow.com/a/22747272
-    @see https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.splice
-    TODO: this is still too slow
-
-   * @param target 
-   * @param elements 
-   * @param start 
-   */
-  private _pagedInsert(target: any[], elements: any[], start: number) {
-    const ARG_LIMIT = 60000
-
-    while (elements.length > ARG_LIMIT) {
-      const chunk = elements.splice(0, ARG_LIMIT)
-      target.splice(start, 0, ...chunk)
-      start += chunk.length
-    }
-    // Append remainder
-    target.splice(start, 0, ...elements)
   }
 
   /**
