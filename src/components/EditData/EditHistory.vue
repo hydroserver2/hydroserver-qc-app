@@ -59,7 +59,7 @@
 
             <div class="d-flex ml-2 justify-end" style="min-width: 5rem">
               <v-btn
-                v-if="index < editHistory.length - 1"
+                v-if="index < editHistory.length"
                 icon="mdi-reload"
                 color="blue"
                 variant="plain"
@@ -105,7 +105,7 @@ const onReload = async () => {
 }
 
 const onReloadHistory = async (index: number) => {
-  if (index < editHistory.value.length - 1) {
+  if (index < editHistory.value.length) {
     isUpdating.value = true
     setTimeout(async () => {
       await selectedSeries.value.data.reloadHistory(index)

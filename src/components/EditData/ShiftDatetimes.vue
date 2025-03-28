@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumEditOperations } from '@/utils/plotting/observationRecordV2'
+import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
 import { useUIStore, TimeUnit } from '@/store/userInterface'
 

@@ -79,7 +79,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumEditOperations } from '@/utils/plotting/observationRecordV2'
+import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { computed } from 'vue'
 import { formatDate } from '@/utils/formatDate'
 import { usePlotlyStore } from '@/store/plotly'

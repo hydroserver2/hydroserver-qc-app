@@ -12,6 +12,11 @@ import { storeToRefs } from 'pinia'
 import { useObservationStore } from '@/store/observations'
 import { usePlotlyStore } from '@/store/plotly'
 import { shiftDatetime, timeUnitMultipliers } from '../formatDate'
+import {
+  findFirstGreaterOrEqual,
+  findLastLessOrEqual,
+  findLowerBound,
+} from './plotly'
 
 export enum EnumEditOperations {
   ADD_POINTS = 'ADD_POINTS',
@@ -422,87 +427,96 @@ export class ObservationRecord {
     }
   }
 
-  private _deleteDataPoints(deleteIndices: number[]) {
-    if (!deleteIndices.length) {
-      return
-    }
-
-    for (let i = 0; i < deleteIndices.length; i++) {
-      this.dataset.source.x[deleteIndices[i]] = -Infinity
-    }
-
-    let offset = deleteIndices[0]
-
-    for (let i = deleteIndices[0]; i < this.dataset.source.x.length; i++) {
-      if (this.dataset.source.x[i] != -Infinity) {
-        this.dataset.source.x[offset] = this.dataset.source.x[i]
-        this.dataset.source.y[offset] = this.dataset.source.y[i]
-        offset++
-      }
-    }
-    // After deletion, the resulting array will always be a subarray of the original
-    // So we can simply use the `subarray` function to get the new view
-    this.dataset.source.x = this.dataset.source.x.subarray(0, offset)
-    this.dataset.source.y = this.dataset.source.y.subarray(0, offset)
-  }
-
-  /** In progress. Using multithreading */
-  private async _deleteDataPointsV5(deleteIndices: number[]) {
-    if (!deleteIndices.length) {
-      return
-    }
-
-    // First, create tasks to mark the items to delete with -Infinity
-    const maxThreads = navigator.hardwareConcurrency || 1
-    const delta = Math.ceil(deleteIndices.length / maxThreads) || 1
+  /**
+   Deletes data points from a large array using worker threads.
+    1. The main thread divides the original array into equal parts to distribute work among workers.
+    2. For each segment, binary search locates the indexes to delete (deleteSegment), ensuring efficient lookups.
+    3. The cumulative deletions before each segment help compute the starting index (startTarget) for each worker's output, ensuring no overlap.
+    4. Each worker processes its segment linearly, skipping deletions and copying kept elements to their computed positions.
+    * @param deleteIndices 
+   */
+  // TODO: implement similar multithread solutions for other operations
+  private async _deleteDataPoints(deleteIndices: number[]) {
+    const numWorkers = navigator.hardwareConcurrency || 1
+    const segmentSize = Math.ceil(this.dataX.length / numWorkers)
     const workers: Worker[] = []
-    const promises = []
-    // Copy the original array of indices to a shared array buffer so that all threads can read it without having to create one for each
-    const sharedIndices = new Uint32Array(
-      deleteIndices.length * Uint32Array.BYTES_PER_ELEMENT
-    )
-    sharedIndices.set(deleteIndices)
+    const segments = []
 
-    // Spawn workers
-    const createDeleteWorker = (range: [number, number]) => {
-      return new Promise((resolve) => {
-        const worker = new Worker(new URL('worker.ts', import.meta.url))
-        workers.push(worker)
-        worker.postMessage({
-          range,
-          indices: sharedIndices.buffer,
-          bufferX: this.dataset.source.x.buffer,
-          // bufferY: this.dataset.source.y.buffer,
-        })
-        worker.onmessage = (event: MessageEvent) => {
-          resolve(event.data)
-        }
-      })
+    // Prepare segments
+    for (let i = 0; i < numWorkers; i++) {
+      const start = i * segmentSize
+      const end = Math.min((i + 1) * segmentSize - 1, this.dataX.length - 1)
+
+      // Binary search to find deleteSegment within [start, end]
+      const first = findFirstGreaterOrEqual(deleteIndices, start)
+      const last = findLastLessOrEqual(deleteIndices, end)
+      const deleteSegment = deleteIndices.slice(first, last + 1)
+
+      segments.push({ start, end, deleteSegment })
     }
 
-    for (let i = 0; i < maxThreads; i++) {
-      const start = i * delta
-      const end = Math.min(i * delta + delta - 1, deleteIndices.length - 1)
-      // TODO: figure out a good multithreading delete strategy
-      promises.push(createDeleteWorker([start, end]))
+    // Compute prefix sums. These help distribute the work evenly.
+    const prefixSum = new Array(numWorkers).fill(0)
+    for (let i = 1; i < numWorkers; i++) {
+      prefixSum[i] = prefixSum[i - 1] + segments[i - 1].deleteSegment.length
+    }
+
+    const promises = []
+    const newLength = this.dataX.length - deleteIndices.length
+
+    // To avoid workers reading from a memory address where another working is writing to, we use separate output buffers.
+    const outputBufferX = new SharedArrayBuffer(
+      newLength * Float64Array.BYTES_PER_ELEMENT,
+      {
+        maxByteLength:
+          (newLength + MAX_DATA_POINTS) * Float64Array.BYTES_PER_ELEMENT,
+      }
+    )
+
+    const outputBufferY = new SharedArrayBuffer(
+      (this.dataY.length - deleteIndices.length) *
+        Float32Array.BYTES_PER_ELEMENT,
+      {
+        maxByteLength:
+          (newLength + MAX_DATA_POINTS) * Float32Array.BYTES_PER_ELEMENT,
+      }
+    )
+
+    // Compute startTarget for each segment and start workers
+    for (let i = 0; i < numWorkers; i++) {
+      const { start, end, deleteSegment } = segments[i]
+      const startTarget = start - prefixSum[i]
+
+      // Spawn workers
+      promises.push(
+        new Promise((resolve) => {
+          const worker = new Worker(
+            new URL('delete-data.worker.ts', import.meta.url)
+          )
+          workers.push(worker)
+          worker.postMessage({
+            bufferX: this.dataX.buffer,
+            bufferY: this.dataY.buffer,
+            outputBufferX,
+            outputBufferY,
+            start,
+            end,
+            deleteSegment,
+            startTarget,
+          })
+          worker.onmessage = (event: MessageEvent) => {
+            resolve(event.data)
+          }
+        })
+      )
     }
 
     await Promise.all(promises)
-    workers.forEach((worker) => worker.terminate())
 
-    let offset = deleteIndices[0]
+    workers.forEach((worker) => worker.terminate()) // Important to terminate the workers
 
-    for (let i = deleteIndices[0]; i < this.dataset.source.x.length; i++) {
-      if (this.dataset.source.x[i] != -Infinity) {
-        this.dataset.source.x[offset] = this.dataset.source.x[i]
-        this.dataset.source.y[offset] = this.dataset.source.y[i]
-        offset++
-      }
-    }
-    // After deletion, the resulting array will always be a subarray of the original
-    // So we can simply use the `subarray` function to get the new view
-    this.dataset.source.x = this.dataset.source.x.subarray(0, offset)
-    this.dataset.source.y = this.dataset.source.y.subarray(0, offset)
+    this.dataset.source.x = new Float64Array(outputBufferX)
+    this.dataset.source.y = new Float32Array(outputBufferY)
   }
 
   /**
@@ -557,7 +571,7 @@ export class ObservationRecord {
   private _addDataPoints(dataPoints: [number, number][]) {
     dataPoints.sort((a, b) => b[0] - a[0])
 
-    let lowerBound = this._findLowerBound(dataPoints[0][0])
+    let lowerBound = findLowerBound(this.dataX, dataPoints[0][0])
     const toInsertX: number[] = []
     const toInsertY: number[] = []
 
@@ -570,7 +584,7 @@ export class ObservationRecord {
         this.dataset.source.y.splice(lowerBound + 1, 0, ...toInsertY)
         toInsertX.length = 0
         toInsertY.length = 0
-        lowerBound = this._findLowerBound(d[0])
+        lowerBound = findLowerBound(this.dataX, d[0])
       }
 
       toInsertX.splice(0, 0, d[0])
@@ -579,21 +593,6 @@ export class ObservationRecord {
     // Leftovers in last iteration
     this.dataset.source.x.splice(lowerBound + 1, 0, ...toInsertX)
     this.dataset.source.y.splice(lowerBound + 1, 0, ...toInsertY)
-  }
-
-  private _findLowerBound(target: number) {
-    const xData = this.dataset.source.x
-    let low = 0
-    let high = xData.length
-    while (low < high) {
-      const mid = (low + high) >>> 1
-      if (xData[mid] < target) {
-        low = mid + 1
-      } else {
-        high = mid
-      }
-    }
-    return low
   }
 
   // =======================

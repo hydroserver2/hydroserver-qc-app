@@ -115,8 +115,14 @@ onMounted(async () => {
 
         // Find visible points count
         // Plotly does not return the indexes. We must find them using binary seach
-        const startIdx = findLowerBound(layoutUpdates.xaxis.range[0])
-        const endIdx = findLowerBound(layoutUpdates.xaxis.range[1])
+        const startIdx = findLowerBound(
+          plotlyRef.value?.data[0].x,
+          layoutUpdates.xaxis.range[0]
+        )
+        const endIdx = findLowerBound(
+          plotlyRef.value?.data[0].x,
+          layoutUpdates.xaxis.range[1]
+        )
 
         visiblePoints.value = endIdx - startIdx
 

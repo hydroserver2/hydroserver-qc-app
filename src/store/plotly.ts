@@ -90,10 +90,17 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     // TODO: After an operation the array would have changed and this redraw has no effect
     // await Plotly.redraw(plotlyRef.value, [0])
 
-    await Plotly.react(
+    // await Plotly.react(
+    //   plotlyRef.value,
+    //   plotlyOptions.value.traces,
+    //   plotlyOptions.value.layout
+    // )
+
+    await Plotly.update(
       plotlyRef.value,
-      plotlyOptions.value.traces,
-      plotlyOptions.value.layout
+      plotlyOptions.value.traces[0],
+      plotlyOptions.value.layout,
+      [0]
     )
 
     if (recomputeXaxisRange) {

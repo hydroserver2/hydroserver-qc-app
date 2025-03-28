@@ -195,18 +195,38 @@ export const handleDoubleClick = async () => {
 }
 
 // Binary search
-export const findLowerBound = (target: number) => {
-  const { plotlyRef } = storeToRefs(usePlotlyStore())
-  const xData = plotlyRef.value?.data[0].x
+export const findLowerBound = (array: number[], target: number) => {
   let low = 0
-  let high = xData.length
+  let high = array.length
   while (low < high) {
     const mid = (low + high) >>> 1
-    if (xData[mid] < target) {
+    if (array[mid] < target) {
       low = mid + 1
     } else high = mid
   }
   return low
+}
+
+export const findFirstGreaterOrEqual = (array: number[], target: number) => {
+  let low = 0,
+    high = array.length
+  while (low < high) {
+    const mid = (low + high) >> 1
+    if (array[mid] < target) low = mid + 1
+    else high = mid
+  }
+  return low
+}
+
+export const findLastLessOrEqual = (array: number[], target: number) => {
+  let low = 0,
+    high = array.length
+  while (low < high) {
+    const mid = (low + high) >> 1
+    if (array[mid] > target) high = mid
+    else low = mid + 1
+  }
+  return low - 1
 }
 
 export const cropXaxisRange = async () => {
@@ -265,8 +285,8 @@ export const cropYaxisRange = async (_eventData: any) => {
 
     // Find visible points count
     // Plotly does not return the indexes of current axis range. We must find them using binary seach
-    const startIdx = findLowerBound(xRange[0])
-    const endIdx = findLowerBound(xRange[1])
+    const startIdx = findLowerBound(plotlyRef.value?.data[0].x, xRange[0])
+    const endIdx = findLowerBound(plotlyRef.value?.data[0].x, xRange[1])
 
     // auto scale y axis using data from the first trace
     const traceData = plotlyRef.value?.data[0]

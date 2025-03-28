@@ -57,7 +57,7 @@
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { useDataSelection } from '@/composables/useDataSelection'
-import { EnumFilterOperations } from '@/utils/plotting/observationRecordV2'
+import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
 import { TimeUnit, useUIStore } from '@/store/userInterface'
 
