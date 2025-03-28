@@ -75,11 +75,20 @@ export class ObservationRecord {
   /** The generated dataset to be used for plotting */
   dataset: {
     dimensions: string[]
-    source: { x: number[]; y: Float32Array<SharedArrayBuffer> }
+    source: {
+      // Store datetimes in a Float64Array because there is no UInt64Array in JavaScript
+      // And plotly can't parse BigInts right
+      x: Float64Array<SharedArrayBuffer>
+      y: Float32Array<SharedArrayBuffer>
+    }
   } = {
     dimensions: components,
     source: {
-      x: [],
+      x: new Float64Array(
+        new SharedArrayBuffer(0, {
+          maxByteLength: MAX_DATA_POINTS * Float64Array.BYTES_PER_ELEMENT, // Max size the array can reach
+        })
+      ),
       y: new Float32Array(
         new SharedArrayBuffer(0, {
           maxByteLength: MAX_DATA_POINTS * Float32Array.BYTES_PER_ELEMENT, // Max size the array can reach
@@ -106,15 +115,27 @@ export class ObservationRecord {
       return
     }
 
-    const dataArrayByteSize =
+    const dataArrayByteSizeX =
+      dataArrays.dataValues.length * BigUint64Array.BYTES_PER_ELEMENT
+
+    const dataArrayByteSizeY =
       dataArrays.dataValues.length * Float32Array.BYTES_PER_ELEMENT
 
-    if (dataArrayByteSize > this.dataset.source.y.buffer.maxByteLength) {
+    if (dataArrayByteSizeY > this.dataset.source.y.buffer.maxByteLength) {
       console.log('Edge case.')
       // Edge case. If a dataset has more than the buffer's max length, use a larger buffer.
       // TODO: Plotly reference to the data array will be invalidated. Must call Plotly.update which is undesirable.
+
+      this.dataset.source.x = new Float64Array(
+        new SharedArrayBuffer(dataArrayByteSizeX, {
+          maxByteLength:
+            (dataArrays.dataValues.length + MAX_DATA_POINTS) *
+            BigUint64Array.BYTES_PER_ELEMENT,
+        })
+      )
+
       this.dataset.source.y = new Float32Array(
-        new SharedArrayBuffer(dataArrayByteSize, {
+        new SharedArrayBuffer(dataArrayByteSizeY, {
           maxByteLength:
             (dataArrays.dataValues.length + MAX_DATA_POINTS) *
             Float32Array.BYTES_PER_ELEMENT,
@@ -123,21 +144,29 @@ export class ObservationRecord {
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer/grow
-    if (this.dataset.source.y.buffer.byteLength < dataArrayByteSize) {
-      this.dataset.source.y.buffer.grow(dataArrayByteSize)
+    if (this.dataset.source.y.buffer.byteLength < dataArrayByteSizeY) {
+      this.dataset.source.x.buffer.grow(dataArrayByteSizeX)
+      this.dataset.source.y.buffer.grow(dataArrayByteSizeY)
     }
 
-    // TypedArrays using SharedArrayBuffer can't shrink. Recreate the view to effectively resize it
+    // We need to resize the view to match our data length,
+    // but TypedArrays using SharedArrayBuffer can't shrink.
+    // Recreate the view to effectively resize it
+    this.dataset.source.x = new Float64Array(
+      this.dataset.source.x.buffer
+    ).subarray(0, dataArrays.datetimes.length)
+    this.dataset.source.x.set(dataArrays.datetimes)
+
     this.dataset.source.y = new Float32Array(
       this.dataset.source.y.buffer
     ).subarray(0, dataArrays.dataValues.length)
     this.dataset.source.y.set(dataArrays.dataValues)
 
     // Set the values without changing the array reference
-    this.dataset.source.x.length = dataArrays.datetimes.length
-    dataArrays.datetimes.forEach((_row, index) => {
-      this.dataset.source.x[index] = dataArrays.datetimes[index]
-    })
+    // this.dataset.source.x.length = dataArrays.datetimes.length
+    // dataArrays.datetimes.forEach((_row, index) => {
+    //   this.dataset.source.x[index] = dataArrays.datetimes[index]
+    // })
 
     this.history.length = 0
     this.isLoading = false
@@ -429,8 +458,9 @@ export class ObservationRecord {
         nextFillDatetime += fillDelta
       }
 
-      dataX.splice(currentGap[0] + 1, 0, ...fillX)
-      dataY.set(fillY, currentGap[0] + 1)
+      // TODO: fill in a typed array
+      // dataX (fillX, currentGap[0] + 1)
+      // dataY (fillY, currentGap[0] + 1)
     }
   }
 
@@ -440,20 +470,21 @@ export class ObservationRecord {
     }
 
     for (let i = 0; i < deleteIndices.length; i++) {
-      delete this.dataset.source.x[deleteIndices[i]] // Does not change array length, but makes the array sparse
+      this.dataset.source.x[deleteIndices[i]] = -Infinity
     }
 
     let offset = deleteIndices[0]
 
     for (let i = deleteIndices[0]; i < this.dataset.source.x.length; i++) {
-      if (this.dataset.source.x.hasOwnProperty(i)) {
+      if (this.dataset.source.x[i] != -Infinity) {
         this.dataset.source.x[offset] = this.dataset.source.x[i]
         this.dataset.source.y[offset] = this.dataset.source.y[i]
         offset++
       }
     }
-    this.dataset.source.x.length = offset
-    // this.dataset.source.y.buffer.grow(offset * Float32Array.BYTES_PER_ELEMENT) // TODO: can't shrink
+    // After deletion, the resulting array will always be a subarray of the original
+    // So we can simply use the `subarray` function to get the new view
+    this.dataset.source.x = this.dataset.source.x.subarray(0, offset)
     this.dataset.source.y = this.dataset.source.y.subarray(0, offset)
   }
 
