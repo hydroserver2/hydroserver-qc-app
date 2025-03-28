@@ -1,12 +1,14 @@
 self.addEventListener(
   'message',
   function (e: MessageEvent) {
-    // Send the message back.
-    const buffer = e.data.data as ArrayBuffer
-    const index = e.data.index
-    const sharedArray = new Uint32Array(buffer)
-    sharedArray[index] = 999
-    self.postMessage(sharedArray.buffer)
+    const dataX = new Float64Array(e.data.bufferX)
+    const indices = new Uint32Array(e.data.indices)
+
+    for (let i = e.data.range[0]; i <= e.data.range[1]; i++) {
+      dataX[indices[i]] = -Infinity
+    }
+
+    self.postMessage('Done')
   },
   false
 )

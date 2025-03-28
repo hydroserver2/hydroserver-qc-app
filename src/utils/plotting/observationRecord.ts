@@ -33,42 +33,6 @@ export enum EnumFilterOperations {
 export const MAX_DATA_POINTS = 400 * 1000
 
 const components = ['date', 'value', 'qualifier']
-// In case we need to avoid race conditions
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics
-// ====================================
-// Testing shared array buffers and worker multithreading
-const workers: Worker[] = []
-const data = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-const MAX_ITEMS = 100 // Arbitrarily large number
-const buffer = new SharedArrayBuffer(10 * Uint32Array.BYTES_PER_ELEMENT, {
-  maxByteLength: MAX_ITEMS * Uint32Array.BYTES_PER_ELEMENT,
-})
-buffer.grow(12 * Uint32Array.BYTES_PER_ELEMENT) // Allocates more memory
-const dv = new Uint32Array(buffer)
-const sub = dv.subarray(0, 8) // Keeps the same buffer
-dv.set(data) // Also affects sub because uses the same buffer
-
-if (window.Worker) {
-  for (let i = 0; i < navigator.hardwareConcurrency; i++) {
-    const worker = new Worker(new URL('worker.ts', import.meta.url))
-    worker.addEventListener(
-      'message',
-      function (e) {
-        // Log the workers message.
-        handleWorkerMessage(e, i)
-      },
-      false
-    )
-    worker.postMessage({ data: dv.buffer, index: i }) // Send this to the worker script.
-    workers.push(worker)
-  }
-}
-
-function handleWorkerMessage(message: MessageEvent, workerID: number) {
-  // console.log(workerID)
-  // console.log(dv)
-}
-// ====================================
 
 export class ObservationRecord {
   // A JsProxy of the pandas DataFrame
@@ -161,12 +125,6 @@ export class ObservationRecord {
       this.dataset.source.y.buffer
     ).subarray(0, dataArrays.dataValues.length)
     this.dataset.source.y.set(dataArrays.dataValues)
-
-    // Set the values without changing the array reference
-    // this.dataset.source.x.length = dataArrays.datetimes.length
-    // dataArrays.datetimes.forEach((_row, index) => {
-    //   this.dataset.source.x[index] = dataArrays.datetimes[index]
-    // })
 
     this.history.length = 0
     this.isLoading = false
@@ -489,38 +447,62 @@ export class ObservationRecord {
   }
 
   /** In progress. Using multithreading */
-  private _deleteDataPointsV5(deleteIndices: number[]) {
+  private async _deleteDataPointsV5(deleteIndices: number[]) {
     if (!deleteIndices.length) {
       return
     }
 
-    const deleteInPlaceTasks = []
-    const delta =
-      Math.floor(deleteIndices.length / navigator.hardwareConcurrency) || 1
-    let start = 0
-    while (start < deleteIndices.length) {
-      deleteInPlaceTasks.push([
-        start,
-        Math.min(deleteIndices.length - 1, start + delta - 1),
-      ])
-      start += delta
+    // First, create tasks to mark the items to delete with -Infinity
+    const maxThreads = navigator.hardwareConcurrency || 1
+    const delta = Math.ceil(deleteIndices.length / maxThreads) || 1
+    const workers: Worker[] = []
+    const promises = []
+    // Copy the original array of indices to a shared array buffer so that all threads can read it without having to create one for each
+    const sharedIndices = new Uint32Array(
+      deleteIndices.length * Uint32Array.BYTES_PER_ELEMENT
+    )
+    sharedIndices.set(deleteIndices)
+
+    // Spawn workers
+    const createDeleteWorker = (range: [number, number]) => {
+      return new Promise((resolve) => {
+        const worker = new Worker(new URL('worker.ts', import.meta.url))
+        workers.push(worker)
+        worker.postMessage({
+          range,
+          indices: sharedIndices.buffer,
+          bufferX: this.dataset.source.x.buffer,
+          // bufferY: this.dataset.source.y.buffer,
+        })
+        worker.onmessage = (event: MessageEvent) => {
+          resolve(event.data)
+        }
+      })
     }
 
-    // for (let i = 0; i < deleteIndices.length; i++) {
-    //   delete this.dataset.source.x[deleteIndices[i]] // Does not change array length, but makes the array sparse
-    // }
+    for (let i = 0; i < maxThreads; i++) {
+      const start = i * delta
+      const end = Math.min(i * delta + delta - 1, deleteIndices.length - 1)
+      // TODO: figure out a good multithreading delete strategy
+      promises.push(createDeleteWorker([start, end]))
+    }
 
-    // let offset = deleteIndices[0]
+    await Promise.all(promises)
+    workers.forEach((worker) => worker.terminate())
 
-    // for (let i = deleteIndices[0]; i < this.dataset.source.x.length; i++) {
-    //   if (this.dataset.source.x.hasOwnProperty(i)) {
-    //     this.dataset.source.x[offset] = this.dataset.source.x[i]
-    //     this.dataset.source.y[offset] = this.dataset.source.y[i]
-    //     offset++
-    //   }
-    // }
-    // this.dataset.source.x.length = offset
-    // this.dataset.source.y.length = offset
+    let offset = deleteIndices[0]
+
+    for (let i = deleteIndices[0]; i < this.dataset.source.x.length; i++) {
+      if (this.dataset.source.x[i] != -Infinity) {
+        this.dataset.source.x[offset] = this.dataset.source.x[i]
+        this.dataset.source.y[offset] = this.dataset.source.y[i]
+        offset++
+      }
+    }
+    // After deletion, the resulting array will always be a subarray of the original
+    // So we can simply use the `subarray` function to get the new view
+    this.dataset.source.x = this.dataset.source.x.subarray(0, offset)
+    this.dataset.source.y = this.dataset.source.y.subarray(0, offset)
   }
 
   /**
