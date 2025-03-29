@@ -43,27 +43,38 @@
           <div class="d-flex align-center">
             <v-expansion-panels>
               <v-expansion-panel>
-                <v-expansion-panel-title color="grey-lighten-4">{{
-                  entry.method
-                }}</v-expansion-panel-title>
+                <v-expansion-panel-title color="grey-lighten-4">
+                  {{ entry.method }}</v-expansion-panel-title
+                >
                 <v-expansion-panel-text>
                   <div class="text-caption mb-2">Arguments:</div>
                   <ul class="text-caption px-2">
-                    <li v-for="(arg, index) of entry.args" :key="index">
-                      {{ arg }}
-                    </li>
+                    <code>
+                      <li v-for="(arg, index) of entry.args" :key="index">
+                        {{ arg }}
+                      </li>
+                    </code>
                   </ul>
                 </v-expansion-panel-text>
               </v-expansion-panel>
             </v-expansion-panels>
 
-            <div class="d-flex ml-2 justify-end" style="min-width: 5rem">
+            <div
+              class="d-flex ml-2 justify-end align-center"
+              style="min-width: 5rem"
+            >
+              <v-progress-circular
+                v-if="entry.isLoading"
+                size="20"
+                color="primary"
+                indeterminate
+              />
               <v-btn
-                v-if="index < editHistory.length"
+                v-else
                 icon="mdi-reload"
                 color="blue"
                 variant="plain"
-                :disabled="isUpdating"
+                :disabled="isUpdating || entry.isLoading"
                 title="Reload at this stage"
                 @click="onReloadHistory(index)"
               ></v-btn>
@@ -131,5 +142,10 @@ const onRemoveHistoryItem = async (index: number) => {
 <style lang="scss" scoped>
 :deep(.v-timeline-item__body) {
   width: 100%;
+}
+
+:deep(.v-timeline-item .v-expansion-panel-text) {
+  max-height: 15rem;
+  overflow-y: auto;
 }
 </style>

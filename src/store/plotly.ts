@@ -1,11 +1,10 @@
-import { Datastream, GraphSeries } from '@/types'
+import { Datastream, GraphSeries, HistoryItem } from '@/types'
 import { defineStore, storeToRefs } from 'pinia'
 import { computed, ComputedRef, Ref, ref, watch } from 'vue'
 
 import { api } from '@/services/api'
 // import { preProcessData } from '@/utils/observationsUtils'
 import { useDataVisStore } from './dataVisualization'
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 // @ts-ignore no type definitions
 import Plotly from 'plotly.js-dist'
 
@@ -32,9 +31,7 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     return -1
   })
   /** The edit history for the currently selected series */
-  const editHistory: Ref<
-    { method: EnumEditOperations; args?: any[]; icon: string }[]
-  > = ref([])
+  const editHistory: Ref<HistoryItem[]> = ref([])
 
   const selectedSeries: ComputedRef<GraphSeries> = computed(() => {
     return graphSeriesArray.value[selectedSeriesIndex.value]

@@ -1,4 +1,4 @@
-import { Datastream, EnumDictionary } from '@/types'
+import { Datastream, EnumDictionary, HistoryItem } from '@/types'
 import {
   FilterOperation,
   FilterOperationFn,
@@ -65,7 +65,7 @@ export class ObservationRecord {
       ),
     },
   }
-  history: { method: EnumEditOperations; args?: any[]; icon: string }[]
+  history: HistoryItem[]
   isLoading: boolean
   ds: Datastream
 
@@ -227,20 +227,41 @@ export class ObservationRecord {
         for (let i = 0; i < action.length; i++) {
           const method = action[i][0]
           const actionArgs = action[i].slice(1, action[i].length)
-          const res = await actions[method].apply(this, actionArgs)
-
-          response.push(res)
-          this.history.push({
+          const historyItem = {
             method,
             args: actionArgs,
             icon: editIcons[method],
-          })
+            isLoading: false,
+          }
+          this.history.push(historyItem)
         }
         editHistory.value = [...this.history]
+
+        for (
+          let i = this.history.length - action.length;
+          i < this.history.length;
+          i++
+        ) {
+          const historyItem = this.history[i]
+          historyItem.isLoading = true
+          const res = await actions[historyItem.method].apply(
+            this,
+            historyItem.args
+          )
+          historyItem.isLoading = false
+          response.push(res)
+        }
       } else {
-        response = await actions[action].apply(this, args)
-        this.history.push({ method: action, args, icon: editIcons[action] })
+        const historyItem = {
+          method: action,
+          args,
+          icon: editIcons[action],
+          isLoading: true,
+        }
+        this.history.push(historyItem)
         editHistory.value = [...this.history]
+        response = await actions[action].apply(this, args)
+        historyItem.isLoading = false
       }
     } catch (e) {
       console.log(

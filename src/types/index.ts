@@ -1,4 +1,7 @@
-import { ObservationRecord } from '@/utils/plotting/observationRecord'
+import {
+  EnumEditOperations,
+  ObservationRecord,
+} from '@/utils/plotting/observationRecord'
 
 export type EnumDictionary<T extends string | symbol | number, U> = {
   [K in T]: U
@@ -8,6 +11,15 @@ export type DataPoint = {
   date: Date
   value: number
   qualifierValue: string[]
+}
+
+export type HistoryItem = {
+  method: EnumEditOperations
+  icon: string
+  isLoading: boolean
+  args?: any[]
+  duration?: number
+  status?: 'success' | 'failed'
 }
 
 export interface PartialQualifier {
