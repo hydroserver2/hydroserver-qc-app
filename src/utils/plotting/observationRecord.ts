@@ -32,7 +32,10 @@ export enum EnumFilterOperations {
   VALUE_THRESHOLD = 'VALUE_THRESHOLD',
 }
 
-export const MAX_DATA_POINTS = 400 * 1000
+// This number should approximate the max number of observations that a dataset could typically reach.
+// The lower this number, the less memory the entire app uses.
+// Note that when a dataset surpasses `MAX_DATA_POINTS` elements, the `growBuffer()` method needs to be called and frequent calls can be very demanding.
+export const MAX_DATA_POINTS = 20 * 1000
 
 const components = ['date', 'value', 'qualifier']
 
@@ -88,12 +91,11 @@ export class ObservationRecord {
     }
     const { editHistory } = storeToRefs(usePlotlyStore())
 
-    // TODO: error when restoring to start
-    this.growBuffer()
+    this.growBuffer(dataArrays.datetimes.length)
     this.resizeTo(dataArrays.datetimes.length)
 
-    this.dataset.source.x.set(dataArrays.datetimes)
-    this.dataset.source.y.set(dataArrays.dataValues)
+    this.dataX.set(dataArrays.datetimes)
+    this.dataY.set(dataArrays.dataValues)
 
     this.history.length = 0
     editHistory.value = []
@@ -128,25 +130,51 @@ export class ObservationRecord {
    * Buffer size is always in increments of `MAX_DATA_POINTS`.
    * Grows the buffer by `MAX_DATA_POINTS` in bytes if the current data doesn't fit
    */
-  growBuffer() {
-    const dataArrayByteSizeX =
-      this.dataX.length * Float64Array.BYTES_PER_ELEMENT
+  growBuffer(newLength: number) {
+    const dataArrayByteSizeX = newLength * Float64Array.BYTES_PER_ELEMENT
 
-    while (dataArrayByteSizeX > this.dataX.buffer.byteLength) {
-      this._growBuffer(MAX_DATA_POINTS)
+    let maxLengthBytes = this.dataX.buffer.byteLength
+    while (dataArrayByteSizeX > maxLengthBytes) {
+      maxLengthBytes += MAX_DATA_POINTS * Float64Array.BYTES_PER_ELEMENT
     }
+    this._growBuffer(newLength, maxLengthBytes / Float64Array.BYTES_PER_ELEMENT)
   }
 
   /**
    * @param growth Number of array elements to allocate space for
    */
-  private _growBuffer(growth: number) {
-    this.dataX.buffer.grow(
-      (this.dataX.buffer.byteLength + growth) * Float64Array.BYTES_PER_ELEMENT
-    )
-    this.dataY.buffer.grow(
-      (this.dataY.buffer.byteLength + growth) * Float32Array.BYTES_PER_ELEMENT
-    )
+  private _growBuffer(newLength: number, maxLength: number) {
+    if (
+      maxLength * Float64Array.BYTES_PER_ELEMENT >
+      this.dataX.buffer.maxByteLength
+    ) {
+      // More space is needed to allocate the data, so a new buffer needs to be allocated.
+      const outputBufferX = new SharedArrayBuffer(
+        this.dataX.buffer.byteLength,
+        {
+          maxByteLength: maxLength * Float64Array.BYTES_PER_ELEMENT,
+        }
+      )
+
+      const outputBufferY = new SharedArrayBuffer(
+        this.dataY.buffer.byteLength,
+        {
+          maxByteLength: maxLength * Float32Array.BYTES_PER_ELEMENT,
+        }
+      )
+
+      const outputArrayX = new Float64Array(outputBufferX)
+      const outputArrayY = new Float32Array(outputBufferY)
+      outputArrayX.set(this.dataX)
+      outputArrayY.set(this.dataY)
+
+      // Swap to the new array and buffer
+      this.dataset.source.x = outputArrayX
+      this.dataset.source.y = outputArrayY
+    }
+
+    this.dataX.buffer.grow(newLength * Float64Array.BYTES_PER_ELEMENT)
+    this.dataY.buffer.grow(newLength * Float32Array.BYTES_PER_ELEMENT)
   }
 
   /**
@@ -608,7 +636,8 @@ export class ObservationRecord {
    */
   private async _addDataPoints(dataPoints: [number, number][]) {
     // Check if more space is needed
-    this.growBuffer()
+    const newLength = this.dataX.length + dataPoints.length
+    this.growBuffer(newLength)
     // Sort the datapoints by datetime in reverse order
     dataPoints.sort((a, b) => {
       return a[0] - b[0]
@@ -618,12 +647,10 @@ export class ObservationRecord {
       return findLastLessOrEqual(this.dataX, point[0]) + 1
     })
 
-    const newLength = this.dataX.length + dataPoints.length
     this.resizeTo(newLength) // The space needs to be allocated before insertion can happen
 
     insertIndex.push(this.dataX.length)
 
-    const inserted: number[] = []
     // Shift elements to the right to make room for the items to insert
     let toInsert = dataPoints.length
     for (let i = insertIndex.length - 1; i > 0; i--) {
@@ -633,14 +660,10 @@ export class ObservationRecord {
       for (let n = right; n >= left; n--) {
         this.dataX[n + toInsert] = this.dataX[n]
         this.dataY[n + toInsert] = this.dataY[n]
-        if (inserted.includes(n + toInsert)) {
-          debugger
-        }
       }
       toInsert--
       this.dataX[left + toInsert] = dataPoints[i - 1][0]
       this.dataY[left + toInsert] = dataPoints[i - 1][1]
-      inserted.push(left + toInsert)
     }
   }
 
