@@ -70,10 +70,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, Ref } from 'vue'
 import type { MaskInputOptions } from 'maska'
-
-const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
-const { redraw } = usePlotlyStore()
-
 import { vMaska } from 'maska/vue'
 import { ref } from 'vue'
 import { dateTimeFormat, required, requiredNumber } from '@/utils/rules'
@@ -81,6 +77,9 @@ import { VForm } from 'vuetify/lib/components/index.mjs'
 import { storeToRefs } from 'pinia'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
+
+const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
+const { redraw } = usePlotlyStore()
 
 const form = ref<InstanceType<typeof VForm>>()
 
@@ -97,7 +96,7 @@ const options = reactive<MaskInputOptions>({
 })
 
 const addRow = () => {
-  dataPoints.value.push(['', 0, { resultQualifiers: [] }])
+  dataPoints.value.push(['2023-01-01 12:00:00', 0, { resultQualifiers: [] }])
   form.value?.validate()
 }
 
@@ -139,7 +138,7 @@ const onAddDataPoints = async () => {
     )
 
     isUpdating.value = false
-    await redraw()
+    await redraw(true)
     emit('close')
   })
 }

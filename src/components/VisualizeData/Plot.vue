@@ -58,7 +58,7 @@ import { usePlotlyStore } from '@/store/plotly'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import {
-  findLowerBound,
+  findFirstGreaterOrEqual,
   handleClick,
   handleDeselect,
   handleDoubleClick,
@@ -115,11 +115,11 @@ onMounted(async () => {
 
         // Find visible points count
         // Plotly does not return the indexes. We must find them using binary seach
-        const startIdx = findLowerBound(
+        const startIdx = findFirstGreaterOrEqual(
           plotlyRef.value?.data[0].x,
           layoutUpdates.xaxis.range[0]
         )
-        const endIdx = findLowerBound(
+        const endIdx = findFirstGreaterOrEqual(
           plotlyRef.value?.data[0].x,
           layoutUpdates.xaxis.range[1]
         )

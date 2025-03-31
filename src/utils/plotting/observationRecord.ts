@@ -15,7 +15,7 @@ import { shiftDatetime, timeUnitMultipliers } from '../formatDate'
 import {
   findFirstGreaterOrEqual,
   findLastLessOrEqual,
-  findLowerBound,
+  findFirstGreaterOrEqual,
 } from './plotly'
 
 export enum EnumEditOperations {
@@ -54,14 +54,20 @@ export class ObservationRecord {
     dimensions: components,
     source: {
       x: new Float64Array(
-        new SharedArrayBuffer(0, {
-          maxByteLength: MAX_DATA_POINTS * Float64Array.BYTES_PER_ELEMENT, // Max size the array can reach
-        })
+        new SharedArrayBuffer(
+          MAX_DATA_POINTS * Float64Array.BYTES_PER_ELEMENT,
+          {
+            maxByteLength: MAX_DATA_POINTS * Float64Array.BYTES_PER_ELEMENT, // Max size the array can reach
+          }
+        )
       ),
       y: new Float32Array(
-        new SharedArrayBuffer(0, {
-          maxByteLength: MAX_DATA_POINTS * Float32Array.BYTES_PER_ELEMENT, // Max size the array can reach
-        })
+        new SharedArrayBuffer(
+          MAX_DATA_POINTS * Float32Array.BYTES_PER_ELEMENT,
+          {
+            maxByteLength: MAX_DATA_POINTS * Float32Array.BYTES_PER_ELEMENT, // Max size the array can reach
+          }
+        )
       ),
     },
   }
@@ -84,51 +90,11 @@ export class ObservationRecord {
       return
     }
 
-    const dataArrayByteSizeX =
-      dataArrays.dataValues.length * BigUint64Array.BYTES_PER_ELEMENT
+    // TODO: error when restoring to start
+    this.growBuffer()
+    this.resizeTo(dataArrays.datetimes.length)
 
-    const dataArrayByteSizeY =
-      dataArrays.dataValues.length * Float32Array.BYTES_PER_ELEMENT
-
-    if (dataArrayByteSizeY > this.dataset.source.y.buffer.maxByteLength) {
-      console.log('Edge case.')
-      // Edge case. If a dataset has more than the buffer's max length, use a larger buffer.
-      // TODO: Plotly reference to the data array will be invalidated. Must call Plotly.update which is undesirable.
-
-      this.dataset.source.x = new Float64Array(
-        new SharedArrayBuffer(dataArrayByteSizeX, {
-          maxByteLength:
-            (dataArrays.dataValues.length + MAX_DATA_POINTS) *
-            BigUint64Array.BYTES_PER_ELEMENT,
-        })
-      )
-
-      this.dataset.source.y = new Float32Array(
-        new SharedArrayBuffer(dataArrayByteSizeY, {
-          maxByteLength:
-            (dataArrays.dataValues.length + MAX_DATA_POINTS) *
-            Float32Array.BYTES_PER_ELEMENT,
-        })
-      )
-    }
-
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer/grow
-    if (this.dataset.source.y.buffer.byteLength < dataArrayByteSizeY) {
-      this.dataset.source.x.buffer.grow(dataArrayByteSizeX)
-      this.dataset.source.y.buffer.grow(dataArrayByteSizeY)
-    }
-
-    // We need to resize the view to match our data length,
-    // but TypedArrays using SharedArrayBuffer can't shrink.
-    // Recreate the view to effectively resize it
-    this.dataset.source.x = new Float64Array(
-      this.dataset.source.x.buffer
-    ).subarray(0, dataArrays.datetimes.length)
     this.dataset.source.x.set(dataArrays.datetimes)
-
-    this.dataset.source.y = new Float32Array(
-      this.dataset.source.y.buffer
-    ).subarray(0, dataArrays.dataValues.length)
     this.dataset.source.y.set(dataArrays.dataValues)
 
     this.history.length = 0
@@ -141,6 +107,47 @@ export class ObservationRecord {
 
   get dataY() {
     return this.dataset.source.y
+  }
+
+  /**
+   * Resizes the typed array
+   */
+  resizeTo(length: number) {
+    // We need to resize the view to match our data length,
+    // but TypedArrays using SharedArrayBuffer can't shrink.
+    // Recreate the view to effectively resize it
+    this.dataset.source.x = new Float64Array(
+      this.dataset.source.x.buffer
+    ).subarray(0, length)
+
+    this.dataset.source.y = new Float32Array(
+      this.dataset.source.y.buffer
+    ).subarray(0, length)
+  }
+
+  /**
+   * Buffer size is always in increments of `MAX_DATA_POINTS`.
+   * Grows the buffer by `MAX_DATA_POINTS` in bytes if the current data doesn't fit
+   */
+  growBuffer() {
+    const dataArrayByteSizeX =
+      this.dataX.length * Float64Array.BYTES_PER_ELEMENT
+
+    while (dataArrayByteSizeX > this.dataX.buffer.byteLength) {
+      this._growBuffer(MAX_DATA_POINTS)
+    }
+  }
+
+  /**
+   * @param growth Number of array elements to allocate space for
+   */
+  private _growBuffer(growth: number) {
+    this.dataX.buffer.grow(
+      (this.dataX.buffer.byteLength + growth) * Float64Array.BYTES_PER_ELEMENT
+    )
+    this.dataY.buffer.grow(
+      (this.dataY.buffer.byteLength + growth) * Float32Array.BYTES_PER_ELEMENT
+    )
   }
 
   /**
@@ -485,23 +492,31 @@ export class ObservationRecord {
     const promises = []
     const newLength = this.dataX.length - deleteIndices.length
 
-    // To avoid workers reading from a memory address where another working is writing to, we use separate output buffers.
-    const outputBufferX = new SharedArrayBuffer(
-      newLength * Float64Array.BYTES_PER_ELEMENT,
-      {
-        maxByteLength:
-          (newLength + MAX_DATA_POINTS) * Float64Array.BYTES_PER_ELEMENT,
-      }
-    )
+    // // To avoid workers reading from a memory address where another working is writing to, we use separate output buffers.
+    const outputBufferX = new SharedArrayBuffer(this.dataX.buffer.byteLength, {
+      maxByteLength: this.dataX.buffer.maxByteLength,
+    })
 
-    const outputBufferY = new SharedArrayBuffer(
-      (this.dataY.length - deleteIndices.length) *
-        Float32Array.BYTES_PER_ELEMENT,
-      {
-        maxByteLength:
-          (newLength + MAX_DATA_POINTS) * Float32Array.BYTES_PER_ELEMENT,
-      }
-    )
+    const outputBufferY = new SharedArrayBuffer(this.dataY.buffer.byteLength, {
+      maxByteLength: this.dataY.buffer.maxByteLength,
+    })
+
+    // const outputBufferX = new SharedArrayBuffer(
+    //   newLength * Float64Array.BYTES_PER_ELEMENT,
+    //   {
+    //     maxByteLength:
+    //       (newLength + MAX_DATA_POINTS) * Float64Array.BYTES_PER_ELEMENT,
+    //   }
+    // )
+
+    // const outputBufferY = new SharedArrayBuffer(
+    //   (this.dataY.length - deleteIndices.length) *
+    //     Float32Array.BYTES_PER_ELEMENT,
+    //   {
+    //     maxByteLength:
+    //       (newLength + MAX_DATA_POINTS) * Float32Array.BYTES_PER_ELEMENT,
+    //   }
+    // )
 
     // Compute startTarget for each segment and start workers
     for (let i = 0; i < numWorkers; i++) {
@@ -538,6 +553,7 @@ export class ObservationRecord {
 
     this.dataset.source.x = new Float64Array(outputBufferX)
     this.dataset.source.y = new Float32Array(outputBufferY)
+    this.resizeTo(newLength)
   }
 
   /**
@@ -586,34 +602,45 @@ export class ObservationRecord {
   }
 
   /**
-   * Adds data points. Their insert index is determined using `_findLowerBound` in the x-axis.
+   * Adds data points. Their insert index is determined using `findFirstGreaterOrEqual` in the x-axis.
    * @param dataPoints
    */
-  private _addDataPoints(dataPoints: [number, number][]) {
-    dataPoints.sort((a, b) => b[0] - a[0])
+  private async _addDataPoints(dataPoints: [number, number][]) {
+    // Check if more space is needed
+    this.growBuffer()
+    // Sort the datapoints by datetime in reverse order
+    dataPoints.sort((a, b) => {
+      return a[0] - b[0]
+    })
 
-    let lowerBound = findLowerBound(this.dataX, dataPoints[0][0])
-    const toInsertX: number[] = []
-    const toInsertY: number[] = []
+    const insertIndex = dataPoints.map((point) => {
+      return findLastLessOrEqual(this.dataX, point[0]) + 1
+    })
 
-    /** Iterate through the points to add and find their insert index. Minimize the number of splice operations because they are costly. */
-    for (let i = 0; i < dataPoints.length; i++) {
-      const d = dataPoints[i]
-      if (this.dataset.source.x[lowerBound] > d[0]) {
-        // lowerBound crossed, insert the collected items
-        this.dataset.source.x.splice(lowerBound + 1, 0, ...toInsertX)
-        this.dataset.source.y.splice(lowerBound + 1, 0, ...toInsertY)
-        toInsertX.length = 0
-        toInsertY.length = 0
-        lowerBound = findLowerBound(this.dataX, d[0])
+    const newLength = this.dataX.length + dataPoints.length
+    this.resizeTo(newLength) // The space needs to be allocated before insertion can happen
+
+    insertIndex.push(this.dataX.length)
+
+    const inserted: number[] = []
+    // Shift elements to the right to make room for the items to insert
+    let toInsert = dataPoints.length
+    for (let i = insertIndex.length - 1; i > 0; i--) {
+      const left = insertIndex[i - 1]
+      const right = insertIndex[i] - 1
+
+      for (let n = right; n >= left; n--) {
+        this.dataX[n + toInsert] = this.dataX[n]
+        this.dataY[n + toInsert] = this.dataY[n]
+        if (inserted.includes(n + toInsert)) {
+          debugger
+        }
       }
-
-      toInsertX.splice(0, 0, d[0])
-      toInsertY.splice(0, 0, d[1])
+      toInsert--
+      this.dataX[left + toInsert] = dataPoints[i - 1][0]
+      this.dataY[left + toInsert] = dataPoints[i - 1][1]
+      inserted.push(left + toInsert)
     }
-    // Leftovers in last iteration
-    this.dataset.source.x.splice(lowerBound + 1, 0, ...toInsertX)
-    this.dataset.source.y.splice(lowerBound + 1, 0, ...toInsertY)
   }
 
   // =======================
