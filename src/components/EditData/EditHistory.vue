@@ -43,9 +43,22 @@
           <div class="d-flex align-center">
             <v-expansion-panels>
               <v-expansion-panel>
-                <v-expansion-panel-title color="grey-lighten-4">
-                  {{ entry.method }}</v-expansion-panel-title
+                <v-expansion-panel-title
+                  color="grey-lighten-4 d-flex align-flex-start"
                 >
+                  <div>{{ entry.method }}</div>
+                  <template v-if="entry.duration">
+                    <v-spacer></v-spacer>
+                    <div class="text-medium-emphasis">
+                      {{
+                        entry.duration > 1000
+                          ? (entry.duration / 1000).toFixed(2) + ' s'
+                          : entry.duration.toFixed(0) + ' ms'
+                      }}
+                    </div>
+                  </template>
+                </v-expansion-panel-title>
+
                 <v-expansion-panel-text>
                   <div class="text-caption mb-2">Arguments:</div>
                   <ul class="text-caption px-2">

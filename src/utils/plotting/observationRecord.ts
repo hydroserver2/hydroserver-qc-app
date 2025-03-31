@@ -12,11 +12,8 @@ import { storeToRefs } from 'pinia'
 import { useObservationStore } from '@/store/observations'
 import { usePlotlyStore } from '@/store/plotly'
 import { shiftDatetime, timeUnitMultipliers } from '../formatDate'
-import {
-  findFirstGreaterOrEqual,
-  findLastLessOrEqual,
-  findFirstGreaterOrEqual,
-} from './plotly'
+import { findLastLessOrEqual, findFirstGreaterOrEqual } from './plotly'
+import { measureEllapsedTime } from '../ellapsedTime'
 
 export enum EnumEditOperations {
   ADD_POINTS = 'ADD_POINTS',
@@ -89,6 +86,7 @@ export class ObservationRecord {
     if (!dataArrays) {
       return
     }
+    const { editHistory } = storeToRefs(usePlotlyStore())
 
     // TODO: error when restoring to start
     this.growBuffer()
@@ -98,6 +96,7 @@ export class ObservationRecord {
     this.dataset.source.y.set(dataArrays.dataValues)
 
     this.history.length = 0
+    editHistory.value = []
     this.isLoading = false
   }
 
@@ -227,14 +226,14 @@ export class ObservationRecord {
       [EnumEditOperations.FILL_GAPS]: 'mdi-keyboard-space',
     }
 
-    let response = []
+    let response: any[] = []
 
     try {
       if (Array.isArray(action)) {
         for (let i = 0; i < action.length; i++) {
           const method = action[i][0]
           const actionArgs = action[i].slice(1, action[i].length)
-          const historyItem = {
+          const historyItem: HistoryItem = {
             method,
             args: actionArgs,
             icon: editIcons[method],
@@ -251,15 +250,19 @@ export class ObservationRecord {
         ) {
           const historyItem = this.history[i]
           historyItem.isLoading = true
-          const res = await actions[historyItem.method].apply(
-            this,
-            historyItem.args
-          )
+
+          const measurement = await measureEllapsedTime(async () => {
+            return await actions[historyItem.method].apply(
+              this,
+              historyItem.args
+            )
+          })
+          historyItem.duration = measurement.duration
           historyItem.isLoading = false
-          response.push(res)
+          response.push(measurement.response)
         }
       } else {
-        const historyItem = {
+        const historyItem: HistoryItem = {
           method: action,
           args,
           icon: editIcons[action],
@@ -267,7 +270,11 @@ export class ObservationRecord {
         }
         this.history.push(historyItem)
         editHistory.value = [...this.history]
-        response = await actions[action].apply(this, args)
+        const measurement = await measureEllapsedTime(async () => {
+          return await actions[action].apply(this, args)
+        })
+        response = measurement.response
+        historyItem.duration = measurement.duration
         historyItem.isLoading = false
       }
     } catch (e) {
@@ -391,17 +398,15 @@ export class ObservationRecord {
    * @param unit {@link TimeUnit}
    * @returns
    */
-  private _shift(index: number[], amount: number, unit: TimeUnit) {
-    const xData = this.dataset.source.x
-    const yData = this.dataset.source.y
-
+  private async _shift(index: number[], amount: number, unit: TimeUnit) {
     // Collection that will be re-added using `_addDataPoints`
     const collection: [number, number][] = index.map((i) => [
-      shiftDatetime(xData[i], amount, unit),
-      yData[i],
+      shiftDatetime(this.dataX[i], amount, unit),
+      this.dataY[i],
     ])
-    this._deleteDataPoints(index)
-    this._addDataPoints(collection)
+    // TODO: add dedicated method to do these in one go
+    await this._deleteDataPoints(index)
+    await this._addDataPoints(collection)
   }
 
   /**
@@ -425,8 +430,7 @@ export class ObservationRecord {
       const currentGap = gaps[i]
       const leftDatetime = dataX[currentGap[0]]
       const rightDatetime = dataX[currentGap[1]]
-      const fillX: number[] = []
-      const fillY: number[] = []
+      const fillPoints: [number, number][] = []
 
       // TODO: number of seconds in a year or month is not constant
       // Use setMonth and setFullYear instead
@@ -444,14 +448,11 @@ export class ObservationRecord {
             )
           : -9999
 
-        fillX.push(nextFillDatetime)
-        fillY.push(val)
+        fillPoints.push([nextFillDatetime, val])
         nextFillDatetime += fillDelta
       }
 
-      // TODO: fill in a typed array
-      // dataX (fillX, currentGap[0] + 1)
-      // dataY (fillY, currentGap[0] + 1)
+      this._addDataPoints(fillPoints)
     }
   }
 
@@ -722,7 +723,7 @@ export class ObservationRecord {
 
     let prevDatetime = dataX[start]
 
-    for (let i = start + 1; i < end; i++) {
+    for (let i = start + 1; i <= end; i++) {
       const curr = dataX[i]
       const delta = curr - prevDatetime // milliseconds
 
