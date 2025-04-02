@@ -46,7 +46,7 @@ export class ObservationRecord {
     dimensions: string[]
     source: {
       // Store datetimes in a Float64Array because there is no UInt64Array in JavaScript
-      // And plotly can't parse BigInts right
+      // And plotly can't parse BigInts correctly.
       x: Float64Array<SharedArrayBuffer>
       y: Float32Array<SharedArrayBuffer>
     }
@@ -129,37 +129,32 @@ export class ObservationRecord {
   /**
    * Buffer size is always in increments of `MAX_DATA_POINTS`.
    * Grows the buffer by `MAX_DATA_POINTS` in bytes if the current data doesn't fit
+   * @param newLength Number of array elements to allocate space for
    */
-  growBuffer(newLength: number) {
+  private growBuffer(newLength: number) {
     const dataArrayByteSizeX = newLength * Float64Array.BYTES_PER_ELEMENT
 
-    let maxLengthBytes = this.dataX.buffer.byteLength
-    while (dataArrayByteSizeX > maxLengthBytes) {
-      maxLengthBytes += MAX_DATA_POINTS * Float64Array.BYTES_PER_ELEMENT
+    let maxByteLengthNeeded = this.dataX.buffer.byteLength
+    while (dataArrayByteSizeX > maxByteLengthNeeded) {
+      maxByteLengthNeeded += MAX_DATA_POINTS * Float64Array.BYTES_PER_ELEMENT
     }
-    this._growBuffer(newLength, maxLengthBytes / Float64Array.BYTES_PER_ELEMENT)
-  }
 
-  /**
-   * @param growth Number of array elements to allocate space for
-   */
-  private _growBuffer(newLength: number, maxLength: number) {
     if (
-      maxLength * Float64Array.BYTES_PER_ELEMENT >
+      maxByteLengthNeeded * Float64Array.BYTES_PER_ELEMENT >
       this.dataX.buffer.maxByteLength
     ) {
-      // More space is needed to allocate the data, so a new buffer needs to be allocated.
+      // More space is needed, beyond the maxByteLength initially set, to allocate the data. A new buffer needs to be allocated.
       const outputBufferX = new SharedArrayBuffer(
         this.dataX.buffer.byteLength,
         {
-          maxByteLength: maxLength * Float64Array.BYTES_PER_ELEMENT,
+          maxByteLength: maxByteLengthNeeded * Float64Array.BYTES_PER_ELEMENT,
         }
       )
 
       const outputBufferY = new SharedArrayBuffer(
         this.dataY.buffer.byteLength,
         {
-          maxByteLength: maxLength * Float32Array.BYTES_PER_ELEMENT,
+          maxByteLength: maxByteLengthNeeded * Float32Array.BYTES_PER_ELEMENT,
         }
       )
 
@@ -173,8 +168,13 @@ export class ObservationRecord {
       this.dataset.source.y = outputArrayY
     }
 
-    this.dataX.buffer.grow(newLength * Float64Array.BYTES_PER_ELEMENT)
-    this.dataY.buffer.grow(newLength * Float32Array.BYTES_PER_ELEMENT)
+    if (
+      this.dataX.buffer.byteLength <
+      newLength * Float64Array.BYTES_PER_ELEMENT
+    ) {
+      this.dataX.buffer.grow(newLength * Float64Array.BYTES_PER_ELEMENT)
+      this.dataY.buffer.grow(newLength * Float32Array.BYTES_PER_ELEMENT)
+    }
   }
 
   /**
@@ -444,6 +444,7 @@ export class ObservationRecord {
    * @param interpolateValues If true, the new values will be linearly interpolated
    * @returns
    */
+  // TODO: this needs to be improved using web workers
   private _fillGaps(
     gap: [number, TimeUnit],
     fill: [number, TimeUnit],
