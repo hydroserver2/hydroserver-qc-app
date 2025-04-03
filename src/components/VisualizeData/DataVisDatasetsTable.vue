@@ -78,7 +78,7 @@
           <template v-else-if="!!observationsRaw[item.id]">
             <v-icon
               color="primary"
-              :title="`${observationsRaw[item.id].length} observation(s)`"
+              :title="`${observationsRaw[item.id].datetimes.length} observation(s)`"
               >mdi-database-check</v-icon
             >
           </template>

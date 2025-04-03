@@ -84,7 +84,10 @@ export class ObservationRecord {
     this.loadData(observationsRaw.value[this.ds.id])
   }
 
-  async loadData(dataArrays: { datetimes: number[]; dataValues: number[] }) {
+  async loadData(dataArrays: {
+    datetimes: Float64Array<ArrayBuffer>
+    dataValues: Float32Array<ArrayBuffer>
+  }) {
     if (!dataArrays) {
       return
     }

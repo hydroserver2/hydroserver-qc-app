@@ -7,9 +7,15 @@ import { ObservationRecord } from '@/utils/plotting/observationRecord'
 export const useObservationStore = defineStore(
   'observations',
   () => {
-    const observations = ref<Record<string, ObservationRecord>>({}) // TODO: make persistent
+    const observations = ref<Record<string, ObservationRecord>>({})
     const observationsRaw = ref<
-      Record<string, { datetimes: number[]; dataValues: number[] }>
+      Record<
+        string,
+        {
+          datetimes: Float64Array<ArrayBuffer>
+          dataValues: Float32Array<ArrayBuffer>
+        }
+      >
     >({})
 
     /**
@@ -39,10 +45,10 @@ export const useObservationStore = defineStore(
       }> = Promise.resolve({ datetimes: [], dataValues: [] })
 
       if (observationsRaw.value[id]?.dataValues.length) {
-        const rawBeginDatetime: Date = new Date(
+        const rawBeginDatetime = new Date(
           observationsRaw.value[id].datetimes[0]
         )
-        const rawEndDatetime: Date = new Date(
+        const rawEndDatetime = new Date(
           observationsRaw.value[id].datetimes[
             observationsRaw.value[id].datetimes.length - 1
           ]
@@ -76,34 +82,44 @@ export const useObservationStore = defineStore(
       ])
 
       if (!observationsRaw.value[id]) {
-        observationsRaw.value[id] = { datetimes: [], dataValues: [] }
-        // observationsRaw.value[id].datetimes = []
-      }
-
-      if (beginData.dataValues.length > 0) {
         observationsRaw.value[id] = {
-          datetimes: [
-            ...beginData.datetimes,
-            ...observationsRaw.value[id].datetimes,
-          ],
-          dataValues: [
-            ...beginData.dataValues,
-            ...observationsRaw.value[id].dataValues,
-          ],
+          datetimes: new Float64Array(0),
+          dataValues: new Float32Array(0),
         }
       }
 
-      if (endData.dataValues.length > 0) {
-        observationsRaw.value[id] = {
-          datetimes: [
-            ...observationsRaw.value[id].datetimes,
-            ...endData.datetimes,
-          ],
-          dataValues: [
-            ...observationsRaw.value[id].dataValues,
-            ...endData.dataValues,
-          ],
-        }
+      if (beginData.dataValues.length > 0 || endData.dataValues.length > 0) {
+        const newLength =
+          beginData.dataValues.length +
+          endData.dataValues.length +
+          observationsRaw.value[id].dataValues.length
+        const newBufferX = new ArrayBuffer(
+          newLength * Float64Array.BYTES_PER_ELEMENT
+        )
+        const newBufferY = new ArrayBuffer(
+          newLength * Float32Array.BYTES_PER_ELEMENT
+        )
+
+        const newArrayX = new Float64Array(newBufferX)
+        const newArrayY = new Float32Array(newBufferY)
+
+        // Begin data
+        let offset = 0
+        newArrayX.set(beginData.datetimes, offset)
+        newArrayY.set(beginData.dataValues, offset)
+
+        // Previous data
+        offset += beginData.datetimes.length
+        newArrayX.set(observationsRaw.value[id].datetimes, offset)
+        newArrayY.set(observationsRaw.value[id].dataValues, offset)
+
+        // End data
+        offset += endData.datetimes.length
+        newArrayX.set(endData.datetimes, offset)
+        newArrayY.set(endData.dataValues, offset)
+
+        observationsRaw.value[id].datetimes = newArrayX
+        observationsRaw.value[id].dataValues = newArrayY
       }
 
       if (beginData.dataValues.length || endData.dataValues.length) {
@@ -123,7 +139,7 @@ export const useObservationStore = defineStore(
     persist: {
       pick: [
         // TODO: enable only in development mode
-        'observationsRaw',
+        // 'observationsRaw', // TODO: can not save buffers correctly
       ],
     },
   }
