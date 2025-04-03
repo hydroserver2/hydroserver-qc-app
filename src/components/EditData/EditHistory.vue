@@ -11,17 +11,26 @@
     <v-divider></v-divider>
 
     <v-card-text>
-      <v-empty-state
-        v-if="editHistory.length === 0"
-        icon="mdi-clock"
-        text="Edit your data and manage your changes here."
-        title="Edit History"
-      />
-      <v-timeline v-else side="end" hide-opposite density="compact">
+      <v-timeline side="end" hide-opposite density="compact">
         <v-timeline-item dot-color="green" fill-dot size="small">
           <div class="d-flex align-center">
-            <span class="text-body-1 mr-2">Start</span>
+            <span v-if="selectedSeries.data.isLoading" class="text-body-1 mr-2"
+              >Loading Data...</span
+            >
+            <span v-else class="text-body-1 mr-2">Data loaded</span>
+            <v-spacer></v-spacer>
+            <div v-if="selectedSeries.data.loadingTime">
+              {{ formatDuration(selectedSeries.data.loadingTime) }}
+            </div>
+            <v-progress-circular
+              v-if="selectedSeries.data.isLoading"
+              size="20"
+              color="primary"
+              indeterminate
+              class="ma-2"
+            />
             <v-btn
+              v-else
               icon="mdi-reload"
               color="blue"
               variant="plain"
@@ -49,12 +58,8 @@
                   <div>{{ entry.method }}</div>
                   <template v-if="entry.duration">
                     <v-spacer></v-spacer>
-                    <div class="text-medium-emphasis">
-                      {{
-                        entry.duration > 1000
-                          ? (entry.duration / 1000).toFixed(2) + ' s'
-                          : entry.duration.toFixed(0) + ' ms'
-                      }}
+                    <div class="text-medium-emphasis mr-1">
+                      {{ formatDuration(entry.duration) }}
                     </div>
                   </template>
                 </v-expansion-panel-title>
@@ -81,6 +86,7 @@
                 size="20"
                 color="primary"
                 indeterminate
+                class="ma-2"
               />
               <v-btn
                 v-else
@@ -103,6 +109,13 @@
           </div>
         </v-timeline-item>
       </v-timeline>
+
+      <v-empty-state
+        v-if="editHistory.length === 0"
+        icon="mdi-clock"
+        text="Edit your data and manage your changes here."
+        title="Edit History"
+      />
     </v-card-text>
   </v-card>
 </template>
@@ -111,6 +124,7 @@
 import { storeToRefs } from 'pinia'
 import { usePlotlyStore } from '@/store/plotly'
 import { useDataSelection } from '@/composables/useDataSelection'
+import { formatDuration } from '@/utils/format'
 
 const { editHistory, selectedSeries, isUpdating } =
   storeToRefs(usePlotlyStore())

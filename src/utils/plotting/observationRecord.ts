@@ -11,7 +11,7 @@ import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
 import { useObservationStore } from '@/store/observations'
 import { usePlotlyStore } from '@/store/plotly'
-import { shiftDatetime, timeUnitMultipliers } from '../formatDate'
+import { shiftDatetime, timeUnitMultipliers } from '../format'
 import { findLastLessOrEqual, findFirstGreaterOrEqual } from './plotly'
 import { measureEllapsedTime } from '../ellapsedTime'
 
@@ -32,21 +32,22 @@ export enum EnumFilterOperations {
   VALUE_THRESHOLD = 'VALUE_THRESHOLD',
 }
 
-// This number should approximate the max number of observations that a dataset could typically reach.
-// The lower this number, the less memory the entire app uses.
-// Note that when a dataset surpasses `MAX_DATA_POINTS` elements, the `growBuffer()` method needs to be called and frequent calls can be very demanding.
-export const MAX_DATA_POINTS = 20 * 1000
+/**
+ * This number should approximate the number of observations that a dataset could increase by during a session.
+ * The lower this number, the less memory the entire app uses.
+ * Note that when a dataset number of data points increases by more than `INCREASE_AMOUNT`,
+ * the `_growBuffer()` method will allocate a new buffer, and the data will be copied into it.
+ */
+export const INCREASE_AMOUNT = 20 * 1000
 
-const components = ['date', 'value', 'qualifier']
+const components = ['date', 'value', 'qualifier'] // TODO: `qualifier` unused for now...
 
 export class ObservationRecord {
-  // A JsProxy of the pandas DataFrame
   /** The generated dataset to be used for plotting */
   dataset: {
     dimensions: string[]
     source: {
-      // Store datetimes in a Float64Array because there is no UInt64Array in JavaScript
-      // And plotly can't parse BigInts correctly.
+      // Store datetimes in a Float64Array because plotly can't parse BigInts correctly.
       x: Float64Array<SharedArrayBuffer>
       y: Float32Array<SharedArrayBuffer>
     }
@@ -55,47 +56,50 @@ export class ObservationRecord {
     source: {
       x: new Float64Array(
         new SharedArrayBuffer(
-          MAX_DATA_POINTS * Float64Array.BYTES_PER_ELEMENT,
+          INCREASE_AMOUNT * Float64Array.BYTES_PER_ELEMENT,
           {
-            maxByteLength: MAX_DATA_POINTS * Float64Array.BYTES_PER_ELEMENT, // Max size the array can reach
+            maxByteLength: INCREASE_AMOUNT * Float64Array.BYTES_PER_ELEMENT, // Max size the array can reach
           }
         )
       ),
       y: new Float32Array(
         new SharedArrayBuffer(
-          MAX_DATA_POINTS * Float32Array.BYTES_PER_ELEMENT,
+          INCREASE_AMOUNT * Float32Array.BYTES_PER_ELEMENT,
           {
-            maxByteLength: MAX_DATA_POINTS * Float32Array.BYTES_PER_ELEMENT, // Max size the array can reach
+            maxByteLength: INCREASE_AMOUNT * Float32Array.BYTES_PER_ELEMENT, // Max size the array can reach
           }
         )
       ),
     },
   }
-  history: HistoryItem[]
-  isLoading: boolean
+  history: HistoryItem[] = []
+  loadingTime: number | null = null
+  isLoading: boolean = true
   ds: Datastream
 
   constructor(ds: Datastream) {
     const { observationsRaw } = storeToRefs(useObservationStore())
-
     this.history = []
     this.ds = ds
-    this.isLoading = true
-
     this.loadData(observationsRaw.value[this.ds.id])
   }
 
-  loadData(dataArrays: { datetimes: number[]; dataValues: number[] }) {
+  async loadData(dataArrays: { datetimes: number[]; dataValues: number[] }) {
     if (!dataArrays) {
       return
     }
+    this.isLoading = true
     const { editHistory } = storeToRefs(usePlotlyStore())
 
-    this.growBuffer(dataArrays.datetimes.length)
-    this.resizeTo(dataArrays.datetimes.length)
+    const measurement = await measureEllapsedTime(() => {
+      this._growBuffer(dataArrays.datetimes.length)
+      this._resizeTo(dataArrays.datetimes.length)
 
-    this.dataX.set(dataArrays.datetimes)
-    this.dataY.set(dataArrays.dataValues)
+      this.dataX.set(dataArrays.datetimes)
+      this.dataY.set(dataArrays.dataValues)
+    })
+
+    this.loadingTime = measurement.duration
 
     this.history.length = 0
     editHistory.value = []
@@ -112,8 +116,9 @@ export class ObservationRecord {
 
   /**
    * Resizes the typed array
+   * @param length The total number of elements that the view will contain
    */
-  resizeTo(length: number) {
+  private _resizeTo(length: number) {
     // We need to resize the view to match our data length,
     // but TypedArrays using SharedArrayBuffer can't shrink.
     // Recreate the view to effectively resize it
@@ -127,16 +132,16 @@ export class ObservationRecord {
   }
 
   /**
-   * Buffer size is always in increments of `MAX_DATA_POINTS`.
-   * Grows the buffer by `MAX_DATA_POINTS` in bytes if the current data doesn't fit
-   * @param newLength Number of array elements to allocate space for
+   * Buffer size is always in increments of `INCREASE_AMOUNT`.
+   * Grows the buffer by `INCREASE_AMOUNT` in bytes if the current data doesn't fit
+   * @param newLength The total number of elements that the view will contain
    */
-  private growBuffer(newLength: number) {
+  private _growBuffer(newLength: number) {
     const dataArrayByteSizeX = newLength * Float64Array.BYTES_PER_ELEMENT
 
     let maxByteLengthNeeded = this.dataX.buffer.byteLength
     while (dataArrayByteSizeX > maxByteLengthNeeded) {
-      maxByteLengthNeeded += MAX_DATA_POINTS * Float64Array.BYTES_PER_ELEMENT
+      maxByteLengthNeeded += INCREASE_AMOUNT * Float64Array.BYTES_PER_ELEMENT
     }
 
     if (
@@ -185,9 +190,10 @@ export class ObservationRecord {
     const { fetchObservationsInRange } = useObservationStore()
     const { observationsRaw } = storeToRefs(useObservationStore())
 
+    this.loadingTime = null
+    this.isLoading = true
     await fetchObservationsInRange(this.ds, beginDate.value, endDate.value)
-
-    this.loadData(observationsRaw.value[this.ds.id])
+    await this.loadData(observationsRaw.value[this.ds.id])
   }
 
   /**
@@ -531,23 +537,6 @@ export class ObservationRecord {
       maxByteLength: this.dataY.buffer.maxByteLength,
     })
 
-    // const outputBufferX = new SharedArrayBuffer(
-    //   newLength * Float64Array.BYTES_PER_ELEMENT,
-    //   {
-    //     maxByteLength:
-    //       (newLength + MAX_DATA_POINTS) * Float64Array.BYTES_PER_ELEMENT,
-    //   }
-    // )
-
-    // const outputBufferY = new SharedArrayBuffer(
-    //   (this.dataY.length - deleteIndices.length) *
-    //     Float32Array.BYTES_PER_ELEMENT,
-    //   {
-    //     maxByteLength:
-    //       (newLength + MAX_DATA_POINTS) * Float32Array.BYTES_PER_ELEMENT,
-    //   }
-    // )
-
     // Compute startTarget for each segment and start workers
     for (let i = 0; i < numWorkers; i++) {
       const { start, end, deleteSegment } = segments[i]
@@ -583,7 +572,7 @@ export class ObservationRecord {
 
     this.dataset.source.x = new Float64Array(outputBufferX)
     this.dataset.source.y = new Float32Array(outputBufferY)
-    this.resizeTo(newLength)
+    this._resizeTo(newLength)
   }
 
   /**
@@ -638,7 +627,7 @@ export class ObservationRecord {
   private async _addDataPoints(dataPoints: [number, number][]) {
     // Check if more space is needed
     const newLength = this.dataX.length + dataPoints.length
-    this.growBuffer(newLength)
+    this._growBuffer(newLength)
     // Sort the datapoints by datetime in reverse order
     dataPoints.sort((a, b) => {
       return a[0] - b[0]
@@ -648,7 +637,7 @@ export class ObservationRecord {
       return findLastLessOrEqual(this.dataX, point[0]) + 1
     })
 
-    this.resizeTo(newLength) // The space needs to be allocated before insertion can happen
+    this._resizeTo(newLength) // The space needs to be allocated before insertion can happen
 
     insertIndex.push(this.dataX.length)
 

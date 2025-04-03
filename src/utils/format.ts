@@ -31,6 +31,31 @@ export const formatDate = (date: Date) => {
   })
 }
 
+export const formatDuration = (duration: number) => {
+  let value
+  let unit
+
+  if (duration >= MINUTE * 1000) {
+    value = duration / (MINUTE * 1000)
+    unit = 'm'
+  } else if (duration >= 1000) {
+    value = duration / 1000
+    unit = 's'
+  } else {
+    value = duration
+    unit = 'ms'
+  }
+
+  let formattedValue
+  if (unit === 'ms') {
+    formattedValue = Math.round(value).toString()
+  } else {
+    formattedValue = value.toFixed(2)
+  }
+
+  return `${formattedValue} ${unit}`
+}
+
 export const shiftDatetime = (
   datetime: number,
   amount: number,
