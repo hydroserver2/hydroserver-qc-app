@@ -41,11 +41,13 @@ import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
 import { InterpolationMethods, useUIStore } from '@/store/userInterface'
+import { useDataSelection } from '@/composables/useDataSelection'
 
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { redraw } = usePlotlyStore()
 const { selectedInterpolationMethod } = storeToRefs(useUIStore())
+const { clearSelected } = useDataSelection()
 
 const emit = defineEmits(['close'])
 
@@ -62,6 +64,7 @@ const onInterpolate = async () => {
       selectedData.value
     )
 
+    await clearSelected()
     isUpdating.value = false
     await redraw()
     emit('close')

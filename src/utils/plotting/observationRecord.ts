@@ -446,6 +446,57 @@ export class ObservationRecord {
     await this._addDataPoints(collection)
   }
 
+  private async _fillGapsV2(
+    gap: [number, TimeUnit],
+    fill: [number, TimeUnit],
+    interpolateValues: boolean,
+    range?: [number, number]
+  ) {
+    const numWorkers = navigator.hardwareConcurrency || 1
+    const workers: Worker[] = []
+    const promises = []
+    const newLength = this.dataX.length
+
+    // To avoid workers reading from a memory address where another working is writing to, we use separate output buffers.
+    const outputBufferX = new SharedArrayBuffer(this.dataX.buffer.byteLength, {
+      maxByteLength: this.dataX.buffer.maxByteLength,
+    })
+
+    const outputBufferY = new SharedArrayBuffer(this.dataY.buffer.byteLength, {
+      maxByteLength: this.dataY.buffer.maxByteLength,
+    })
+
+    // Compute startTarget for each segment and start workers
+    for (let i = 0; i < numWorkers; i++) {
+      // Spawn workers
+      promises.push(
+        new Promise((resolve) => {
+          const worker = new Worker(
+            new URL('fill-gaps.worker.ts', import.meta.url)
+          )
+          workers.push(worker)
+          worker.postMessage({
+            bufferX: this.dataX.buffer,
+            bufferY: this.dataY.buffer,
+            outputBufferX,
+            outputBufferY,
+          })
+          worker.onmessage = (event: MessageEvent) => {
+            resolve(event.data)
+          }
+        })
+      )
+    }
+
+    await Promise.all(promises)
+
+    workers.forEach((worker) => worker.terminate()) // Important to terminate the workers
+
+    this.dataset.source.x = new Float64Array(outputBufferX)
+    this.dataset.source.y = new Float32Array(outputBufferY)
+    this._resizeTo(newLength)
+  }
+
   /**
    * Find gaps and fill them with placeholder value
    * @param gap Intervals to detect as gaps
@@ -461,13 +512,11 @@ export class ObservationRecord {
     range?: [number, number]
   ) {
     const gaps = this._findGaps(gap[0], gap[1], range)
-    const dataX = this.dataset.source.x
-    const dataY = this.dataset.source.y
 
     for (let i = gaps.length - 1; i >= 0; i--) {
       const currentGap = gaps[i]
-      const leftDatetime = dataX[currentGap[0]]
-      const rightDatetime = dataX[currentGap[1]]
+      const leftDatetime = this.dataX[currentGap[0]]
+      const rightDatetime = this.dataX[currentGap[1]]
       const fillPoints: [number, number][] = []
 
       // TODO: number of seconds in a year or month is not constant
@@ -479,10 +528,10 @@ export class ObservationRecord {
         const val: number = interpolateValues
           ? this._interpolateLinear(
               nextFillDatetime,
-              dataX[currentGap[0]],
-              dataY[currentGap[0]],
-              dataX[currentGap[1]],
-              dataY[currentGap[1]]
+              this.dataX[currentGap[0]],
+              this.dataY[currentGap[0]],
+              this.dataX[currentGap[1]],
+              this.dataY[currentGap[1]]
             )
           : -9999
 

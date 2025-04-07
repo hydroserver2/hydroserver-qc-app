@@ -36,11 +36,11 @@ import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
-const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 import { usePlotlyStore } from '@/store/plotly'
+
+const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { redraw } = usePlotlyStore()
 const { clearSelected } = useDataSelection()
-
 const { selectedData } = storeToRefs(useDataVisStore())
 
 const emit = defineEmits(['close'])
@@ -53,17 +53,14 @@ const onDeleteDataPoints = async () => {
   isUpdating.value = true
 
   setTimeout(async () => {
-    console.log(new Date(Date.now()))
     await selectedSeries.value.data.dispatch(
       EnumEditOperations.DELETE_POINTS,
       selectedData.value
     )
-    console.log(new Date(Date.now()))
 
     await clearSelected()
     isUpdating.value = false
     await redraw(true)
-
     emit('close')
   })
 }

@@ -74,9 +74,9 @@ import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { useDataSelection } from '@/composables/useDataSelection'
-
 import { usePlotlyStore } from '@/store/plotly'
 import { Operator, useUIStore } from '@/store/userInterface'
+
 const { redraw } = usePlotlyStore()
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())

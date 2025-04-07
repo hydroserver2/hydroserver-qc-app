@@ -43,12 +43,14 @@ import { useDataVisStore } from '@/store/dataVisualization'
 import { EnumEditOperations } from '@/utils/plotting/observationRecord'
 import { usePlotlyStore } from '@/store/plotly'
 import { useUIStore, TimeUnit } from '@/store/userInterface'
+import { useDataSelection } from '@/composables/useDataSelection'
 
 const { selectedData } = storeToRefs(useDataVisStore())
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { selectedShiftUnit, shiftAmount } = storeToRefs(useUIStore())
 const { redraw } = usePlotlyStore()
 const { shiftUnits } = useUIStore()
+const { clearSelected } = useDataSelection()
 
 const emit = defineEmits(['close'])
 
@@ -68,6 +70,7 @@ const onShiftDatetimes = async () => {
       TimeUnit[selectedShiftUnit.value]
     )
 
+    await clearSelected()
     isUpdating.value = false
     await redraw(true)
     emit('close')

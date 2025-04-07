@@ -53,15 +53,15 @@
             <v-expansion-panels>
               <v-expansion-panel>
                 <v-expansion-panel-title
-                  color="grey-lighten-4 d-flex align-flex-start"
+                  color="grey-lighten-4 d-flex align-flex-start justify-lg-space-between flex-lg-row flex-column gap-1"
                 >
                   <div>{{ entry.method }}</div>
-                  <template v-if="entry.duration">
-                    <v-spacer></v-spacer>
-                    <div class="text-medium-emphasis mr-1">
-                      {{ formatDuration(entry.duration) }}
-                    </div>
-                  </template>
+                  <div
+                    v-if="entry.duration"
+                    class="text-medium-emphasis flex-shrink-0"
+                  >
+                    {{ formatDuration(entry.duration) }}
+                  </div>
                 </v-expansion-panel-title>
 
                 <v-expansion-panel-text>
