@@ -299,7 +299,7 @@ export const handleRelayout = async (eventData: any) => {
         await Plotly.restyle(plotlyRef.value, { hoverinfo: [newHoverState] }, 0)
       }
 
-      await Plotly.update(plotlyRef.value, {}, layoutUpdates)
+      // await Plotly.update(plotlyRef.value, {}, layoutUpdates)
     } finally {
       isUpdating.value = false
     }
