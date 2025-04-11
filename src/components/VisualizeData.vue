@@ -19,14 +19,19 @@
     v-else-if="currentView === DrawerType.Edit"
     class="fill-height ma-0 gap-1 pa-4"
   >
-    <v-col class="pa-0">
+    <v-col cols="12" md="2" class="pa-0">
       <v-card class="fill-height">
+        <EditDrawer />
+      </v-card>
+    </v-col>
+    <v-col class="pa-0">
+      <v-card class="fill-height" min-height="40rem">
         <v-card-text class="fill-height">
           <DataVisualization />
         </v-card-text>
       </v-card>
     </v-col>
-    <v-col cols="4" class="pa-0">
+    <v-col cols="12" md="2" class="pa-0">
       <EditHistory />
     </v-col>
   </v-row>
@@ -36,6 +41,7 @@
 import DataVisDatasetsTable from '@/components/VisualizeData/DataVisDatasetsTable.vue'
 import DataVisualization from '@/components/VisualizeData/DataVisualization.vue'
 import EditHistory from '@/components/EditData/EditHistory.vue'
+import EditDrawer from '@/components/Navigation/EditDrawer.vue'
 
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'

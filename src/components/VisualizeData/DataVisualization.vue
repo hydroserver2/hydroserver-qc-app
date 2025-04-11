@@ -77,6 +77,7 @@ import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
 import Plot from '@/components/VisualizeData/Plot.vue'
 
+const { plotlyOptions } = storeToRefs(usePlotlyStore())
 const { dispatchSelection, clearSelected } = useDataSelection()
 
 const { loadingStates, plottedDatastreams, selectedQualifier, selectedData } =
@@ -84,14 +85,12 @@ const { loadingStates, plottedDatastreams, selectedQualifier, selectedData } =
 const openStyleModal = ref(false)
 const seriesDatastream = ref<Datastream | null>(null)
 
-const { graphSeriesArray } = storeToRefs(usePlotlyStore())
-
 const isUpdating = computed(() =>
   Array.from(loadingStates.value.values()).some((isLoading) => isLoading)
 )
 
 const isDataAvailable = computed(() => {
-  return !!graphSeriesArray.value.some((series) => series.data?.dataset)
+  return plotlyOptions.value.traces?.length
 })
 </script>
 

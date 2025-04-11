@@ -92,7 +92,7 @@
             "
             class="d-flex align-self-center"
             density="compact"
-            @change="() => updatePlottedDatastreams(item)"
+            @change="() => toggleDatastream(item)"
           />
         </template>
         <template v-slot:item.select="{ item }">
@@ -263,64 +263,35 @@ const selectedHeaders = computed({
   },
 })
 
-const findIndexInPlotted = (ds: Datastream) =>
-  plottedDatastreams.value.findIndex((item) => item.id === ds.id)
-
-const addDatastreamToPlotted = (ds: Datastream) => {
-  const index = findIndexInPlotted(ds)
-  if (index === -1) plottedDatastreams.value.push(ds)
+function toggleDatastream(datastream: Datastream) {
+  const index = plottedDatastreams.value.findIndex(
+    (item) => item.id === datastream.id
+  )
+  if (index === -1) {
+    plottedDatastreams.value.push(datastream)
+  } else {
+    plottedDatastreams.value.splice(index, 1)
+  }
 }
 
-function removeDatastreamFromPlotted(datastream: Datastream) {
-  const index = findIndexInPlotted(datastream)
-  if (index !== -1) plottedDatastreams.value.splice(index, 1)
-}
-
-function updatePlottedDatastreams(datastream: Datastream) {
-  const index = findIndexInPlotted(datastream)
-  if (index === -1) plottedDatastreams.value.push(datastream)
-  else plottedDatastreams.value.splice(index, 1)
-}
-
-// For now, remove then add the related plottedDatastream so that the plottedDatastream watcher
-// gets triggered. This makes sure the the time range and plot get updated whenever the selected
-// datastream changes.
-// TODO: Some redundant code to simplify here
 function updateSelectedDatastream(datastream: Datastream) {
-  // Case 1: No currently selected & selecting
+  // No currently selected & selecting
   if (qcDatastream.value === null) {
     qcDatastream.value = datastream
-    removeDatastreamFromPlotted(datastream)
-    addDatastreamToPlotted(datastream)
-    updateOptions()
-    return
   }
-
-  // Case 2: There is a currently selected
-  // Case 2.1: There's an unsaved history - open a modal that says this action will delete their unsaved work.
-  // TODO - Or do we want a watcher in the dataVis store that does this check reactively?
-  // Probably two watchers so we're looking at plottedDatastreams.
-  // If the qc datastream gets deselected, then check or when someone changed
-  // the qcDatastream's value check and revert if there's a history
-
-  // if (!historyResolved()) {
-  //   return
-  // }
-
-  // Case 2.2: There's no history and we're unselecting it
-  if (datastream.id === qcDatastream.value.id) {
+  // There's no history and we're unselecting it
+  else if (datastream.id === qcDatastream.value.id) {
     qcDatastream.value = null
-    removeDatastreamFromPlotted(datastream)
-    addDatastreamToPlotted(datastream)
-    updateOptions()
-    return
+  }
+  // Switching datastreams
+  else {
+    qcDatastream.value = datastream
   }
 
-  // Case 2.3: Switching datastreams
-  qcDatastream.value = datastream
-  removeDatastreamFromPlotted(datastream)
-  addDatastreamToPlotted(datastream)
-  updateOptions()
+  if (!plottedDatastreams.value.includes(datastream)) {
+    plottedDatastreams.value.push(datastream)
+  }
+  // updateOptions()
 }
 </script>
 

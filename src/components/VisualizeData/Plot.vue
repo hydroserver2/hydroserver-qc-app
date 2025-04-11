@@ -6,7 +6,7 @@
           v-model="areTooltipsEnabled"
           color="primary"
           label="Tooltips"
-          :disabled="isLargeDataset"
+          :disabled="visiblePoints > tooltipsMaxDataPoints"
           hide-details
         />
 
@@ -50,117 +50,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, Ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 // @ts-ignore no type definitions
-import Plotly from 'plotly.js-dist'
 import { usePlotlyStore } from '@/store/plotly'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import {
-  findFirstGreaterOrEqual,
-  handleClick,
-  handleDeselect,
-  handleDoubleClick,
-  handleSelected,
-} from '@/utils/plotting/plotly'
-import { isEqual } from 'lodash-es'
+import { handleNewPlot } from '@/utils/plotting/plotly'
 
 const plot = ref<HTMLDivElement>()
-const { plotlyOptions, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
+const { isUpdating, areTooltipsEnabled, visiblePoints, tooltipsMaxDataPoints } =
+  storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
-const areTooltipsEnabled = ref(true)
-const isLargeDataset = ref(true)
-const tooltipsMaxDataPoints = ref(10 * 1000)
-const visiblePoints: Ref<number> = ref(0)
 
 onMounted(async () => {
-  plotlyRef.value = await Plotly.newPlot(
-    plot.value,
-    plotlyOptions.value.traces,
-    plotlyOptions.value.layout,
-    plotlyOptions.value.config
-  )
-
-  const handleRelayout = async (eventData: any) => {
-    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
-
-    // Plotly fires the relayout event for practically everything.
-    // We only need to handle it when panning or zooming.
-    if (
-      isUpdating.value ||
-      eventData?.dragmode || // Changing selected tool
-      eventData?.selections || // Selecting points
-      eventData?.['selections[0].x0'] || // Moving a selected area
-      isEqual(eventData, {}) // Double click using pan tool
-    ) {
-      return
-    }
-
-    isUpdating.value = true
-
-    setTimeout(async () => {
-      console.log('handleRelayout')
-      try {
-        const layoutUpdates = { ...plotlyOptions.value.layout }
-        // Plotly will rewrite timestamps as datestrings. We need to convert them back to timestamps.
-        if (typeof layoutUpdates.xaxis.range[0] == 'string') {
-          layoutUpdates.xaxis.range[0] = Date.parse(
-            layoutUpdates.xaxis.range[0]
-          )
-          layoutUpdates.xaxis.range[1] = Date.parse(
-            layoutUpdates.xaxis.range[1]
-          )
-        }
-
-        // Find visible points count
-        // Plotly does not return the indexes. We must find them using binary seach
-        const startIdx = findFirstGreaterOrEqual(
-          plotlyRef.value?.data[0].x,
-          layoutUpdates.xaxis.range[0]
-        )
-        const endIdx = findFirstGreaterOrEqual(
-          plotlyRef.value?.data[0].x,
-          layoutUpdates.xaxis.range[1]
-        )
-
-        visiblePoints.value = endIdx - startIdx
-
-        // Threshold check
-        const newHoverState =
-          visiblePoints.value > tooltipsMaxDataPoints.value ? 'skip' : 'x+y'
-        isLargeDataset.value = newHoverState === 'skip'
-
-        // Only update if state changed
-        if (plotlyRef.value?.data[0].hoverinfo !== newHoverState) {
-          if (newHoverState === 'x+y' && !areTooltipsEnabled.value) {
-            return
-          }
-
-          await Plotly.restyle(
-            plotlyRef.value,
-            { hoverinfo: [newHoverState] },
-            0
-          )
-        }
-
-        await Plotly.update(plotlyRef.value, {}, layoutUpdates)
-      } finally {
-        isUpdating.value = false
-      }
-    })
-  }
-
-  handleRelayout(null)
-
-  plotlyRef.value?.on('plotly_redraw', handleRelayout)
-  plotlyRef.value?.on('plotly_relayout', handleRelayout)
-  plotlyRef.value?.on('plotly_click', handleClick)
-  plotlyRef.value?.on('plotly_selected', handleSelected)
-  plotlyRef.value?.on('plotly_deselec', handleDeselect)
-  plotlyRef.value?.on('plotly_doubleclick', handleDoubleClick)
-
-  // https://plotly.com/javascript/plotlyjs-function-reference/#plotlyupdate
+  handleNewPlot(plot.value)
 })
 </script>
 

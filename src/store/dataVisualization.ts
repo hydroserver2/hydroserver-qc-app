@@ -4,6 +4,9 @@ import { computed, ref, watch } from 'vue'
 import { usePlotlyStore } from './plotly'
 import { useObservationStore } from './observations'
 import { Snackbar } from '@/utils/notifications'
+import { handleNewPlot } from '@/utils/plotting/plotly'
+// @ts-ignore
+import Plotly from 'plotly.js-dist'
 
 export const useDataVisStore = defineStore('dataVisualization', () => {
   const {
@@ -215,8 +218,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
         const newSeries = await fetchGraphSeries(datastream, start, end)
         graphSeriesArray.value.push(newSeries)
       }
-
-      updateOptions()
     } catch (error) {
       console.error(
         `Failed to fetch or update dataset for ${datastream.id}:`,
@@ -243,6 +244,8 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
     return Promise.all(updateOrFetchPromises)
   }
+
+  // TODO: avoid using watchers!
 
   // If currently selected datastreams are no longer in filteredDatastreams, deselect them
   watch(
@@ -292,7 +295,13 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
         if (newDatastreamIds !== prevDatastreamIds) {
           await refreshGraphSeriesArray(newDs)
+          // Call above will make data available and show plot before updateOptions
           updateOptions()
+
+          const { plotlyRef } = storeToRefs(usePlotlyStore())
+          if (plotlyRef.value) {
+            handleNewPlot()
+          }
         }
       }
       prevDatastreamIds = newDatastreamIds

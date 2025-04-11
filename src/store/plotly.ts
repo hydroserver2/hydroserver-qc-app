@@ -18,6 +18,9 @@ export const usePlotlyStore = defineStore('Plotly', () => {
   const showLegend = ref(true)
   const showTooltip = ref(false)
   const isUpdating = ref(false)
+  const tooltipsMaxDataPoints = ref(10 * 1000)
+  const visiblePoints: Ref<number> = ref(0)
+  const areTooltipsEnabled = ref(true)
 
   const graphSeriesArray = ref<GraphSeries[]>([])
   /** The index of the series that represents the datastream selected for quality control */
@@ -48,19 +51,19 @@ export const usePlotlyStore = defineStore('Plotly', () => {
    *
    * @returns {string} - Hex code of the first available color that is not in use. Returns black as a default if all are in use.
    */
-  function assignColor(): string {
-    const usedColors = new Set(
-      graphSeriesArray.value.map((s) => s.seriesOption.itemStyle?.color)
-    )
+  // function assignColor(): string {
+  //   const usedColors = new Set(
+  //     graphSeriesArray.value.map((s) => s.seriesOption.itemStyle?.color)
+  //   )
 
-    for (const color of LineColors) {
-      if (!usedColors.has(color)) {
-        return color
-      }
-    }
+  //   for (const color of LineColors) {
+  //     if (!usedColors.has(color)) {
+  //       return color
+  //     }
+  //   }
 
-    return '#000000'
-  }
+  //   return '#000000'
+  // }
 
   const clearChartState = () => {
     graphSeriesArray.value = []
@@ -70,7 +73,6 @@ export const usePlotlyStore = defineStore('Plotly', () => {
    * Set the initial chart options.
    */
   function updateOptions() {
-    console.log('updateOptions')
     // @ts-ignore
     plotlyOptions.value = createPlotlyOption(graphSeriesArray.value)
   }
@@ -84,20 +86,14 @@ export const usePlotlyStore = defineStore('Plotly', () => {
 
     updateOptions()
 
-    // TODO: After an operation the array would have changed and this redraw has no effect
-    // await Plotly.redraw(plotlyRef.value, [0])
-
-    // await Plotly.react(
-    //   plotlyRef.value,
-    //   plotlyOptions.value.traces,
-    //   plotlyOptions.value.layout
-    // )
-
+    // Update all traces
     await Plotly.update(
       plotlyRef.value,
-      plotlyOptions.value.traces[0],
-      plotlyOptions.value.layout,
-      [0]
+      {
+        x: plotlyOptions.value.traces.map((t) => t.x),
+        y: plotlyOptions.value.traces.map((t) => t.y),
+      },
+      plotlyOptions.value.layout
     )
 
     if (recomputeXaxisRange) {
@@ -147,18 +143,6 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     } as GraphSeries
   }
 
-  watch(showLegend, () => {
-    if (plotlyOptions.value) {
-      // TODO: integrate createLegendConfig()
-    }
-  })
-
-  watch(showTooltip, () => {
-    if (plotlyOptions.value) {
-      // TODO: integrate createTooltipConfig()
-    }
-  })
-
   return {
     graphSeriesArray,
     showLegend,
@@ -173,5 +157,8 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     plotlyOptions,
     plotlyRef,
     isUpdating,
+    tooltipsMaxDataPoints,
+    visiblePoints,
+    areTooltipsEnabled,
   }
 })

@@ -48,14 +48,10 @@ export const useObservationStore = defineStore(
         const rawBeginDatetime = new Date(
           observationsRaw.value[id].datetimes[0]
         )
-        const rawEndDatetime = new Date(
-          observationsRaw.value[id].datetimes[
-            observationsRaw.value[id].datetimes.length - 1
-          ]
-        )
 
         // Check if new data before the stored data is needed
-        if (beginTime < rawBeginDatetime) {
+        if (beginTime <= rawBeginDatetime) {
+          // rawBeginDatetime.setSeconds(rawBeginDatetime.getSeconds() - 1) // Results in range will be inclusive, so we need to offset by 1
           beginDataPromise = fetchObservationsSync(
             datastream,
             beginTime,
@@ -63,19 +59,32 @@ export const useObservationStore = defineStore(
           )
         }
 
-        // Check if new data after the stored data is needed
-        if (endTime > rawEndDatetime) {
-          const temp = rawEndDatetime
-          temp.setSeconds(temp.getSeconds() + 1)
+        const rawEndDatetime = new Date(
+          observationsRaw.value[id].datetimes[
+            observationsRaw.value[id].datetimes.length - 1
+          ]
+        )
 
-          endDataPromise = fetchObservationsSync(datastream, temp, endTime)
+        // Check if new data after the stored data is needed
+        if (endTime >= rawEndDatetime) {
+          rawEndDatetime.setSeconds(rawEndDatetime.getSeconds() + 1)
+          endDataPromise = fetchObservationsSync(
+            datastream,
+            rawEndDatetime,
+            endTime
+          )
         }
       } else {
-        // There is no raw data for this dataset. Fetch the whole range
-        beginDataPromise = fetchObservationsSync(datastream, beginTime, endTime)
+        const endTimeCopy = new Date(endTime)
+        endTimeCopy.setSeconds(endTimeCopy.getSeconds() + 1)
+        // Right value is exclusive
+        beginDataPromise = fetchObservationsSync(
+          datastream,
+          beginTime,
+          endTimeCopy
+        )
       }
 
-      // Fetch and update in parallel if needed
       const [beginData, endData] = await Promise.all([
         beginDataPromise,
         endDataPromise,

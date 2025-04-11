@@ -4,6 +4,7 @@ import { GraphSeries } from '@/types'
 import Plotly from 'plotly.js-dist'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
+import { debounce, isEqual } from 'lodash-es'
 
 const selectorOptions = {
   buttons: [
@@ -38,18 +39,19 @@ const selectorOptions = {
 }
 
 export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
+  console.log('createPlotlyOption')
   const traces: any[] = seriesArray.map((s, index) => {
     return {
       x: s.data?.dataX,
       y: s.data?.dataY,
-      xaxis: `x${index + 1}`,
-      yaxis: `y${index + 1}`,
+      yaxis: `y${index > 0 ? index + 1 : ''}`,
       type: 'scattergl',
       mode: 'lines+markers',
       // https://github.com/plotly/plotly.js/issues/5927
       hoverinfo: 'skip', // Fixes performance issues, but disables tooltips
       // hoverinfo: 'x+y',
       name: s.name,
+      showLegend: !!index,
       selected: {
         marker: {
           color: 'red',
@@ -58,31 +60,64 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
     }
   })
 
-  const xaxis: any = {}
   const yaxis: any = {}
 
+  let maxDatetime = -Infinity
+  let minDatetime = Infinity
+  const axisPlotFraction = 0.05 // Between 0 and 1
+
+  // TODO: import these directly from Plotly
+  // https://github.com/plotly/plotly.js/blob/v2.14.0/src/components/color/attributes.js#L5-L16
+  const colors = [
+    '#1f77b4', // muted blue
+    '#ff7f0e', // safety orange
+    '#2ca02c', // cooked asparagus green
+    '#d62728', // brick red
+    '#9467bd', // muted purple
+    '#8c564b', // chestnut brown
+    '#e377c2', // raspberry yogurt pink
+    '#7f7f7f', // middle gray
+    '#bcbd22', // curry yellow-green
+    '#17becf', // blue-teal
+  ]
   seriesArray.forEach((s, index) => {
     const xData = s.data?.dataX
-    const maxDatetime = xData[xData.length - 1]
-    const minDatetime = xData[0]
+    maxDatetime = Math.max(xData[xData.length - 1], maxDatetime)
+    minDatetime = Math.min(xData[0], minDatetime)
 
-    xaxis[`xaxis${index > 0 ? index + 1 : ''}`] = {
-      type: 'date',
-      title: { text: 'Datetime' },
-      rangeselector: selectorOptions,
-      range: [minDatetime, maxDatetime],
-      minallowed: minDatetime,
-      maxallowed: maxDatetime,
-      autorange: false,
-      // range slider compatibility for Scattergl: https://github.com/plotly/plotly.js/issues/2627
-    }
-
-    yaxis[`yaxis${index > 0 ? index + 1 : ''}`] = {
-      title: { text: s.yAxisLabel },
-      // fixedrange: true,
-      // autorange: true,
+    if (index == 0) {
+      yaxis[`yaxis`] = {
+        title: { text: s.yAxisLabel, font: { color: colors[index] } },
+        tickfont: { color: colors[index] },
+      }
+    } else {
+      yaxis[`yaxis${index + 1}`] = {
+        title: { text: s.yAxisLabel, font: { color: colors[index] } },
+        tickfont: { color: colors[index] },
+        overlaying: 'y',
+        side: 'right',
+        anchor: 'free',
+        position: 1 - axisPlotFraction * (index - 1),
+        // fixedrange: true,
+        // autorange: true,
+      }
     }
   })
+
+  const xaxis: any = {
+    type: 'date',
+    title: { text: 'Datetime' },
+    rangeselector: selectorOptions,
+    range: [minDatetime, maxDatetime],
+    minallowed: minDatetime,
+    maxallowed: maxDatetime,
+    autorange: false,
+    // range slider compatibility for Scattergl: https://github.com/plotly/plotly.js/issues/2627
+  }
+
+  if (seriesArray.length > 2) {
+    xaxis.domain = [0, 1 - axisPlotFraction * (seriesArray.length - 2)]
+  }
 
   const iconRescaleY = {
     width: 500,
@@ -95,12 +130,25 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
     layout: {
       spikedistance: 0, // https://github.com/plotly/plotly.js/issues/5927#issuecomment-1697679087
       // hoverdistance: 20,
-      ...xaxis,
+      xaxis,
       ...yaxis,
       dragmode: 'pan',
       hovermode: 'closest', // Disable if hovering is too costly
       uirevision: true,
-      title: { text: seriesArray[0].name },
+      title: { text: seriesArray[0].name, font: { color: '#1f77b4' } },
+      legend: {
+        x: 0,
+        y: 1,
+        traceorder: 'normal',
+        font: {
+          family: 'sans-serif',
+          size: 12,
+          color: '#000',
+        },
+        bgcolor: '#E2E2E2',
+        bordercolor: '#FFFFFF',
+        borderwidth: 2,
+      },
     },
     config: {
       displayModeBar: true,
@@ -159,14 +207,106 @@ export const handleClick = async (eventData: any) => {
   }
 }
 
-export const handleSelected = async (_eventData: any) => {
+export const handleSelected = async (eventData: any) => {
   console.log('handleSelected')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
   const { selectedData } = storeToRefs(useDataVisStore())
   selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+
+  // TODO: prevent selection on other traces
 }
 
-export const handleDeselect = async () => {
+export const handleNewPlot = async (element?: any) => {
+  const { plotlyOptions, plotlyRef } = storeToRefs(usePlotlyStore())
+
+  plotlyRef.value = await Plotly.newPlot(
+    element || plotlyRef.value,
+    plotlyOptions.value.traces,
+    plotlyOptions.value.layout,
+    plotlyOptions.value.config
+  )
+
+  handleRelayout(null)
+  plotlyRef.value?.on('plotly_redraw', debounce(handleRelayout, 150))
+  plotlyRef.value?.on('plotly_relayout', debounce(handleRelayout, 150))
+  plotlyRef.value?.on('plotly_selected', debounce(handleSelected, 150))
+  plotlyRef.value?.on('plotly_deselec', debounce(handleDeselect, 150))
+  plotlyRef.value?.on('plotly_click', handleClick)
+  plotlyRef.value?.on('plotly_doubleclick', handleDoubleClick)
+}
+
+export const handleRelayout = async (eventData: any) => {
+  const {
+    plotlyOptions,
+    plotlyRef,
+    isUpdating,
+    areTooltipsEnabled,
+    visiblePoints,
+    tooltipsMaxDataPoints,
+  } = storeToRefs(usePlotlyStore())
+  const { selectedData } = storeToRefs(useDataVisStore())
+
+  selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+
+  // Plotly fires the relayout event for practically everything.
+  // We only need to handle it when panning or zooming.
+  if (
+    isUpdating.value ||
+    eventData?.dragmode || // Changing selected tool
+    eventData?.selections || // Selecting points
+    eventData?.['selections[0].x0'] || // Moving a selected area
+    isEqual(eventData, {}) // Double click using pan tool
+  ) {
+    return
+  }
+
+  isUpdating.value = true
+
+  setTimeout(async () => {
+    console.log('handleRelayout')
+    try {
+      const layoutUpdates = { ...plotlyOptions.value.layout }
+
+      // Plotly will rewrite timestamps as datestrings. We need to convert them back to timestamps.
+      if (typeof layoutUpdates.xaxis.range[0] == 'string') {
+        layoutUpdates.xaxis.range[0] = Date.parse(layoutUpdates.xaxis.range[0])
+        layoutUpdates.xaxis.range[1] = Date.parse(layoutUpdates.xaxis.range[1])
+      }
+
+      // Find visible points count
+      // Plotly does not return the indexes. We must find them using binary seach
+      const startIdx = findFirstGreaterOrEqual(
+        plotlyRef.value?.data[0].x,
+        layoutUpdates.xaxis.range[0]
+      )
+      const endIdx = findFirstGreaterOrEqual(
+        plotlyRef.value?.data[0].x,
+        layoutUpdates.xaxis.range[1]
+      )
+
+      visiblePoints.value = endIdx - startIdx
+
+      // Threshold check
+      const newHoverState =
+        visiblePoints.value > tooltipsMaxDataPoints.value ? 'skip' : 'x+y'
+
+      // Only update if state changed
+      if (plotlyRef.value?.data[0].hoverinfo !== newHoverState) {
+        if (newHoverState === 'x+y' && !areTooltipsEnabled.value) {
+          return
+        }
+
+        await Plotly.restyle(plotlyRef.value, { hoverinfo: [newHoverState] }, 0)
+      }
+
+      await Plotly.update(plotlyRef.value, {}, layoutUpdates)
+    } finally {
+      isUpdating.value = false
+    }
+  })
+}
+
+export const handleDeselect = async (_eventData: any) => {
   console.log('handleDeselect')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
   const { selectedData } = storeToRefs(useDataVisStore())
@@ -259,7 +399,8 @@ export const cropXaxisRange = async () => {
  * @param _eventData
  */
 export const cropYaxisRange = async (_eventData: any) => {
-  const { plotlyOptions, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
+  const { plotlyOptions, plotlyRef, isUpdating, graphSeriesArray } =
+    storeToRefs(usePlotlyStore())
 
   isUpdating.value = true
   console.log('cropYaxisRange')
@@ -274,8 +415,6 @@ export const cropYaxisRange = async (_eventData: any) => {
       return d
     })
 
-    const yRange = plotlyRef.value?.layout.yaxis.range
-
     // Find visible points count
     // Plotly does not return the indexes of current axis range. We must find them using binary seach
     const startIdx = findFirstGreaterOrEqual(
@@ -287,34 +426,38 @@ export const cropYaxisRange = async (_eventData: any) => {
       xRange[1]
     )
 
-    // auto scale y axis using data from the first trace
-    const traceData = plotlyRef.value?.data[0]
-    const yData = traceData.y as number[]
+    for (let i = 0; i < graphSeriesArray.value.length; i++) {
+      const axisKey = i == 0 ? 'yaxis' : `yaxis${i + 1}`
+      const yAxis = plotlyOptions.value.layout[axisKey]
 
-    // Find all y-values within the current x-axis range
-    let yMin = Infinity
-    let yMax = -Infinity
+      const traceData = plotlyRef.value?.data[i]
+      const yData = traceData.y as number[]
 
-    // Could use Math.max and Math.min and spread operator, but this is more memory efficient
-    for (let i = startIdx; i < endIdx; i++) {
-      const val = yData[i]
-      if (yMin > val && val > yRange[0]) {
-        yMin = val
+      // Find all y-values within the current x-axis range
+      let yMin = Infinity
+      let yMax = -Infinity
+
+      // Could use Math.max and Math.min and spread operator, but this is more memory efficient
+      for (let i = startIdx; i < endIdx; i++) {
+        const val = yData[i]
+        if (yMin > val && val > yAxis.range[0]) {
+          yMin = val
+        }
+
+        if (yMax < val && val < yAxis.range[1]) {
+          yMax = val
+        }
       }
 
-      if (yMax < val && val < yRange[1]) {
-        yMax = val
-      }
-    }
+      // Calculate new y-axis range with padding
+      if (endIdx - startIdx != 0 && yMax !== yMin) {
+        const padding = (yMax - yMin) * 0.1 // 10% padding
 
-    // Calculate new y-axis range with padding
-    if (endIdx - startIdx != 0 && yMax !== yMin) {
-      const padding = (yMax - yMin) * 0.1 // 10% padding
-
-      layoutUpdates.yaxis = {
-        ...plotlyOptions.value.layout.yaxis,
-        range: [yMin - padding, yMax + padding],
-        autorange: false,
+        layoutUpdates[axisKey] = {
+          ...yAxis,
+          range: [yMin - padding, yMax + padding],
+          autorange: false,
+        }
       }
     }
 

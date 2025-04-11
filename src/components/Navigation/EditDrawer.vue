@@ -1,12 +1,5 @@
 <template>
-  <v-navigation-drawer
-    permanent
-    :width="250"
-    elevation="3"
-    class="bg-navbar"
-    theme="dark"
-  >
-    <!-- <v-container>
+  <!-- <v-container>
       <v-expansion-panels color="primary-darken-2" v-model="panelOpen">
         <v-expansion-panel title="History" elevation="3">
           <v-expansion-panel-text>
@@ -30,41 +23,40 @@
       </v-expansion-panels>
     </v-container> -->
 
-    <v-divider />
+  <v-divider />
 
-    <v-list density="compact">
-      <v-list-subheader>Filter points</v-list-subheader>
+  <v-list density="compact">
+    <v-list-subheader>Filter points</v-list-subheader>
 
-      <v-list-item
-        v-for="(item, i) in filterPoints"
-        :key="i"
-        @click="item.clickAction"
-      >
-        <template v-slot:prepend>
-          <v-icon :icon="item.props.prependIcon"></v-icon>
-        </template>
-        <v-list-item-title>{{ item.title }}</v-list-item-title>
-      </v-list-item>
-    </v-list>
+    <v-list-item
+      v-for="(item, i) in filterPoints"
+      :key="i"
+      @click="item.clickAction"
+    >
+      <template v-slot:prepend>
+        <v-icon :icon="item.props.prependIcon"></v-icon>
+      </template>
+      <v-list-item-title>{{ item.title }}</v-list-item-title>
+    </v-list-item>
+  </v-list>
 
-    <v-divider />
+  <v-divider />
 
-    <v-list :items="editData" density="compact">
-      <v-list-subheader>Edit Data</v-list-subheader>
+  <v-list :items="editData" density="compact">
+    <v-list-subheader>Edit Data</v-list-subheader>
 
-      <v-list-item
-        v-for="(item, i) in editData"
-        :key="i"
-        @click="item.clickAction"
-        :disabled="item.isDisabled?.()"
-      >
-        <template v-slot:prepend>
-          <v-icon :icon="item.props.prependIcon"></v-icon>
-        </template>
-        <v-list-item-title>{{ item.title }}</v-list-item-title>
-      </v-list-item>
-    </v-list>
-  </v-navigation-drawer>
+    <v-list-item
+      v-for="(item, i) in editData"
+      :key="i"
+      @click="item.clickAction"
+      :disabled="item.isDisabled?.()"
+    >
+      <template v-slot:prepend>
+        <v-icon :icon="item.props.prependIcon"></v-icon>
+      </template>
+      <v-list-item-title>{{ item.title }}</v-list-item-title>
+    </v-list-item>
+  </v-list>
 
   <!-- FILTER POINTS -->
 
