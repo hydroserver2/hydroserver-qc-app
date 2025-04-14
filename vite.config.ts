@@ -13,12 +13,23 @@ export default defineConfig({
       styles: { configFile: 'src/styles/settings.scss' },
     }),
   ],
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler', // or "modern"
+      },
+    },
+  },
   optimizeDeps: {
     exclude: ['vuetify'],
   },
   server: {
     host: '127.0.0.1',
     port: 1203,
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
   },
   resolve: {
     extensions: ['.js', '.json', '.vue', '.less', '.scss', '.ts'],
@@ -53,7 +64,6 @@ export default defineConfig({
         '**/src/utils/mdi-icons.ts',
         '**/src/utils/materialColors.ts',
         '**/src/utils/CSVDownloadUtils.ts',
-        '**/src/utils/plotting/echarts.ts',
         '**/src/utils/plotting/graphSeriesUtils.ts',
         '**/src/utils/test/**',
         '**/src/utils/googleMaps/**',

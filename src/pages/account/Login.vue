@@ -22,6 +22,7 @@
                 type="email"
                 name="email"
                 validate-on="blur"
+                autocomplete="username"
               />
               <v-text-field
                 class="mb-4"
@@ -30,6 +31,7 @@
                 v-model="password"
                 type="password"
                 name="password"
+                autocomplete="password"
               />
             </v-card-text>
 
