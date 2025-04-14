@@ -24,12 +24,13 @@ jobs:
     env:
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
       AWS_IAM_ROLE: ${{ vars.AWS_IAM_ROLE }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
       PROXY_BASE_URL: ${{ vars.PROXY_BASE_URL }}
     steps:
       - name: Check Required Environment Variables
         run: |
           echo "Checking required environment variables..."
-          required_vars=(AWS_ACCOUNT_ID AWS_IAM_ROLE PROXY_BASE_URL)
+          required_vars=(AWS_ACCOUNT_ID AWS_IAM_ROLE AWS_REGION PROXY_BASE_URL)
           for var in "${required_vars[@]}"; do
             if [ -z "${!var}" ]; then
               echo "Error: Environment variable $var is not defined."
