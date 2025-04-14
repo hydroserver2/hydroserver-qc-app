@@ -90,11 +90,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       // hoverinfo: 'x+y',
       name: s.name,
       showLegend: false,
-      selected: {
-        marker: {
-          color: 'red',
-        },
-      },
+
       marker: {
         color,
       },
@@ -108,6 +104,11 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       qcTrace = trace
       qcTrace.marker.color = COLORS[0]
       qcTrace.line.color = COLORS[0]
+      qcTrace.selected = {
+        marker: {
+          color: 'red',
+        },
+      }
       qcYaxis = {
         title: { text: s.yAxisLabel, font: { color: COLORS[0] } },
         tickfont: { color: COLORS[0] },
