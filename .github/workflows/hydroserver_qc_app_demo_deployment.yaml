@@ -64,7 +64,9 @@ jobs:
           cache-dependency-path: qc_app/package-lock.json
       - name: Install Dependencies
         working-directory: ./qc_app
-        run: npm ci
+        run: |
+          npm install
+          npm ci
       - name: Configure Environment Variables
         working-directory: ./qc_app
         run: |
