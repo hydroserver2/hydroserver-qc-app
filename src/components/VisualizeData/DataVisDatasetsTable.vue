@@ -86,16 +86,13 @@
         <template v-slot:item.plot="{ item }">
           <v-checkbox
             :model-value="isChecked(item)"
-            :disabled="
-              (plottedDatastreams.length >= 5 && !isChecked(item)) ||
-              isSelected(item)
-            "
+            :disabled="plottedDatastreams.length >= 5 && !isChecked(item)"
             class="d-flex align-self-center"
             density="compact"
             @change="() => toggleDatastream(item)"
           />
         </template>
-        <template v-slot:item.select="{ item }">
+        <!-- <template v-slot:item.select="{ item }">
           <v-checkbox
             :model-value="isSelected(item)"
             :disabled="
@@ -106,7 +103,7 @@
             density="compact"
             @change="() => updateSelectedDatastream(item)"
           />
-        </template>
+        </template> -->
       </v-data-table-virtual>
     </v-card>
 
@@ -131,7 +128,6 @@ import { useObservationStore } from '@/store/observations'
 const { observationsRaw } = storeToRefs(useObservationStore())
 const { loadingStates } = storeToRefs(useDataVisStore())
 
-const { updateOptions } = usePlotlyStore()
 const {
   things,
   filteredDatastreams,
@@ -213,7 +209,7 @@ const search = ref()
 const headers = reactive([
   { title: '', key: 'status', visible: true, width: 1 },
   { title: 'Plot', key: 'plot', visible: true, width: 1 },
-  { title: 'Select', key: 'select', visible: true, width: 1 },
+  // { title: 'Select', key: 'select', visible: true, width: 1 },
   {
     title: 'Site code',
     key: 'siteCodeName',
@@ -269,28 +265,28 @@ function toggleDatastream(datastream: Datastream) {
   )
   if (index === -1) {
     plottedDatastreams.value.push(datastream)
+    if (!qcDatastream.value) {
+      qcDatastream.value = datastream
+    }
   } else {
     plottedDatastreams.value.splice(index, 1)
+    if (qcDatastream.value?.id == datastream.id) {
+      qcDatastream.value =
+        plottedDatastreams.value[Math.max(index - 1, 0)] || null
+    }
   }
 }
 
 function updateSelectedDatastream(datastream: Datastream) {
-  // No currently selected & selecting
-  if (qcDatastream.value === null) {
-    qcDatastream.value = datastream
-  }
-  // There's no history and we're unselecting it
-  else if (datastream.id === qcDatastream.value.id) {
-    qcDatastream.value = null
-  }
-  // Switching datastreams
-  else {
-    qcDatastream.value = datastream
-  }
-
-  if (!plottedDatastreams.value.includes(datastream)) {
-    plottedDatastreams.value.push(datastream)
-  }
+  // if (datastream.id === qcDatastream.value?.id) {
+  //   qcDatastream.value = null
+  // }
+  // else {
+  //   qcDatastream.value = datastream
+  // }
+  // if (!plottedDatastreams.value.includes(datastream)) {
+  //   plottedDatastreams.value.push(datastream)
+  // }
   // updateOptions()
 }
 </script>

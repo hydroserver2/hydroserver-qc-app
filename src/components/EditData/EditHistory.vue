@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-card-title>Edit History</v-card-title>
+    <v-card-title class="text-body-1">Edit History</v-card-title>
 
     <v-divider></v-divider>
 

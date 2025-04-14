@@ -1,6 +1,7 @@
 import { useDataVisStore } from '@/store/dataVisualization'
 import { usePlotlyStore } from '@/store/plotly'
 import { formatDate } from '@/utils/format'
+import { handleSelected } from '@/utils/plotting/plotly'
 import { storeToRefs } from 'pinia'
 
 // @ts-ignore no type definitions
@@ -26,7 +27,7 @@ export function useDataSelection() {
       0
     )
 
-    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+    handleSelected()
   }
 
   /** Call this method after operations that change the order of elements or remove elements in the data */

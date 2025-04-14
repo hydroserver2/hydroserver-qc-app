@@ -6,6 +6,21 @@ import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { debounce, isEqual } from 'lodash-es'
 
+// TODO: import these directly from Plotly
+// https://github.com/plotly/plotly.js/blob/v2.14.0/src/components/color/attributes.js#L5-L16
+export const COLORS = [
+  '#1f77b4', // muted blue
+  '#ff7f0e', // safety orange
+  '#2ca02c', // cooked asparagus green
+  '#d62728', // brick red
+  '#9467bd', // muted purple
+  '#8c564b', // chestnut brown
+  '#e377c2', // raspberry yogurt pink
+  '#7f7f7f', // middle gray
+  '#bcbd22', // curry yellow-green
+  '#17becf', // blue-teal
+]
+
 const selectorOptions = {
   buttons: [
     {
@@ -40,69 +55,93 @@ const selectorOptions = {
 
 export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
   console.log('createPlotlyOption')
-  const traces: any[] = seriesArray.map((s, index) => {
-    return {
+  const { qcDatastream } = storeToRefs(useDataVisStore())
+
+  const traces: any = []
+  const yaxis: any = {}
+
+  let maxDatetime = -Infinity
+  let minDatetime = Infinity
+  const axisPlotFraction = 0.075 // Between 0 and 1
+
+  let qcTrace: any
+  let qcYaxis: any
+  let counter = 0
+  let axisSuffix = counter > 0 ? counter + 1 : ''
+
+  seriesArray.forEach((s, index) => {
+    const color = COLORS[index + 1] // The first color is reserved for the QC datastream
+    const xData = s.data?.dataX
+
+    maxDatetime = Math.max(xData[xData.length - 1], maxDatetime)
+    minDatetime = Math.min(xData[0], minDatetime)
+
+    const trace: any = {
+      id: s.id,
       x: s.data?.dataX,
       y: s.data?.dataY,
-      yaxis: `y${index > 0 ? index + 1 : ''}`,
+      yaxis: `y${axisSuffix}`,
       type: 'scattergl',
       mode: 'lines+markers',
       // https://github.com/plotly/plotly.js/issues/5927
       hoverinfo: 'skip', // Fixes performance issues, but disables tooltips
       // hoverinfo: 'x+y',
       name: s.name,
-      showLegend: !!index,
+      showLegend: false,
       selected: {
         marker: {
           color: 'red',
         },
       },
+      marker: {
+        color,
+      },
+      line: {
+        color,
+      },
     }
-  })
 
-  const yaxis: any = {}
-
-  let maxDatetime = -Infinity
-  let minDatetime = Infinity
-  const axisPlotFraction = 0.05 // Between 0 and 1
-
-  // TODO: import these directly from Plotly
-  // https://github.com/plotly/plotly.js/blob/v2.14.0/src/components/color/attributes.js#L5-L16
-  const colors = [
-    '#1f77b4', // muted blue
-    '#ff7f0e', // safety orange
-    '#2ca02c', // cooked asparagus green
-    '#d62728', // brick red
-    '#9467bd', // muted purple
-    '#8c564b', // chestnut brown
-    '#e377c2', // raspberry yogurt pink
-    '#7f7f7f', // middle gray
-    '#bcbd22', // curry yellow-green
-    '#17becf', // blue-teal
-  ]
-  seriesArray.forEach((s, index) => {
-    const xData = s.data?.dataX
-    maxDatetime = Math.max(xData[xData.length - 1], maxDatetime)
-    minDatetime = Math.min(xData[0], minDatetime)
-
-    if (index == 0) {
-      yaxis[`yaxis`] = {
-        title: { text: s.yAxisLabel, font: { color: colors[index] } },
-        tickfont: { color: colors[index] },
+    if (s.id === qcDatastream.value?.id) {
+      // The trace for the QC datastream needs to be added last so it's drawn on top.
+      qcTrace = trace
+      qcTrace.marker.color = COLORS[0]
+      qcTrace.line.color = COLORS[0]
+      qcYaxis = {
+        title: { text: s.yAxisLabel, font: { color: COLORS[0] } },
+        tickfont: { color: COLORS[0] },
+        side: 'left',
+        anchor: 'free',
+        position: 0,
       }
     } else {
-      yaxis[`yaxis${index + 1}`] = {
-        title: { text: s.yAxisLabel, font: { color: colors[index] } },
-        tickfont: { color: colors[index] },
-        overlaying: 'y',
+      traces.push(trace)
+
+      const yAxis: any = {
+        title: { text: s.yAxisLabel, font: { color } },
+        tickfont: { color },
+        // overlaying: 'y',
         side: 'right',
         anchor: 'free',
-        position: 1 - axisPlotFraction * (index - 1),
+        position: 1 - axisPlotFraction * counter,
         // fixedrange: true,
         // autorange: true,
       }
+      if (axisSuffix) {
+        yAxis.overlaying = 'y'
+      }
+
+      yaxis[`yaxis${axisSuffix}`] = yAxis
+      counter++
+      axisSuffix = counter > 0 ? counter + 1 : ''
     }
   })
+
+  qcTrace.yaxis = `y${axisSuffix}`
+  traces.push(qcTrace)
+  if (axisSuffix) {
+    qcYaxis.overlaying = 'y'
+  }
+  yaxis[`yaxis${axisSuffix}`] = qcYaxis
 
   const xaxis: any = {
     type: 'date',
@@ -115,7 +154,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
     // range slider compatibility for Scattergl: https://github.com/plotly/plotly.js/issues/2627
   }
 
-  if (seriesArray.length > 2) {
+  if (seriesArray.length > 2 || true) {
     xaxis.domain = [0, 1 - axisPlotFraction * (seriesArray.length - 2)]
   }
 
@@ -135,24 +174,12 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       dragmode: 'pan',
       hovermode: 'closest', // Disable if hovering is too costly
       uirevision: true,
-      title: { text: seriesArray[0].name, font: { color: '#1f77b4' } },
-      legend: {
-        x: 0,
-        y: 1,
-        traceorder: 'normal',
-        font: {
-          family: 'sans-serif',
-          size: 12,
-          color: '#000',
-        },
-        bgcolor: '#E2E2E2',
-        bordercolor: '#FFFFFF',
-        borderwidth: 2,
-      },
+      title: { text: qcTrace?.name, font: { color: COLORS[0] } },
+      showlegend: false,
     },
     config: {
       displayModeBar: true,
-      showlegend: true,
+      showlegend: false,
       modeBarButtonsToRemove: ['toImage', 'autoScale'],
       scrollZoom: true,
       responsive: true,
@@ -203,15 +230,21 @@ export const handleClick = async (eventData: any) => {
       selectedpoints: [[...alreadySelected]],
     })
 
-    selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+    handleSelected()
   }
 }
 
-export const handleSelected = async (eventData: any) => {
+export const handleSelected = async (eventData?: any) => {
   console.log('handleSelected')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
   const { selectedData } = storeToRefs(useDataVisStore())
-  selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+  const { qcDatastream } = storeToRefs(useDataVisStore())
+
+  const traceIndex = plotlyRef.value?.data.findIndex(
+    (trace: any) => trace.id == qcDatastream.value?.id
+  )
+
+  selectedData.value = plotlyRef.value?.data[traceIndex].selectedpoints || null
 
   // TODO: prevent selection on other traces
 }
@@ -244,9 +277,8 @@ export const handleRelayout = async (eventData: any) => {
     visiblePoints,
     tooltipsMaxDataPoints,
   } = storeToRefs(usePlotlyStore())
-  const { selectedData } = storeToRefs(useDataVisStore())
 
-  selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+  handleSelected()
 
   // Plotly fires the relayout event for practically everything.
   // We only need to handle it when panning or zooming.
@@ -308,9 +340,7 @@ export const handleRelayout = async (eventData: any) => {
 
 export const handleDeselect = async (_eventData: any) => {
   console.log('handleDeselect')
-  const { plotlyRef } = storeToRefs(usePlotlyStore())
-  const { selectedData } = storeToRefs(useDataVisStore())
-  selectedData.value = plotlyRef.value?.data[0].selectedpoints || null
+  handleSelected()
 }
 
 export const handleDoubleClick = async () => {

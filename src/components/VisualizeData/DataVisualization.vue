@@ -69,19 +69,16 @@
 
 <script setup lang="ts">
 import { useDataVisStore } from '@/store/dataVisualization'
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import SeriesStyleCard from '@/components/VisualizeData/SeriesStyleCard.vue'
 import { Datastream } from '@/types'
-import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
 import Plot from '@/components/VisualizeData/Plot.vue'
 
 const { plotlyOptions } = storeToRefs(usePlotlyStore())
-const { dispatchSelection, clearSelected } = useDataSelection()
 
-const { loadingStates, plottedDatastreams, selectedQualifier, selectedData } =
-  storeToRefs(useDataVisStore())
+const { loadingStates, plottedDatastreams } = storeToRefs(useDataVisStore())
 const openStyleModal = ref(false)
 const seriesDatastream = ref<Datastream | null>(null)
 

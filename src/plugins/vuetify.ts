@@ -71,11 +71,11 @@ export default createVuetify({
     VCombobox: {
       variant: 'outlined',
     },
-    VBtn: {
-      color: 'primary',
-      density: 'comfortable',
-      rounded: false,
-    },
+    // VBtn: {
+    //   color: 'primary',
+    //   density: 'comfortable',
+    //   rounded: false,
+    // },
     VBtnPrimary: {
       color: 'primary',
       density: 'comfortable',
