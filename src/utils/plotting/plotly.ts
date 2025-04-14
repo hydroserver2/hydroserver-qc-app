@@ -22,6 +22,8 @@ export const COLORS = [
 ]
 
 const selectorOptions = {
+  yanchor: 'top',
+  y: -0.15,
   buttons: [
     {
       step: 'month',

@@ -5,8 +5,6 @@ import { usePlotlyStore } from './plotly'
 import { useObservationStore } from './observations'
 import { Snackbar } from '@/utils/notifications'
 import { handleNewPlot } from '@/utils/plotting/plotly'
-// @ts-ignore
-import Plotly from 'plotly.js-dist'
 
 export const useDataVisStore = defineStore('dataVisualization', () => {
   const {
@@ -60,6 +58,25 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     beginDate.value = new Date(new Date().getTime() - oneWeek)
     selectedDateBtnId.value = 0
     // resetChartZoom()
+  }
+
+  function toggleDatastream(datastream: Datastream) {
+    console.log('here')
+    const index = plottedDatastreams.value.findIndex(
+      (item) => item.id === datastream.id
+    )
+    if (index === -1) {
+      plottedDatastreams.value.push(datastream)
+      if (!qcDatastream.value) {
+        qcDatastream.value = datastream
+      }
+    } else {
+      plottedDatastreams.value.splice(index, 1)
+      if (qcDatastream.value?.id == datastream.id) {
+        qcDatastream.value =
+          plottedDatastreams.value[Math.max(index - 1, 0)] || null
+      }
+    }
   }
 
   function matchesSelectedObservedProperty(datastream: Datastream) {
@@ -371,6 +388,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     setDateRange,
     onDateBtnClick,
     resetState,
+    toggleDatastream,
     // updateOrFetchGraphSeries,
   }
 })

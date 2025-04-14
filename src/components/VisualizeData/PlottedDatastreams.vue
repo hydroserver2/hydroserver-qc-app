@@ -38,6 +38,7 @@
               variant="text"
               rounded="true"
               color="default"
+              title="Move up"
             ></v-btn>
             <v-btn
               :disabled="index >= plottedDatastreams.length - 1"
@@ -46,6 +47,7 @@
               variant="text"
               rounded="true"
               color="default"
+              title="Move down"
             ></v-btn>
           </div>
           <v-btn
@@ -54,6 +56,8 @@
             variant="text"
             rounded="true"
             color="default"
+            @click="toggleDatastream(datastream)"
+            title="Remove from plot"
           ></v-btn>
         </v-list-item-action>
         <!-- <v-label>Editing...</v-label> -->
@@ -77,6 +81,7 @@ import Plotly from 'plotly.js-dist'
 import { Ref, ref } from 'vue'
 
 const { plottedDatastreams, qcDatastream } = storeToRefs(useDataVisStore())
+const { toggleDatastream } = useDataVisStore()
 const visibleDict: Ref<{ [key: string]: boolean }> = ref({})
 
 const setQcDatastream = async (datastream: Datastream) => {

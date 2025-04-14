@@ -92,18 +92,6 @@
             @change="() => toggleDatastream(item)"
           />
         </template>
-        <!-- <template v-slot:item.select="{ item }">
-          <v-checkbox
-            :model-value="isSelected(item)"
-            :disabled="
-              (plottedDatastreams.length >= 5 && !isChecked(item)) ||
-              loadingStates.get(item.id)
-            "
-            class="d-flex align-self-center"
-            density="compact"
-            @change="() => updateSelectedDatastream(item)"
-          />
-        </template> -->
       </v-data-table-virtual>
     </v-card>
 
@@ -136,6 +124,7 @@ const {
   processingLevels,
   qcDatastream,
 } = storeToRefs(useDataVisStore())
+const { toggleDatastream } = useDataVisStore()
 
 const showOnlySelected = ref(false)
 const openInfoCard = ref(false)
@@ -258,37 +247,6 @@ const selectedHeaders = computed({
     })
   },
 })
-
-function toggleDatastream(datastream: Datastream) {
-  const index = plottedDatastreams.value.findIndex(
-    (item) => item.id === datastream.id
-  )
-  if (index === -1) {
-    plottedDatastreams.value.push(datastream)
-    if (!qcDatastream.value) {
-      qcDatastream.value = datastream
-    }
-  } else {
-    plottedDatastreams.value.splice(index, 1)
-    if (qcDatastream.value?.id == datastream.id) {
-      qcDatastream.value =
-        plottedDatastreams.value[Math.max(index - 1, 0)] || null
-    }
-  }
-}
-
-function updateSelectedDatastream(datastream: Datastream) {
-  // if (datastream.id === qcDatastream.value?.id) {
-  //   qcDatastream.value = null
-  // }
-  // else {
-  //   qcDatastream.value = datastream
-  // }
-  // if (!plottedDatastreams.value.includes(datastream)) {
-  //   plottedDatastreams.value.push(datastream)
-  // }
-  // updateOptions()
-}
 </script>
 
 <style scoped lang="scss">

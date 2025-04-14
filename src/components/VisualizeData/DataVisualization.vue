@@ -87,7 +87,7 @@ const isUpdating = computed(() =>
 )
 
 const isDataAvailable = computed(() => {
-  return plotlyOptions.value.traces?.length
+  return plotlyOptions.value.traces?.length && plottedDatastreams.value?.length
 })
 </script>
 
