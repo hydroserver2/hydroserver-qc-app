@@ -261,11 +261,19 @@ export const handleNewPlot = async (element?: any) => {
     plotlyOptions.value.config
   )
 
+  const debounceDelay = 250
+
   handleRelayout(null)
-  plotlyRef.value?.on('plotly_redraw', debounce(handleRelayout, 150))
-  plotlyRef.value?.on('plotly_relayout', debounce(handleRelayout, 150))
-  plotlyRef.value?.on('plotly_selected', debounce(handleSelected, 150))
-  plotlyRef.value?.on('plotly_deselec', debounce(handleDeselect, 150))
+  plotlyRef.value?.on('plotly_redraw', debounce(handleRelayout, debounceDelay))
+  plotlyRef.value?.on(
+    'plotly_relayout',
+    debounce(handleRelayout, debounceDelay)
+  )
+  plotlyRef.value?.on(
+    'plotly_selected',
+    debounce(handleSelected, debounceDelay)
+  )
+  plotlyRef.value?.on('plotly_deselec', debounce(handleDeselect, debounceDelay))
   plotlyRef.value?.on('plotly_click', handleClick)
   plotlyRef.value?.on('plotly_doubleclick', handleDoubleClick)
 }
@@ -307,22 +315,28 @@ export const handleRelayout = async (eventData: any) => {
         layoutUpdates.xaxis.range[1] = Date.parse(layoutUpdates.xaxis.range[1])
       }
 
-      // Find visible points count
-      // Plotly does not return the indexes. We must find them using binary seach
-      const startIdx = findFirstGreaterOrEqual(
-        plotlyRef.value?.data[0].x,
-        layoutUpdates.xaxis.range[0]
-      )
-      const endIdx = findFirstGreaterOrEqual(
-        plotlyRef.value?.data[0].x,
-        layoutUpdates.xaxis.range[1]
-      )
+      visiblePoints.value = 0
 
-      visiblePoints.value = endIdx - startIdx
+      // Find number of visible points
+      for (let i = 0; i < plotlyRef.value?.data.length; i++) {
+        // Plotly does not return the indexes of current x-axis extent. We must find them using binary seach.
+        const startIdx = findFirstGreaterOrEqual(
+          plotlyRef.value?.data[i].x,
+          layoutUpdates.xaxis.range[0]
+        )
+        const endIdx = findFirstGreaterOrEqual(
+          plotlyRef.value?.data[i].x,
+          layoutUpdates.xaxis.range[1]
+        )
+        visiblePoints.value += endIdx - startIdx
+      }
 
       // Threshold check
       const newHoverState =
-        visiblePoints.value > tooltipsMaxDataPoints.value ? 'skip' : 'x+y'
+        visiblePoints.value > tooltipsMaxDataPoints.value ||
+        !areTooltipsEnabled.value
+          ? 'skip'
+          : 'x+y'
 
       // Only update if state changed
       if (plotlyRef.value?.data[0].hoverinfo !== newHoverState) {
@@ -330,10 +344,8 @@ export const handleRelayout = async (eventData: any) => {
           return
         }
 
-        await Plotly.restyle(plotlyRef.value, { hoverinfo: [newHoverState] }, 0)
+        await Plotly.restyle(plotlyRef.value, { hoverinfo: [newHoverState] })
       }
-
-      // await Plotly.update(plotlyRef.value, {}, layoutUpdates)
     } finally {
       isUpdating.value = false
     }

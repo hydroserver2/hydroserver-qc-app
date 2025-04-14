@@ -4,6 +4,7 @@
       <div class="d-flex align-center gap-2">
         <v-switch
           v-model="areTooltipsEnabled"
+          @update:model-value="handleRelayout"
           color="primary"
           label="Tooltips"
           :disabled="visiblePoints > tooltipsMaxDataPoints"
@@ -56,7 +57,7 @@ import { ref, onMounted } from 'vue'
 import { usePlotlyStore } from '@/store/plotly'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { handleNewPlot } from '@/utils/plotting/plotly'
+import { handleNewPlot, handleRelayout } from '@/utils/plotting/plotly'
 
 const plot = ref<HTMLDivElement>()
 const { isUpdating, areTooltipsEnabled, visiblePoints, tooltipsMaxDataPoints } =
