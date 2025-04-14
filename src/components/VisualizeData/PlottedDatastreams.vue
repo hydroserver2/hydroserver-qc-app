@@ -75,12 +75,13 @@ import { COLORS, handleNewPlot } from '@/utils/plotting/plotly'
 import { Datastream } from '@/types'
 import { usePlotlyStore } from '@/store/plotly'
 const { updateOptions } = usePlotlyStore()
-const { selectedSeries, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
+const { selectedSeries, plotlyRef } = storeToRefs(usePlotlyStore())
 // @ts-ignore no type definitions
 import Plotly from 'plotly.js-dist'
-import { Ref, ref } from 'vue'
+import { Ref, ref, computed } from 'vue'
 
-const { plottedDatastreams, qcDatastream } = storeToRefs(useDataVisStore())
+const { plottedDatastreams, qcDatastream, loadingStates } =
+  storeToRefs(useDataVisStore())
 const { toggleDatastream } = useDataVisStore()
 const visibleDict: Ref<{ [key: string]: boolean }> = ref({})
 
@@ -90,16 +91,9 @@ const setQcDatastream = async (datastream: Datastream) => {
   await handleNewPlot()
 }
 
-// const isVisible = (datastream: Datastream): boolean => {
-//   const traceIndex = plotlyRef.value?.data.findIndex(
-//     (trace: any) => trace.id == datastream.id
-//   )
-//   if (traceIndex >= 0) {
-//     const isVisible = plotlyRef.value?.data[traceIndex].visible
-//     return isVisible === true || isVisible == undefined
-//   }
-//   return false
-// }
+const isUpdating = computed(() =>
+  Array.from(loadingStates.value.values()).some((isLoading) => isLoading)
+)
 
 const toggleVisibility = async (datastream: Datastream) => {
   const traceIndex = plotlyRef.value?.data.findIndex(
