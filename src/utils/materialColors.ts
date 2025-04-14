@@ -42,15 +42,6 @@ export const materialColorsHex = [
   '#9E9E9E', // grey
 ]
 
-export const LineColors = [
-  // '#5571c7', // blue  !only the qc selected datastream should be blue
-  '#91cc75', // green
-  '#795548', // brown
-  '#ee6464', // red
-  '#80d4f4', // light blue
-  '#FF5722', // deep-orange
-]
-
 export const googlePinColors = [
   { borderColor: '#B71C1C', background: '#F44336', glyphColor: '#B71C1C' }, // Red
   { borderColor: '#0D47A1', background: '#2196F3', glyphColor: '#0D47A1' }, // Blue

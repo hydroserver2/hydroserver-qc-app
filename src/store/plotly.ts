@@ -11,7 +11,6 @@ import Plotly from 'plotly.js-dist'
 // Register custom data sampler
 // import dataSample from '@/utils/custom-down-sample'
 import { createPlotlyOption, cropXaxisRange } from '@/utils/plotting/plotly'
-import { LineColors } from '@/utils/materialColors'
 import { useObservationStore } from './observations'
 
 export const usePlotlyStore = defineStore('Plotly', () => {
