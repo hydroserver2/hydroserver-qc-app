@@ -61,7 +61,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   }
 
   function toggleDatastream(datastream: Datastream) {
-    console.log('here')
     const index = plottedDatastreams.value.findIndex(
       (item) => item.id === datastream.id
     )
