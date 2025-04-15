@@ -39,8 +39,7 @@ export type DataArray = Observation[]
 export interface GraphSeries {
   id: string
   name: string
-  // data: DataPoint[]
-  data: ObservationRecord // dataframe
+  data: ObservationRecord
   yAxisLabel: string
   seriesOption: any
 }

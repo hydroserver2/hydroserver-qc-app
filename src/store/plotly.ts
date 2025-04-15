@@ -35,7 +35,7 @@ export const usePlotlyStore = defineStore('Plotly', () => {
   /** The edit history for the currently selected series */
   const editHistory: Ref<HistoryItem[]> = ref([])
 
-  const selectedSeries: ComputedRef<GraphSeries> = computed(() => {
+  const selectedSeries = computed(() => {
     return graphSeriesArray.value[selectedSeriesIndex.value]
   })
 
@@ -89,8 +89,8 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     await Plotly.update(
       plotlyRef.value,
       {
-        x: plotlyOptions.value.traces.map((t) => t.x),
-        y: plotlyOptions.value.traces.map((t) => t.y),
+        x: plotlyOptions.value.traces.map((t: any) => t.x),
+        y: plotlyOptions.value.traces.map((t: any) => t.y),
       },
       plotlyOptions.value.layout
     )
