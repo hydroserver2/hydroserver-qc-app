@@ -56,10 +56,10 @@ jobs:
           repository: hydroserver2/hydroserver-qc-app
           ref: ${{ github.event.inputs.branch }}
           path: qc_app
-      - name: Setup Node 22.x
+      - name: Setup Node 23.x
         uses: actions/setup-node@v3
         with:
-          node-version: 22.x
+          node-version: 23.x
           cache: npm
           cache-dependency-path: qc_app/package-lock.json
       - name: Install Dependencies
