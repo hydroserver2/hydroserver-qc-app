@@ -90,7 +90,6 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       // hoverinfo: 'x+y',
       name: s.name,
       showLegend: false,
-      hovertemplate: '<b>%{y}</b><br>%{x}<extra></extra>',
       marker: {
         color,
       },
@@ -348,11 +347,16 @@ export const handleRelayout = async (eventData: any) => {
       }
 
       // Threshold check
-      const newHoverState =
+      let newHoverState = 'x+y'
+      let newHoverTemplate: string = '<b>%{y}</b><br>%{x}<extra></extra>'
+
+      if (
         visiblePoints.value > tooltipsMaxDataPoints.value ||
         !areTooltipsEnabled.value
-          ? 'skip'
-          : 'x+y'
+      ) {
+        newHoverState = 'skip'
+        newHoverTemplate = ''
+      }
 
       // Only update if state changed
       if (plotlyRef.value?.data[0].hoverinfo !== newHoverState) {
@@ -360,7 +364,10 @@ export const handleRelayout = async (eventData: any) => {
           return
         }
 
-        await Plotly.restyle(plotlyRef.value, { hoverinfo: [newHoverState] })
+        await Plotly.restyle(plotlyRef.value, {
+          hoverinfo: newHoverState,
+          hovertemplate: newHoverTemplate,
+        })
       }
     } finally {
       isUpdating.value = false
