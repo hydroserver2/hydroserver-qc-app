@@ -110,7 +110,10 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
         },
       }
       qcYaxis = {
-        title: { text: s.yAxisLabel, font: { color: COLORS[0] } },
+        title: {
+          text: s.yAxisLabel,
+          font: { color: COLORS[0], weight: 'bold' },
+        },
         tickfont: { color: COLORS[0] },
         side: 'left',
         anchor: 'free',
@@ -124,7 +127,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       traces.push(trace)
 
       const yAxis: any = {
-        title: { text: s.yAxisLabel, font: { color } },
+        title: { text: s.yAxisLabel, font: { color, weight: 'bold' } },
         tickfont: { color },
         // overlaying: 'y',
         side: 'right',
@@ -186,7 +189,10 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       dragmode: 'pan',
       hovermode: 'closest', // Disable if hovering is too costly
       uirevision: true,
-      title: { text: qcTrace?.name, font: { color: COLORS[0] } },
+      title: {
+        text: qcTrace?.name,
+        font: { color: COLORS[0], weight: 'bold', size: 24 },
+      },
       showlegend: false,
     },
     config: {
