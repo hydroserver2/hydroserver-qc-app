@@ -90,7 +90,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       // hoverinfo: 'x+y',
       name: s.name,
       showLegend: false,
-
+      hovertemplate: '<b>%{y}</b><br>%{x}<extra></extra>',
       marker: {
         color,
       },
