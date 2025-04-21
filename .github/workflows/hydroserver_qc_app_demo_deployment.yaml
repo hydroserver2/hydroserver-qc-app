@@ -76,7 +76,7 @@ jobs:
           VITE_APP_ROUTE=${{ vars.APP_ROUTE }}
       - name: Build QC App
         working-directory: ./qc_app
-        run: npm run build-prod
+        run: npm run build
       - name: Deploy to S3
         working-directory: ./qc_app
         run: |
