@@ -19,8 +19,8 @@ export const fetchObservationsSync = async (
 
   const pageSize = 50_000
   const endpoints: string[] = []
-  let page = 0
-  const maxPages = Math.floor(valueCount / pageSize)
+  let page = 1
+  const maxPages = Math.ceil(valueCount / pageSize)
   while (page <= maxPages) {
     endpoints.push(
       getObservationsEndpoint({
