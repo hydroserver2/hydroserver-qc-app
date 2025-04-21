@@ -24,12 +24,13 @@ jobs:
     env:
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
       AWS_IAM_ROLE: ${{ vars.AWS_IAM_ROLE }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
       PROXY_BASE_URL: ${{ vars.PROXY_BASE_URL }}
     steps:
       - name: Check Required Environment Variables
         run: |
           echo "Checking required environment variables..."
-          required_vars=(AWS_ACCOUNT_ID AWS_IAM_ROLE PROXY_BASE_URL)
+          required_vars=(AWS_ACCOUNT_ID AWS_IAM_ROLE AWS_REGION PROXY_BASE_URL)
           for var in "${required_vars[@]}"; do
             if [ -z "${!var}" ]; then
               echo "Error: Environment variable $var is not defined."
@@ -55,15 +56,17 @@ jobs:
           repository: hydroserver2/hydroserver-qc-app
           ref: ${{ github.event.inputs.branch }}
           path: qc_app
-      - name: Setup Node 18.x
+      - name: Setup Node 23.x
         uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 23.x
           cache: npm
           cache-dependency-path: qc_app/package-lock.json
       - name: Install Dependencies
         working-directory: ./qc_app
-        run: npm ci
+        run: |
+          npm install
+          npm ci
       - name: Configure Environment Variables
         working-directory: ./qc_app
         run: |
@@ -71,7 +74,7 @@ jobs:
           VITE_APP_PROXY_BASE_URL=${{ vars.PROXY_BASE_URL }}
       - name: Build QC App
         working-directory: ./qc_app
-        run: npm run build
+        run: npm run build-prod
       - name: Deploy to S3
         working-directory: ./qc_app
         run: |
