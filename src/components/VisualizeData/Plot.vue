@@ -69,4 +69,26 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.js-plotly-plot .plotly) {
+  .cursor-ns-resize,
+  .cursor-n-resize,
+  .cursor-s-resize,
+  .cursor-w-resize,
+  .cursor-ew-resize,
+  .cursor-e-resize {
+    fill: #f8f8f8 !important;
+    stroke: #f8f8f8 !important;
+    stroke-width: 1px !important;
+  }
+
+  .cursor-sw-resize,
+  .cursor-nw-resize,
+  .cursor-ne-resize,
+  .cursor-se-resize {
+    fill: #f2f2f2 !important;
+    stroke: #f2f2f2 !important;
+    stroke-width: 1px !important;
+  }
+}
+</style>

@@ -115,6 +115,8 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
         side: 'left',
         anchor: 'free',
         position: 0,
+        showline: true,
+        linecolor: COLORS[0],
       }
       const { editHistory } = storeToRefs(usePlotlyStore())
       editHistory.value = [...s.data.history]
@@ -128,6 +130,10 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
         side: 'right',
         anchor: 'free',
         position: 1 - axisPlotFraction * counter,
+        zeroline: false,
+        showgrid: false,
+        showline: true,
+        linecolor: color,
         // fixedrange: true,
         // autorange: true,
       }
@@ -156,6 +162,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
     minallowed: minDatetime,
     maxallowed: maxDatetime,
     autorange: false,
+    showline: true,
     // range slider compatibility for Scattergl: https://github.com/plotly/plotly.js/issues/2627
   }
 
