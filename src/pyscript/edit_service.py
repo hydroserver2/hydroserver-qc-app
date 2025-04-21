@@ -95,6 +95,7 @@ class EditService():
 
   ###################
   # Filters
+  # filter operations return a new DataFrame object and do not modify the current DataFrame.
   ###################
 
   def _has_filter(self, filter: dict[FilterOperation, float], key: FilterOperation) -> bool:
@@ -103,6 +104,8 @@ class EditService():
   def filter(self, filter: dict[FilterOperation, float]) -> None:
     """
     Executes the applied filters and returns the resulting DataFrame
+
+    :return: Pandas DataFrame object
     """
 
     query = []
@@ -142,13 +145,11 @@ class EditService():
     else:
       return None
 
-  ###################
-  # Gap Analysis
-  ###################
-
   def find_gaps(self, time_value, time_unit: str, range = None):
     """
-    :return Pandas DataFrame:
+    Find gaps in the DataFrame.
+
+    :return: Pandas DataFrame object
     """
 
     df = None
@@ -161,6 +162,12 @@ class EditService():
     return df.loc[self._df[self.get_date_col()].diff() > np.timedelta64(time_value, time_unit)]
   
   def rate_of_change(self, comparator: RateOfChangeOperation, value: float, range = None):
+    """
+    Returns a DataFrame filtered by provided rate of change.
+
+    :return: Pandas DataFrame object
+    """
+        
     df = None
     if range:
       df = self.get_dataframe().iloc[range[0]:range[1] + 1]
@@ -192,7 +199,9 @@ class EditService():
   
   def persistence(self, times, range = None):
     """
-    :return Pandas DataFrame:
+    Returns a DataFrame filtered where values remain the same for `times` in a row.
+
+    :return: Pandas DataFrame object
     """
 
     df = None
@@ -213,6 +222,10 @@ class EditService():
     return df[df_marked['consecutive']].drop(columns=['group', 'consecutive'])
 
 
+  ######################################
+  # Data point operations
+  # These operations modify the DataFrame in place.
+  ######################################
   def fill_gaps(self, gap, fill, interpolate_values, range = None):
     """
     :return Pandas DataFrame:
@@ -254,12 +267,10 @@ class EditService():
     return pd.DataFrame(
       points, columns=[self.get_date_col(), self.get_value_col(), self.get_qualifier_col()])
 
-  ######################################
-  # Data point operations
-  ######################################
-
   def add_points(self, points, index=None):
     """
+    Inserts data points in the DataFrame. The index will be reset.
+
     :return Pandas DataFrame:
     """
 
@@ -303,7 +314,10 @@ class EditService():
       self._df.reset_index(drop=True, inplace=True)
 
   def change_values(self, index_list, operator: str, value):
-
+    """
+    Perform an operation on the DataFrame value column.
+    """
+        
     def operation(x):
       if operator == Operator.MULT.value:
         return x * value
@@ -324,10 +338,18 @@ class EditService():
     )] = self._df.loc[index_list, self.get_value_col()].apply(operation)
 
   def delete_points(self, index_list):
+    """
+    Deletes rows in the DataFrame.
+    """
+        
     self._df.drop(index=index_list, inplace=True)
     self._df.reset_index(drop=True, inplace=True)
 
   def shift_points(self, index_list, time_value, time_unit):
+    """
+    Shift the date column in the DataFrame.
+    """
+        
     shift_value = np.timedelta64(time_value, time_unit)
     condition = self._df.index.isin(index_list)
 
@@ -339,11 +361,21 @@ class EditService():
     self._df.reset_index(drop=True, inplace=True)
 
   def interpolate(self, index_list):
+    """
+    Interpolates the value column in DataFrame. Uses linear interpolation.
+    """
+
     condition = self._df.index.isin(index_list)
     self._df[self.get_value_col()].mask(condition, inplace=True)
     self._df[self.get_value_col()].interpolate(method="linear", inplace=True)
 
   def drift_correction(self, start, end, gap_width):
+    """
+    Performs drift correction.
+
+    :return: Pandas DataFrame object
+    """
+        
     # validate range
     if start >= end:
       raise Exception("Start and end index cannot overlap")
