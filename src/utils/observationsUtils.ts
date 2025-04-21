@@ -13,24 +13,26 @@ export const fetchObservationsSync = async (
   endTime?: Date
 ): Promise<{ datetimes: number[]; dataValues: number[] }> => {
   const { id, phenomenonBeginTime, phenomenonEndTime, valueCount } = datastream
-  if (!phenomenonBeginTime || !phenomenonEndTime)
+  if (!phenomenonBeginTime || !phenomenonEndTime) {
     return { datetimes: [], dataValues: [] }
+  }
 
   const pageSize = 50_000
   const endpoints: string[] = []
-  let skipCount = 0
-  while (skipCount < valueCount) {
+  let page = 0
+  const maxPages = Math.floor(valueCount / pageSize)
+  while (page <= maxPages) {
     endpoints.push(
       getObservationsEndpoint({
         id,
         pageSize,
         startTime: startTime?.toISOString() ?? phenomenonBeginTime,
         endTime: endTime?.toISOString() ?? phenomenonEndTime,
-        skipCount,
+        page,
         addResultQualifiers: true,
       })
     )
-    skipCount += pageSize
+    page++
   }
 
   try {
@@ -38,6 +40,9 @@ export const fetchObservationsSync = async (
 
     for (const endpoint of endpoints) {
       const result = await api.fetchObservations(endpoint)
+      if (!result.phenomenon_time.length) {
+        break
+      }
       results.push(result)
     }
 
@@ -55,23 +60,17 @@ export const fetchObservationsSync = async (
     //     .flat()
     // )
 
-    // TODO: We transform the dataArray into multiple arrays for each column.
-    // Danfo.js and Plotly.js both require data columns
-    const datetimes: number[] = []
-    const dataValues: number[] = []
+    let datetimes: number[] = []
+    let dataValues: number[] = []
 
     results.forEach((r) => {
-      const dataArray: [string, number, any][] = r.value[0]?.dataArray
-
-      // const qualifers = new Array(dataArray.length)
-
-      if (dataArray) {
-        for (const row of dataArray) {
-          datetimes.push(Date.parse(row[0]))
-          dataValues.push(row[1])
-          // qualifers[i] = dataArray[i][2]
-        }
-      }
+      datetimes = [
+        ...datetimes,
+        ...r.phenomenon_time.map((dateString: string) =>
+          new Date(dateString).getTime()
+        ),
+      ]
+      dataValues = [...dataValues, ...r.result]
     })
 
     return {

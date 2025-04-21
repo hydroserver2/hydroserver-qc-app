@@ -51,7 +51,8 @@ export const useObservationStore = defineStore(
 
         // Check if new data before the stored data is needed
         if (beginTime <= rawBeginDatetime) {
-          rawBeginDatetime.setSeconds(rawBeginDatetime.getSeconds() - 1) // Results in range will be inclusive, so we need to offset by 1
+          // Results in range will be inclusive, so we need to offset by 1
+          rawBeginDatetime.setSeconds(rawBeginDatetime.getSeconds() - 1)
           beginDataPromise = fetchObservationsSync(
             datastream,
             beginTime,
@@ -67,6 +68,7 @@ export const useObservationStore = defineStore(
 
         // Check if new data after the stored data is needed
         if (endTime >= rawEndDatetime) {
+          rawEndDatetime.setSeconds(rawEndDatetime.getSeconds() + 1)
           endDataPromise = fetchObservationsSync(
             datastream,
             rawEndDatetime,
