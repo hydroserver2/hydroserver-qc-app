@@ -116,6 +116,8 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
         anchor: 'free',
         position: 0,
       }
+      const { editHistory } = storeToRefs(usePlotlyStore())
+      editHistory.value = [...s.data.history]
     } else {
       traces.push(trace)
 

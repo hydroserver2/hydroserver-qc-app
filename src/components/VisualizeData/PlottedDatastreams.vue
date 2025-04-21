@@ -75,7 +75,7 @@ import { COLORS, handleNewPlot } from '@/utils/plotting/plotly'
 import { Datastream } from '@/types'
 import { usePlotlyStore } from '@/store/plotly'
 const { updateOptions } = usePlotlyStore()
-const { selectedSeries, plotlyRef } = storeToRefs(usePlotlyStore())
+const { plotlyRef } = storeToRefs(usePlotlyStore())
 // @ts-ignore no type definitions
 import Plotly from 'plotly.js-dist'
 import { Ref, ref, computed } from 'vue'
