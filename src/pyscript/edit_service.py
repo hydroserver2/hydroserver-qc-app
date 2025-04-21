@@ -11,6 +11,10 @@ from enum import Enum
 # [x] Drift correction (linear)
 # [x] Delete values
 # [x] Fill values
+# [x] Filter by value threshold
+# [x] Persistence
+# [x] Rate of change
+# [x] Find Gaps
 
 # Automation
 # [x] Gap filling
@@ -42,6 +46,13 @@ class FilterOperation(Enum):
   START = 'START'
   END = 'END'
 
+class RateOfChangeOperation(Enum):
+  LT = 'LT'
+  LTE = 'LTE'
+  GT = 'GT'
+  GTE = 'GTE'
+  E = 'E'
+
 class Operator(Enum):
   ADD = 'ADD'
   SUB = 'SUB'
@@ -55,10 +66,7 @@ ISO_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 class EditService():
   def __init__(self, data) -> None:
     self.data = data
-
-    print("[EditService]: Initializing...")
     self._populate_series()
-    print("[EditService]: Initialized")
 
   def _populate_series(self) -> None:
     rows = self.data["dataArray"]
@@ -121,13 +129,13 @@ class EditService():
         f'`{self.get_value_col()}` == {filter[FilterOperation.E.value]}')
       
     # DATETIME FILTERS
-    # if self._has_filter(filter, FilterOperation.START):
-    #   query.append(
-    #     f'`{self.get_date_col()}` >= {filter[FilterOperation.START.value]}')
+    if self._has_filter(filter, FilterOperation.START):
+      query.append(
+        f'`{self.get_date_col()}` >= {filter[FilterOperation.START.value]}')
       
-    # if self._has_filter(filter, FilterOperation.END):
-    #   query.append(
-    #     f'`{self.get_date_col()}` <= {filter[FilterOperation.END.value]}')
+    if self._has_filter(filter, FilterOperation.END):
+      query.append(
+        f'`{self.get_date_col()}` <= {filter[FilterOperation.END.value]}')
 
     if len(query):
       return self._df.query(" | ".join(query))
@@ -151,6 +159,36 @@ class EditService():
 
     # DataFrame.diff calculates the difference of datetime compared with the element in previous row.
     return df.loc[self._df[self.get_date_col()].diff() > np.timedelta64(time_value, time_unit)]
+  
+  def rate_of_change(self, comparator: RateOfChangeOperation, value: float, range = None):
+    df = None
+    if range:
+      df = self.get_dataframe().iloc[range[0]:range[1] + 1]
+    else:
+      df = self.get_dataframe()
+
+    # Calculate percentage change
+    # Round to the same number of decimals in `value` so we can compare for equality
+    decimals = 0
+    number_string = str(value)
+
+    if "." in number_string:
+        decimals = len(number_string.split(".")[1])
+    df_pct_change = df['value'].pct_change().round(decimals)
+
+    if comparator == RateOfChangeOperation.LT:
+      return df[df_pct_change < value]
+    elif comparator == RateOfChangeOperation.LTE:
+        return df[df_pct_change <= value]
+    elif comparator == RateOfChangeOperation.GT:
+        return df[df_pct_change > value]
+    elif comparator == RateOfChangeOperation.GTE:
+        return df[df_pct_change >= value]
+    elif comparator == RateOfChangeOperation.E:
+        return df[df_pct_change == value]
+    
+    # default
+    return df
   
   def persistence(self, times, range = None):
     """
@@ -271,8 +309,7 @@ class EditService():
         return x * value
       elif operator == Operator.DIV.value:
         if value == 0:
-          print("Error: cannot divide by 0")
-          return x
+          raise Exception("Cannot divide by 0")
         return x / value
       elif operator == Operator.ADD.value:
         return x + value
@@ -309,14 +346,11 @@ class EditService():
   def drift_correction(self, start, end, gap_width):
     # validate range
     if start >= end:
-      print("Start and end index cannot overlap")
-      return self._df
+      raise Exception("Start and end index cannot overlap")
     elif end > len(self._df) - 1:
-      print("End index out of range")
-      return self._df
+      raise Exception("End index out of range")
     elif start < 0:
-      print("Start index must be greater than or equal to 0")
-      return self._df
+      raise Exception("Start index must be greater than or equal to 0")
 
     points = self._df.iloc[start:end + 1]
     startdate = points.iloc[0][self.get_date_col()]
