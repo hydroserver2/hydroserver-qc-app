@@ -82,7 +82,8 @@ jobs:
         run: |
           mv ./dist/index.html /tmp/index.html
           aws s3 sync ./dist s3://hydroserver-qc-demo-app-${{ github.event.inputs.environment }}-${{ vars.AWS_ACCOUNT_ID }}/quality-control-demo/ --delete
-          aws s3 cp /tmp/index.html s3://hydroserver-qc-demo-app-${{ github.event.inputs.environment }}-${{ vars.AWS_ACCOUNT_ID }}/index.html        
+          aws s3 cp /tmp/index.html s3://hydroserver-qc-demo-app-${{ github.event.inputs.environment }}-${{ vars.AWS_ACCOUNT_ID }}/index.html
+          aws s3 cp /tmp/index.html s3://hydroserver-qc-demo-app-${{ github.event.inputs.environment }}-${{ vars.AWS_ACCOUNT_ID }}/quality-control-demo/index.html
       - name: Get CloudFront Distribution ID
         run: |
           DISTRIBUTION_IDS=$(aws cloudfront list-distributions --query "DistributionList.Items[*].Id" --output text)
