@@ -476,17 +476,17 @@ export const cropYaxisRange = async (_eventData: any) => {
     })
 
     // Find visible points count
-    // Plotly does not return the indexes of current axis range. We must find them using binary seach
-    const startIdx = findFirstGreaterOrEqual(
-      plotlyRef.value?.data[0].x,
-      xRange[0]
-    )
-    const endIdx = findFirstGreaterOrEqual(
-      plotlyRef.value?.data[0].x,
-      xRange[1]
-    )
-
     for (let i = 0; i < graphSeriesArray.value.length; i++) {
+      // Plotly does not return the indexes of current axis range. We must find them using binary seach
+      const startIdx = findFirstGreaterOrEqual(
+        plotlyRef.value?.data[i].x,
+        xRange[0]
+      )
+      const endIdx = findFirstGreaterOrEqual(
+        plotlyRef.value?.data[i].x,
+        xRange[1]
+      )
+
       const axisKey = i == 0 ? 'yaxis' : `yaxis${i + 1}`
       const yAxis = plotlyOptions.value.layout[axisKey]
 
