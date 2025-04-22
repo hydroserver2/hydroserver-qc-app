@@ -71,7 +71,12 @@ onMounted(async () => {
 
 <style scoped>
 :deep(.js-plotly-plot .plotly) {
-  .drag {
+  .drag.cursor-ns-resize,
+  .drag.cursor-n-resize,
+  .drag.cursor-s-resize,
+  .drag.cursor-w-resize,
+  .drag.cursor-ew-resize,
+  .drag.cursor-e-resize {
     fill: #f8f8f8 !important;
     stroke: #f8f8f8 !important;
     stroke-width: 1px !important;
