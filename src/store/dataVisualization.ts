@@ -112,7 +112,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   }
 
   const filteredDatastreams = computed(() => {
-    return datastreams.value.filter(
+    return datastreams.value?.filter(
       (datastream) =>
         matchesSelectedThing(datastream) &&
         matchesSelectedObservedProperty(datastream) &&

@@ -18,6 +18,9 @@ export default defineConfig(({ mode }) => {
         styles: { configFile: 'src/styles/settings.scss' },
       }),
     ],
+    define: {
+      VITE_APP_VERSION: JSON.stringify(process.env.npm_package_version),
+    },
     css: {
       preprocessorOptions: {
         scss: {

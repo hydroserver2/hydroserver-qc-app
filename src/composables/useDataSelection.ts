@@ -15,8 +15,6 @@ export function useDataSelection() {
 
   /** Dispatch selection  */
   const dispatchSelection = async (selection: number[]) => {
-    const { selectedData } = storeToRefs(useDataVisStore())
-
     await Plotly.update(
       plotlyRef.value,
       {
@@ -24,7 +22,7 @@ export function useDataSelection() {
         selectedpoints: [selection], // Plotly expects one array per trace (even if updating a single trace).
       },
       {},
-      0
+      [plotlyRef.value?.data.length - 1]
     )
 
     handleSelected()
@@ -33,14 +31,13 @@ export function useDataSelection() {
   /** Call this method after operations that change the order of elements or remove elements in the data */
   const clearSelected = async () => {
     const { selectedData } = storeToRefs(useDataVisStore())
-    const { plotlyRef } = storeToRefs(usePlotlyStore())
 
     // Removes selected areas
     await Plotly.update(
       plotlyRef.value,
       {},
       { selections: [], selectedpoints: [[]] },
-      [0]
+      [plotlyRef.value?.data.length - 1]
     )
 
     // Updates the color
