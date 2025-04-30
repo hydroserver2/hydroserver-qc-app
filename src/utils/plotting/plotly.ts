@@ -161,8 +161,8 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
     title: { text: 'Datetime' },
     rangeselector: selectorOptions,
     range: [minDatetime, maxDatetime],
-    minallowed: minDatetime,
-    maxallowed: maxDatetime,
+    // minallowed: minDatetime,
+    // maxallowed: maxDatetime,
     autorange: false,
     showline: true,
     // range slider compatibility for Scattergl: https://github.com/plotly/plotly.js/issues/2627
@@ -219,7 +219,6 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
 export const handleClick = async (eventData: any) => {
   console.log('handleClick')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
-  const { selectedData } = storeToRefs(useDataVisStore())
 
   const point = eventData.points[0]
   if (point) {
