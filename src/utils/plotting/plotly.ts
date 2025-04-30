@@ -190,7 +190,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
       uirevision: true,
       title: {
         text: qcTrace?.name,
-        font: { color: COLORS[0], weight: 'bold', size: 24 },
+        font: { color: COLORS[0], weight: 'bold' },
       },
       showlegend: false,
     },
