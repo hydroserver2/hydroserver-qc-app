@@ -43,6 +43,39 @@ export const emailFormat = [
   (value: string) => /.+@.+\..+/.test(value) || 'Email must be valid.',
 ]
 
+/** From https://stackoverflow.com/a/20972863/3288102 */
+export const dateTimeFormat = [
+  (value: string) => {
+    const matches = value.match(
+      /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/
+    )
+    if (matches === null) {
+      return 'Datetime must be valid.'
+    } else {
+      // now lets check the date sanity
+      const year = parseInt(matches[1], 10)
+      const month = parseInt(matches[2], 10) - 1 // months are 0-11
+      const day = parseInt(matches[3], 10)
+      const hour = parseInt(matches[4], 10)
+      const minute = parseInt(matches[5], 10)
+      const second = parseInt(matches[6], 10)
+      const date = new Date(year, month, day, hour, minute, second)
+      if (
+        date.getFullYear() !== year ||
+        date.getMonth() != month ||
+        date.getDate() !== day ||
+        date.getHours() !== hour ||
+        date.getMinutes() !== minute ||
+        date.getSeconds() !== second
+      ) {
+        return 'Datetime must be valid.'
+      } else {
+        return true
+      }
+    }
+  },
+]
+
 export const phoneNumber = [
   (value: string) => {
     if (!value) return true
@@ -119,6 +152,7 @@ export const rules = {
   required,
   requiredNumber,
   emailFormat,
+  dateTimeFormat,
   urlFormat,
   phoneNumber,
   nonNumericCharacter,

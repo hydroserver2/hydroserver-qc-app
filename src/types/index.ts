@@ -1,9 +1,25 @@
-import { LineSeriesOption } from 'echarts'
+import {
+  EnumEditOperations,
+  ObservationRecord,
+} from '@/utils/plotting/observationRecord'
+
+export type EnumDictionary<T extends string | symbol | number, U> = {
+  [K in T]: U
+}
 
 export type DataPoint = {
   date: Date
   value: number
-  qualifierValue: string | number
+  qualifierValue: string[]
+}
+
+export type HistoryItem = {
+  method: EnumEditOperations
+  icon: string
+  isLoading: boolean
+  args?: any[]
+  duration?: number
+  status?: 'success' | 'failed'
 }
 
 export interface PartialQualifier {
@@ -20,26 +36,12 @@ export type Observation = [string, number, Qualifier]
 
 export type DataArray = Observation[]
 
-export class ObservationRecord {
-  dataArray: DataArray
-  beginTime: string
-  endTime: string
-  loading: boolean
-
-  constructor() {
-    this.dataArray = []
-    this.beginTime = ''
-    this.endTime = ''
-    this.loading = false
-  }
-}
-
 export interface GraphSeries {
   id: string
   name: string
-  data: DataPoint[]
+  data: ObservationRecord
   yAxisLabel: string
-  seriesOption: LineSeriesOption
+  seriesOption: any
 }
 
 export type TimeSpacingUnit = 'seconds' | 'minutes' | 'hours' | 'days'
@@ -410,3 +412,8 @@ export enum OAuthProvider {
   orcid = 'orcid',
   hydroshare = 'hydroshare',
 }
+
+export type _Window = Window &
+  typeof globalThis & { edit_service_wrapper: any } & {
+    [key: string]: any
+  }

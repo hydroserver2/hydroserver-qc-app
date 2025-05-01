@@ -2,12 +2,11 @@
   <v-navigation-drawer
     permanent
     :width="350"
-    rounded="e-xl"
     elevation="1"
-    class="bg-navbar"
+    class=""
     theme="dark"
   >
-    <v-list class="pb-2" density="compact">
+    <!-- <v-list class="pb-2" density="compact">
       <v-list-subheader> View </v-list-subheader>
       <v-list-item
         @click="showLegend = !showLegend"
@@ -21,8 +20,9 @@
         title="Show tooltip"
       />
 
-      <v-list-item class="pb-0">
+      <v-list-item>
         <v-select
+          class="mt-4"
           :disabled="!qualifierOptions.length"
           :items="qualifierOptions"
           density="compact"
@@ -30,12 +30,12 @@
           v-model="selectedQualifier"
         />
       </v-list-item>
-    </v-list>
+    </v-list> -->
 
     <v-divider />
 
     <v-list class="pb-6">
-      <v-list-subheader>Time filters</v-list-subheader>
+      <v-list-subheader class="text-uppercase">Time filters</v-list-subheader>
       <v-list-item>
         <DataVisTimeFilters />
       </v-list-item>
@@ -44,9 +44,13 @@
     <v-divider />
 
     <v-list class="pb-0">
-      <v-list-subheader>Datastream filters</v-list-subheader>
+      <v-list-subheader class="text-uppercase"
+        >Datastream filters</v-list-subheader
+      >
+      <v-list-item>
+        <DatastreamFilters />
+      </v-list-item>
     </v-list>
-    <DatastreamFilters />
   </v-navigation-drawer>
 </template>
 
@@ -54,11 +58,12 @@
 import DataVisTimeFilters from '@/components/VisualizeData/DataVisTimeFilters.vue'
 import DatastreamFilters from '@/components/VisualizeData/DatastreamFilters.vue'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { useEChartsStore } from '@/store/echarts'
 import { storeToRefs } from 'pinia'
 import { computed, watch } from 'vue'
+import DataVisualizationControls from '../VisualizeData/DataVisualizationControls.vue'
+import { usePlotlyStore } from '@/store/plotly'
 
-const { showLegend, showTooltip } = storeToRefs(useEChartsStore())
+const { showLegend, showTooltip } = storeToRefs(usePlotlyStore())
 const { qualifierSet, selectedQualifier } = storeToRefs(useDataVisStore())
 
 const qualifierOptions = computed(() => {

@@ -1,98 +1,149 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { Datastream, ObservationRecord } from '@/types'
-import { fetchObservationsParallel } from '@/utils/observationsUtils'
+import { Datastream } from '@/types'
+import { fetchObservationsSync } from '@/utils/observationsUtils'
+import { ObservationRecord } from '@/utils/plotting/observationRecord'
 
-export const useObservationStore = defineStore('observations', () => {
-  const observations = ref<Record<string, ObservationRecord>>({})
+export const useObservationStore = defineStore(
+  'observations',
+  () => {
+    const observations = ref<Record<string, ObservationRecord>>({})
+    const observationsRaw = ref<
+      Record<
+        string,
+        {
+          datetimes: Float64Array<ArrayBuffer>
+          dataValues: Float32Array<ArrayBuffer>
+        }
+      >
+    >({})
 
-  /**
-   * Fetches requested observations that aren't currently in the pinia store,
-   * updates the store, then returns the requested observations.
-   */
-  const fetchObservationsInRange = async (
-    datastream: Datastream,
-    beginTime: string,
-    endTime: string
-  ) => {
-    const id = datastream.id
+    /**
+     * Fetches requested observations that aren't currently in the pinia store,
+     * updates the store, then returns the corresponding `ObservationRecord`.
+     */
+    const fetchObservationsInRange = async (
+      datastream: Datastream,
+      beginTime: Date,
+      endTime: Date
+    ): Promise<ObservationRecord> => {
+      console.log('fetchObservationsInRange')
+      const id = datastream.id
 
-    // If nothing is stored yet, create a new record and fetch the data in range
-    if (!observations.value[id]?.dataArray) {
-      observations.value[id] = {
-        dataArray: [],
-        beginTime,
-        endTime,
-        loading: true,
+      // If nothing is stored yet, create a new record
+      if (!observations.value[id]) {
+        observations.value[id] = new ObservationRecord(datastream)
       }
 
-      const fetchedData = await fetchObservationsParallel(
-        datastream,
-        beginTime,
-        endTime
-      )
-      observations.value[id].dataArray = fetchedData
-      observations.value[id].loading = false
+      let beginDataPromise: Promise<{
+        datetimes: number[]
+        dataValues: number[]
+      }> = Promise.resolve({ datetimes: [], dataValues: [] })
+      let endDataPromise: Promise<{
+        datetimes: number[]
+        dataValues: number[]
+      }> = Promise.resolve({ datetimes: [], dataValues: [] })
 
-      return fetchedData
-    } else {
-      const existingRecord = observations.value[id]
-      const newBeginTime = new Date(beginTime).getTime()
-      const newEndTime = new Date(endTime).getTime()
-      const storedBeginTime = new Date(existingRecord.beginTime).getTime()
-      const storedEndTime = new Date(existingRecord.endTime).getTime()
-
-      let beginDataPromise = Promise.resolve([])
-      let endDataPromise = Promise.resolve([])
-
-      // Check if new data before the stored data is needed
-      if (newBeginTime < storedBeginTime) {
-        beginDataPromise = fetchObservationsParallel(
-          datastream,
-          beginTime,
-          existingRecord.beginTime
+      if (observationsRaw.value[id]?.dataValues.length) {
+        const rawBeginDatetime = new Date(
+          observationsRaw.value[id].datetimes[0]
         )
-      }
 
-      // Check if new data after the stored data is needed
-      if (newEndTime > storedEndTime) {
-        endDataPromise = fetchObservationsParallel(
-          datastream,
-          existingRecord.endTime,
-          endTime
+        // Check if new data before the stored data is needed
+        if (beginTime <= rawBeginDatetime) {
+          // Results in range will be inclusive, so we need to offset by 1
+          rawBeginDatetime.setSeconds(rawBeginDatetime.getSeconds() - 1)
+          beginDataPromise = fetchObservationsSync(
+            datastream,
+            beginTime,
+            rawBeginDatetime
+          )
+        }
+
+        const rawEndDatetime = new Date(
+          observationsRaw.value[id].datetimes[
+            observationsRaw.value[id].datetimes.length - 1
+          ]
         )
+
+        // Check if new data after the stored data is needed
+        if (endTime >= rawEndDatetime) {
+          rawEndDatetime.setSeconds(rawEndDatetime.getSeconds() + 1)
+          endDataPromise = fetchObservationsSync(
+            datastream,
+            rawEndDatetime,
+            endTime
+          )
+        }
+      } else {
+        beginDataPromise = fetchObservationsSync(datastream, beginTime, endTime)
       }
 
-      // Fetch and update in parallel if needed
       const [beginData, endData] = await Promise.all([
         beginDataPromise,
         endDataPromise,
       ])
 
-      if (beginData.length > 0) {
-        existingRecord.dataArray = [...beginData, ...existingRecord.dataArray]
-        existingRecord.beginTime = beginTime
-      }
-      if (endData.length > 0) {
-        existingRecord.dataArray = [...existingRecord.dataArray, ...endData]
-        existingRecord.endTime = endTime
+      if (!observationsRaw.value[id]) {
+        observationsRaw.value[id] = {
+          datetimes: new Float64Array(0),
+          dataValues: new Float32Array(0),
+        }
       }
 
-      existingRecord.loading = false
-
-      // Return only the data within the requested range
-      return observations.value[id].dataArray.filter(([dateString, _]) => {
-        const observationTimestamp = new Date(dateString).getTime()
-        return (
-          observationTimestamp >= newBeginTime &&
-          observationTimestamp <= newEndTime
+      if (beginData.dataValues.length > 0 || endData.dataValues.length > 0) {
+        const newLength =
+          beginData.dataValues.length +
+          endData.dataValues.length +
+          observationsRaw.value[id].dataValues.length
+        const newBufferX = new ArrayBuffer(
+          newLength * Float64Array.BYTES_PER_ELEMENT
         )
-      })
-    }
-  }
+        const newBufferY = new ArrayBuffer(
+          newLength * Float32Array.BYTES_PER_ELEMENT
+        )
 
-  return {
-    observations,
-    fetchObservationsInRange,
+        const newArrayX = new Float64Array(newBufferX)
+        const newArrayY = new Float32Array(newBufferY)
+
+        // Begin data
+        let offset = 0
+        newArrayX.set(beginData.datetimes, offset)
+        newArrayY.set(beginData.dataValues, offset)
+
+        // Previous data
+        offset += beginData.datetimes.length
+        newArrayX.set(observationsRaw.value[id].datetimes, offset)
+        newArrayY.set(observationsRaw.value[id].dataValues, offset)
+
+        // End data
+        offset += endData.datetimes.length
+        newArrayX.set(endData.datetimes, offset)
+        newArrayY.set(endData.dataValues, offset)
+
+        observationsRaw.value[id].datetimes = newArrayX
+        observationsRaw.value[id].dataValues = newArrayY
+      }
+
+      if (beginData.dataValues.length || endData.dataValues.length) {
+        observations.value[id].loadData(observationsRaw.value[id])
+      }
+
+      return observations.value[id]
+    }
+
+    return {
+      observations,
+      observationsRaw,
+      fetchObservationsInRange,
+    }
+  },
+  {
+    persist: {
+      pick: [
+        // TODO: enable only in development mode
+        // 'observationsRaw', // TODO: can not save buffers correctly
+      ],
+    },
   }
-})
+)

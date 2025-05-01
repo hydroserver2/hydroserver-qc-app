@@ -1,5 +1,5 @@
 <template>
-  <v-card rounded="xl">
+  <v-card rounded>
     <v-container>
       <v-card-title>Update series style</v-card-title>
 
@@ -21,7 +21,7 @@
         <v-card-actions>
           <v-spacer />
           <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
-          <v-btn rounded="xl" variant="outlined" type="submit">Update</v-btn>
+          <v-btn rounded variant="outlined" type="submit">Update</v-btn>
         </v-card-actions>
       </v-form>
     </v-container>
@@ -29,11 +29,11 @@
 </template>
 
 <script setup lang="ts">
-import { useEChartsStore } from '@/store/echarts'
+import { usePlotlyStore } from '@/store/plotly'
 import { storeToRefs } from 'pinia'
 import { onMounted, ref } from 'vue'
 
-const { graphSeriesArray } = storeToRefs(useEChartsStore())
+const { graphSeriesArray } = storeToRefs(usePlotlyStore())
 
 const props = defineProps({ datastreamId: { type: String, required: true } })
 const emit = defineEmits(['submit', 'close'])

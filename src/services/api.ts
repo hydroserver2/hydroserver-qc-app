@@ -38,24 +38,36 @@ interface GetObservationsEndpointParams {
   pageSize: number
   startTime: string
   endTime?: string
-  skipCount?: number
+  page?: number
   addResultQualifiers?: boolean
 }
 
 export const getObservationsEndpoint = ({
   id,
-  pageSize,
   startTime,
   endTime,
-  skipCount,
+  pageSize,
+  page,
   addResultQualifiers,
 }: GetObservationsEndpointParams): string => {
-  let url = `${SENSORTHINGS_BASE}/Datastreams('${id}')/Observations?$resultFormat=dataArray`
-  url += `&$top=${pageSize}`
-  url += `&$filter=phenomenonTime%20gt%20${startTime}`
-  if (endTime) url += `%20and%20phenomenonTime%20le%20${endTime}`
-  if (skipCount) url += `&$skip=${skipCount}`
-  if (addResultQualifiers) url += `&$select=phenomenonTime,result,resultQuality`
+  const fragments = [`order=asc`]
+  if (pageSize) {
+    fragments.push(`page_size=${pageSize}`)
+  }
+  if (startTime) {
+    fragments.push(`phenomenon_start_time=${startTime}`)
+  }
+  if (endTime) {
+    fragments.push(`phenomenon_end_time=${endTime}`)
+  }
+  if (page) {
+    fragments.push(`page=${page}`)
+  }
+
+  const url = encodeURI(
+    `${BASE_URL}/data/datastreams/${id}/observations?${fragments.join('&')}`
+  )
+  // if (addResultQualifiers) url += `&$select=phenomenonTime,result,resultQuality`
   return url
 }
 

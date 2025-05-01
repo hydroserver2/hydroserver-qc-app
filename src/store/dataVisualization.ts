@@ -1,18 +1,21 @@
 import { Datastream, ObservedProperty, ProcessingLevel, Thing } from '@/types'
 import { defineStore, storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
-import { useEChartsStore } from './echarts'
+import { usePlotlyStore } from './plotly'
+import { useObservationStore } from './observations'
+import { Snackbar } from '@/utils/notifications'
+import { handleNewPlot } from '@/utils/plotting/plotly'
 
 export const useDataVisStore = defineStore('dataVisualization', () => {
   const {
-    resetChartZoom,
-    updateVisualization,
+    // resetChartZoom,
+    updateOptions,
     clearChartState,
     fetchGraphSeries,
-    fetchGraphSeriesData,
-  } = useEChartsStore()
+  } = usePlotlyStore()
+  const { fetchObservationsInRange } = useObservationStore()
 
-  const { graphSeriesArray, prevIds } = storeToRefs(useEChartsStore())
+  const { graphSeriesArray } = storeToRefs(usePlotlyStore())
 
   // To only fetch these once per page
   const things = ref<Thing[]>([])
@@ -33,7 +36,8 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   // Qualifiers
   const qualifierSet = ref<Set<string>>(new Set())
   const selectedQualifier = ref('')
-  const selectedData = ref<{ date: Date; value: number }[]>([])
+
+  const selectedData = ref<number[] | null>(null)
 
   /** Track the loading status of each datastream to be plotted.
    * Set to true when we get a response from the API. Keyed by datastream id. */
@@ -43,7 +47,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   const endDate = ref<Date>(new Date())
   const oneWeek = 7 * 24 * 60 * 60 * 1000
   const beginDate = ref<Date>(new Date(endDate.value.getTime() - oneWeek))
-  const selectedDateBtnId = ref(2)
+  const selectedDateBtnId = ref(0)
 
   function resetState() {
     selectedThings.value = []
@@ -52,8 +56,26 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     selectedProcessingLevelNames.value = []
     endDate.value = new Date()
     beginDate.value = new Date(new Date().getTime() - oneWeek)
-    selectedDateBtnId.value = 2
-    resetChartZoom()
+    selectedDateBtnId.value = 0
+    // resetChartZoom()
+  }
+
+  function toggleDatastream(datastream: Datastream) {
+    const index = plottedDatastreams.value.findIndex(
+      (item) => item.id === datastream.id
+    )
+    if (index === -1) {
+      plottedDatastreams.value.push(datastream)
+      if (!qcDatastream.value) {
+        qcDatastream.value = datastream
+      }
+    } else {
+      plottedDatastreams.value.splice(index, 1)
+      if (qcDatastream.value?.id == datastream.id) {
+        qcDatastream.value =
+          plottedDatastreams.value[Math.max(index - 1, 0)] || null
+      }
+    }
   }
 
   function matchesSelectedObservedProperty(datastream: Datastream) {
@@ -90,7 +112,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   }
 
   const filteredDatastreams = computed(() => {
-    return datastreams.value.filter(
+    return datastreams.value?.filter(
       (datastream) =>
         matchesSelectedThing(datastream) &&
         matchesSelectedObservedProperty(datastream) &&
@@ -105,7 +127,8 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       label: 'Last Year',
       calculateBeginDate: () => {
         const now = endDate.value
-        return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+        // TODO
+        return new Date(now.getFullYear() - 10, now.getMonth(), now.getDate())
       },
     },
     {
@@ -141,13 +164,13 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     custom?: boolean
   }
 
-  const setDateRange = ({
+  const setDateRange = async ({
     begin,
     end,
     update = true,
     custom = true,
   }: SetDateRangeParams) => {
-    resetChartZoom()
+    // resetChartZoom()
     if (begin) beginDate.value = begin
     if (end) endDate.value = end
     if (custom) selectedDateBtnId.value = -1
@@ -158,7 +181,9 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       endDate.value &&
       plottedDatastreams.value.length
     ) {
-      refreshGraphSeriesArray(plottedDatastreams.value)
+      const { redraw } = usePlotlyStore()
+      await refreshGraphSeriesArray(plottedDatastreams.value)
+      redraw()
     }
   }
 
@@ -181,9 +206,10 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
   const updateOrFetchGraphSeries = async (
     datastream: Datastream,
-    start: string,
-    end: string
+    start: Date,
+    end: Date
   ) => {
+    console.log('updateOrFetchGraphSeries')
     try {
       const seriesIndex = graphSeriesArray.value.findIndex(
         (series) => series.id === datastream.id
@@ -191,15 +217,23 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
       if (seriesIndex >= 0) {
         // Update the existing graph series with new data
-        const data = await fetchGraphSeriesData(datastream, start, end)
-        graphSeriesArray.value[seriesIndex].data = data
+        const obsRecord = await fetchObservationsInRange(
+          datastream,
+          start,
+          end
+        ).catch((error) => {
+          Snackbar.error('Failed to fetch observations')
+          console.error('Failed to fetch observations:', error)
+          return null
+        })
+        if (obsRecord) {
+          graphSeriesArray.value[seriesIndex].data = obsRecord
+        }
       } else {
         // Add new graph series
         const newSeries = await fetchGraphSeries(datastream, start, end)
         graphSeriesArray.value.push(newSeries)
       }
-
-      updateVisualization()
     } catch (error) {
       console.error(
         `Failed to fetch or update dataset for ${datastream.id}:`,
@@ -212,19 +246,22 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
   /** Refreshes the graphSeriesArray based on the current selection of datastreams */
   const refreshGraphSeriesArray = async (datastreams: Datastream[]) => {
+    console.log('refreshGraphSeriesArray')
     // Remove graphSeries that are no longer selected
     const currentIds = new Set(datastreams.map((ds) => ds.id))
     graphSeriesArray.value = graphSeriesArray.value.filter((s) =>
       currentIds.has(s.id)
     )
 
-    const begin = beginDate.value.toISOString()
-    const end = endDate.value.toISOString()
-    datastreams.forEach((ds) => {
+    const updateOrFetchPromises = datastreams.map(async (ds) => {
       loadingStates.value.set(ds.id, true)
-      updateOrFetchGraphSeries(ds, begin, end)
+      return updateOrFetchGraphSeries(ds, beginDate.value, endDate.value)
     })
+
+    return Promise.all(updateOrFetchPromises)
   }
+
+  // TODO: avoid using watchers!
 
   // If currently selected datastreams are no longer in filteredDatastreams, deselect them
   watch(
@@ -241,9 +278,10 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   // update the time range to the most recent phenomenon endTime
   let prevDatastreamIds = ''
   let prevSelectedDatastreamId = ''
+
   watch(
     () => plottedDatastreams.value,
-    (newDs) => {
+    async (newDs) => {
       const newDatastreamIds = JSON.stringify(newDs.map((ds) => ds.id).sort())
 
       if (!newDs.length || !beginDate.value || !endDate.value) {
@@ -271,7 +309,16 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
           beginDate.value = new Date(endDate.value.getTime() - timeDifference)
         }
 
-        refreshGraphSeriesArray(newDs)
+        if (newDatastreamIds !== prevDatastreamIds) {
+          await refreshGraphSeriesArray(newDs)
+          // Call above will make data available and show plot before updateOptions
+          updateOptions()
+
+          const { plotlyRef } = storeToRefs(usePlotlyStore())
+          if (plotlyRef.value) {
+            handleNewPlot()
+          }
+        }
       }
       prevDatastreamIds = newDatastreamIds
       prevSelectedDatastreamId = qcDatastream.value?.id || ''
@@ -288,14 +335,15 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
     qualifierSet.value = new Set([])
     if (series) {
-      for (const dataPoint of series.data) {
-        if (typeof dataPoint.qualifierValue === 'string') {
-          // Split the qualifierValue string into individual qualifiers and add them to the set
-          dataPoint.qualifierValue
-            .split(',')
-            .forEach((qualifier) => qualifierSet.value.add(qualifier.trim()))
-        }
-      }
+      // TODO
+      // for (const dataPoint of series.data) {
+      //   if (typeof dataPoint.qualifierValue === 'string') {
+      //     // Split the qualifierValue string into individual qualifiers and add them to the set
+      //     dataPoint.qualifierValue
+      //       .split(',')
+      //       .forEach((qualifier) => qualifierSet.value.add(qualifier.trim()))
+      //   }
+      // }
     }
     selectedQualifier.value = ''
   }
@@ -339,5 +387,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     setDateRange,
     onDateBtnClick,
     resetState,
+    toggleDatastream,
+    // updateOrFetchGraphSeries,
   }
 })

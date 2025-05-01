@@ -64,17 +64,18 @@ export default createVuetify({
     VAutocomplete: textFieldAttrs,
     VTextarea: textFieldAttrs,
     VCheckbox: textFieldAttrs,
+    VSelect: textFieldAttrs,
     VTable: {
       density: 'comfortable',
     },
     VCombobox: {
       variant: 'outlined',
     },
-    VBtn: {
-      color: 'primary',
-      density: 'comfortable',
-      rounded: false,
-    },
+    // VBtn: {
+    //   color: 'primary',
+    //   density: 'comfortable',
+    //   rounded: false,
+    // },
     VBtnPrimary: {
       color: 'primary',
       density: 'comfortable',

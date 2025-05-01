@@ -1,10 +1,8 @@
 <template>
-  <v-row class="my-2" align="center">
-    <v-col>
+  <div class="d-flex flex-column">
+    <div class="d-flex align-center justify-space-between my-2 table-title">
       <h5 class="text-h5">Datastreams</h5>
-    </v-col>
 
-    <v-col cols="12" sm="3" class="ml-auto">
       <v-select
         label="Show/Hide columns"
         v-model="selectedHeaders"
@@ -16,90 +14,94 @@
         density="compact"
         variant="solo"
         hide-details
+        max-width="200"
       >
-        <template v-slot:selection="{ item, index }">
+        <template #selection="{ item, index }">
           <!-- Leave blank so nothing appears in the v-select box -->
         </template>
       </v-select>
-    </v-col>
-  </v-row>
+    </div>
 
-  <v-card>
-    <v-toolbar flat color="secondary-lighten-2">
-      <v-text-field
-        class="mx-2"
-        clearable
-        v-model="search"
-        prepend-inner-icon="mdi-magnify"
-        label="Search"
-        hide-details
+    <v-card class="flex-grow-1 d-flex flex-column">
+      <v-toolbar flat color="blue-grey-lighten-4">
+        <v-text-field
+          class="mx-2"
+          clearable
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          label="Search"
+          hide-details
+          density="compact"
+          rounded
+        />
+
+        <v-spacer />
+
+        <v-btn :disabled="!plottedDatastreams.length" @click="clearSelected">
+          Clear Selected
+        </v-btn>
+
+        <v-btn @click="showOnlySelected = !showOnlySelected">
+          {{ showOnlySelected ? 'Show All' : 'Show Selected' }}
+        </v-btn>
+
+        <v-btn
+          :loading="downloading"
+          :disabled="!plottedDatastreams.length"
+          prepend-icon="mdi-download"
+          @click="downloadPlotted(plottedDatastreams)"
+          >Download Selected</v-btn
+        >
+      </v-toolbar>
+
+      <v-data-table-virtual
+        :headers="headers.filter((header) => header.visible)"
+        :items="tableItems"
+        :sort-by="sortBy"
+        multi-sort
+        :search="search"
+        style="min-height: 30vh; height: 0"
+        fixed-header
+        class="elevation-2 flex-grow-1"
+        color="secondary"
         density="compact"
-        rounded="xl"
+        @click:row="onRowClick"
+        hover
+      >
+        <template #item.status="{ item }">
+          <v-progress-circular
+            v-if="loadingStates.get(item.id)"
+            color="primary"
+            size="small"
+            indeterminate
+          ></v-progress-circular>
+          <template v-else-if="!!observationsRaw[item.id]">
+            <v-icon
+              color="primary"
+              :title="`${observationsRaw[item.id].datetimes.length} observation(s)`"
+              >mdi-database-check</v-icon
+            >
+          </template>
+        </template>
+        <template v-slot:item.plot="{ item }">
+          <v-checkbox
+            :model-value="isChecked(item)"
+            :disabled="plottedDatastreams.length >= 5 && !isChecked(item)"
+            class="d-flex align-self-center"
+            density="compact"
+            @change="() => toggleDatastream(item)"
+          />
+        </template>
+      </v-data-table-virtual>
+    </v-card>
+
+    <v-dialog v-model="openInfoCard" width="50rem" v-if="selectedDatastream">
+      <DatastreamInformationCard
+        :datastream="selectedDatastream"
+        @close="openInfoCard = false"
       />
-
-      <v-spacer />
-
-      <v-btn @click="clearSelected"> Clear Selected </v-btn>
-
-      <v-btn
-        variant="outlined"
-        rounded="xl"
-        @click="showOnlySelected = !showOnlySelected"
-      >
-        {{ showOnlySelected ? 'Show All' : 'Show Selected' }}
-      </v-btn>
-
-      <v-btn
-        :loading="downloading"
-        prepend-icon="mdi-download"
-        @click="downloadPlotted(plottedDatastreams)"
-        >Download Selected</v-btn
-      >
-    </v-toolbar>
-    <v-data-table-virtual
-      :headers="headers.filter((header) => header.visible)"
-      :items="tableItems"
-      :sort-by="sortBy"
-      multi-sort
-      :search="search"
-      :style="{ 'max-height': `${tableHeight}vh` }"
-      fixed-header
-      class="elevation-2"
-      color="secondary"
-      density="compact"
-      @click:row="onRowClick"
-      hover
-    >
-      <template v-slot:item.plot="{ item }">
-        <v-checkbox
-          :model-value="isChecked(item)"
-          :disabled="
-            (plottedDatastreams.length >= 5 && !isChecked(item)) ||
-            isSelected(item)
-          "
-          class="d-flex align-self-center"
-          density="compact"
-          @change="() => updatePlottedDatastreams(item)"
-        />
-      </template>
-      <template v-slot:item.select="{ item }">
-        <v-checkbox
-          :model-value="isSelected(item)"
-          :disabled="plottedDatastreams.length >= 5 && !isChecked(item)"
-          class="d-flex align-self-center"
-          density="compact"
-          @change="() => updateSelectedDatastream(item)"
-        />
-      </template>
-    </v-data-table-virtual>
-  </v-card>
-
-  <v-dialog v-model="openInfoCard" width="50rem" v-if="selectedDatastream">
-    <DatastreamInformationCard
-      :datastream="selectedDatastream"
-      @close="openInfoCard = false"
-    />
-  </v-dialog>
+    </v-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -109,11 +111,11 @@ import { storeToRefs } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import DatastreamInformationCard from './DatastreamInformationCard.vue'
 import { downloadPlottedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
-import { useUIStore } from '@/store/userInterface'
-import { useEChartsStore } from '@/store/echarts'
+import { usePlotlyStore } from '@/store/plotly'
+import { useObservationStore } from '@/store/observations'
+const { observationsRaw } = storeToRefs(useObservationStore())
+const { loadingStates } = storeToRefs(useDataVisStore())
 
-const { tableHeight } = storeToRefs(useUIStore())
-const { updateVisualization } = useEChartsStore()
 const {
   things,
   filteredDatastreams,
@@ -122,6 +124,7 @@ const {
   processingLevels,
   qcDatastream,
 } = storeToRefs(useDataVisStore())
+const { toggleDatastream } = useDataVisStore()
 
 const showOnlySelected = ref(false)
 const openInfoCard = ref(false)
@@ -140,7 +143,7 @@ const downloadPlotted = async (plottedDatastreams: Datastream[]) => {
 
 const onRowClick = (event: Event, item: any) => {
   // If the click came from a checkbox, do nothing.
-  let targetElement = event.target as HTMLElement
+  const targetElement = event.target as HTMLElement
   if (targetElement.id && targetElement.id.startsWith('checkbox-')) return
 
   const selectedDatastreamId = item.item.id
@@ -193,8 +196,9 @@ const isSelected = (ds: Datastream) => ds.id === qcDatastream.value?.id
 
 const search = ref()
 const headers = reactive([
-  { title: 'Plot', key: 'plot', visible: true },
-  { title: 'Select', key: 'select', visible: true },
+  { title: '', key: 'status', visible: true, width: 1 },
+  { title: 'Plot', key: 'plot', visible: true, width: 1 },
+  // { title: 'Select', key: 'select', visible: true, width: 1 },
   {
     title: 'Site code',
     key: 'siteCodeName',
@@ -224,7 +228,7 @@ const headers = reactive([
 
 const selectableHeaders = computed(() => {
   return headers.filter(
-    (header) => header.key !== 'plot' && header.key !== 'select'
+    (header) => !['plot', 'select', 'status'].includes(header.key)
   )
 })
 
@@ -232,6 +236,7 @@ const sortBy = [
   { key: 'siteCodeName' },
   { key: 'observedPropertyName' },
   { key: 'qualityControlLevelDefinition' },
+  // { key: 'valueCount', order: 'desc' },
 ]
 const selectedHeaders = computed({
   get: () =>
@@ -242,64 +247,14 @@ const selectedHeaders = computed({
     })
   },
 })
-
-const findIndexInPlotted = (ds: Datastream) =>
-  plottedDatastreams.value.findIndex((item) => item.id === ds.id)
-
-const addDatastreamToPlotted = (ds: Datastream) => {
-  const index = findIndexInPlotted(ds)
-  if (index === -1) plottedDatastreams.value.push(ds)
-}
-
-function removeDatastreamFromPlotted(datastream: Datastream) {
-  const index = findIndexInPlotted(datastream)
-  if (index !== -1) plottedDatastreams.value.splice(index, 1)
-}
-
-function updatePlottedDatastreams(datastream: Datastream) {
-  const index = findIndexInPlotted(datastream)
-  if (index === -1) plottedDatastreams.value.push(datastream)
-  else plottedDatastreams.value.splice(index, 1)
-}
-
-// For now, remove then add the related plottedDatastream so that the plottedDatastream watcher
-// gets triggered. This makes sure the the time range and plot get updated whenever the selected
-// datastream changes.
-// TODO: Some redundant code to simplify here
-function updateSelectedDatastream(datastream: Datastream) {
-  // Case 1: No currently selected & selecting
-  if (qcDatastream.value === null) {
-    qcDatastream.value = datastream
-    removeDatastreamFromPlotted(datastream)
-    addDatastreamToPlotted(datastream)
-    updateVisualization()
-    return
-  }
-
-  // Case 2: There is a currently selected
-  // Case 2.1: There's an unsaved history - open a modal that says this action will delete their unsaved work.
-  // TODO - Or do we want a watcher in the dataVis store that does this check reactively?
-  // Probably two watchers so we're looking at plottedDatastreams.
-  // If the qc datastream gets deselected, then check or when someone changed
-  // the qcDatastream's value check and revert if there's a history
-
-  // if (!historyResolved()) {
-  //   return
-  // }
-
-  // Case 2.2: There's no history and we're unselecting it
-  if (datastream.id === qcDatastream.value.id) {
-    qcDatastream.value = null
-    removeDatastreamFromPlotted(datastream)
-    addDatastreamToPlotted(datastream)
-    updateVisualization()
-    return
-  }
-
-  // Case 2.3: Switching datastreams
-  qcDatastream.value = datastream
-  removeDatastreamFromPlotted(datastream)
-  addDatastreamToPlotted(datastream)
-  updateVisualization()
-}
 </script>
+
+<style scoped lang="scss">
+:deep(.v-table .v-data-table__tr:nth-child(even) td) {
+  background: #f7f7f7;
+}
+
+.table-title :deep(.v-field__input[data-no-activator]) {
+  display: none;
+}
+</style>

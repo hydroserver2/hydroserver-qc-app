@@ -14,48 +14,48 @@ export type RouteGuard = (
 /** Guards are executed in the order they appear in this array */
 export const guards: RouteGuard[] = [
   // Check if the refresh token is expired each page change
-  (_to, _from, _next) => {
-    const { isRefreshTokenExpired, logout } = useAuthStore()
+  // (_to, _from, _next) => {
+  //   const { isRefreshTokenExpired, logout } = useAuthStore()
 
-    if (isRefreshTokenExpired()) {
-      Snackbar.info('Session expired. Please login')
-      logout()
-    }
-    return null
-  },
+  //   if (isRefreshTokenExpired()) {
+  //     Snackbar.info('Session expired. Please login')
+  //     logout()
+  //   }
+  //   return null
+  // },
 
   // hasAuthGuard
-  (to, _from, _next) => {
-    if (to.meta?.hasAuthGuard) {
-      const { isLoggedIn } = storeToRefs(useAuthStore())
-      const { user } = storeToRefs(useUserStore())
+  // (to, _from, _next) => {
+  //   if (to.meta?.hasAuthGuard) {
+  //     const { isLoggedIn } = storeToRefs(useAuthStore())
+  //     const { user } = storeToRefs(useUserStore())
 
-      if (!isLoggedIn.value) return { name: 'Login', query: { next: to.name } }
-      if (user.value?.isVerified) return null
-      if (user.value?.email) return { name: 'VerifyEmail' }
-      return { name: 'CompleteProfile' }
-    }
-    return null
-  },
+  //     if (!isLoggedIn.value) return { name: 'Login', query: { next: to.name } }
+  //     if (user.value?.isVerified) return null
+  //     if (user.value?.email) return { name: 'VerifyEmail' }
+  //     return { name: 'CompleteProfile' }
+  //   }
+  //   return null
+  // },
 
-  // hasLoggedOutGuard
-  (to, _from, _next) => {
-    if (to.meta?.hasLoggedOutGuard) {
-      const { isLoggedIn } = useAuthStore()
-      if (isLoggedIn) return { name: 'PageNotFound' }
-    }
-    return null
-  },
+  // // hasLoggedOutGuard
+  // (to, _from, _next) => {
+  //   if (to.meta?.hasLoggedOutGuard) {
+  //     const { isLoggedIn } = useAuthStore()
+  //     if (isLoggedIn) return { name: 'PageNotFound' }
+  //   }
+  //   return null
+  // },
 
-  // hasUnverifiedAuthGuard
-  (to, _from, _next) => {
-    if (to.meta?.hasUnverifiedAuthGuard) {
-      const { isLoggedIn } = useAuthStore()
-      const { user } = storeToRefs(useUserStore())
-      if (isLoggedIn && user.value?.isVerified) return { name: 'PageNotFound' }
-    }
-    return null
-  },
+  // // hasUnverifiedAuthGuard
+  // (to, _from, _next) => {
+  //   if (to.meta?.hasUnverifiedAuthGuard) {
+  //     const { isLoggedIn } = useAuthStore()
+  //     const { user } = storeToRefs(useUserStore())
+  //     if (isLoggedIn && user.value?.isVerified) return { name: 'PageNotFound' }
+  //   }
+  //   return null
+  // },
 
   // hasThingOwnershipGuard
   async (to, _from, _next) => {

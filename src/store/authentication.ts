@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import router from '@/router/router'
-import jwtDecode from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode'
 
 interface JWTPayload {
   exp: number

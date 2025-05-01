@@ -2,8 +2,10 @@ import { routes } from '@/router/routes'
 import { createRouter, createWebHistory } from 'vue-router'
 import { guards } from '@/router/guards'
 
+const base = import.meta.env.VITE_APP_ROUTE || '/'
+
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(base),
   routes,
 })
 

@@ -1,20 +1,19 @@
 <template>
-  <div class="d-flex justify-end mb-4 mx-2">
-    <v-btn
-      color="primary-lighten-2"
-      @click="clearFilters"
-      variant="outlined"
-      rounded="xl"
-      append-icon="mdi-close"
-      >Clear filters</v-btn
-    >
-  </div>
+  <v-btn
+    color="primary-lighten-2"
+    @click="clearFilters"
+    variant="outlined"
+    rounded
+    append-icon="mdi-close"
+    class="mb-4"
+    >Clear filters</v-btn
+  >
 
-  <v-expansion-panels multiple v-model="panels">
+  <v-expansion-panels color="blue-grey-darken-2" multiple v-model="panels">
     <v-expansion-panel title="Sites">
-      <v-expansion-panel-text>
+      <v-expansion-panel-text class="bg-blue-grey-darken-4">
         <v-text-field
-          class="pb-1"
+          class="my-4"
           clearable
           @click:clear="searchThing = ''"
           v-model="searchThing"
@@ -43,9 +42,9 @@
     </v-expansion-panel>
 
     <v-expansion-panel title="Observed properties">
-      <v-expansion-panel-text>
+      <v-expansion-panel-text class="bg-blue-grey-darken-4">
         <v-text-field
-          class="pb-1"
+          class="my-4"
           clearable
           @click:clear="searchObservedProperty = ''"
           v-model="searchObservedProperty"
@@ -73,9 +72,9 @@
     </v-expansion-panel>
 
     <v-expansion-panel title="Processing levels">
-      <v-expansion-panel-text>
+      <v-expansion-panel-text class="bg-blue-grey-darken-4">
         <v-text-field
-          class="pb-1"
+          class="my-4"
           clearable
           @click:clear="searchProcessingLevel = ''"
           v-model="searchProcessingLevel"
@@ -215,7 +214,7 @@ const clearFilters = () => {
   searchProcessingLevel.value = ''
 }
 
-const panels = ref([0, 1, 2])
+const panels = ref([])
 </script>
 
 <style scoped>

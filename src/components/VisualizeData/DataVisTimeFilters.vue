@@ -1,5 +1,5 @@
 <template>
-  <v-row align="center" justify="center" class="no-wrap">
+  <v-row align="center" class="no-wrap">
     <v-col cols="auto">
       <v-btn-toggle
         v-model="selectedDateBtnId"
@@ -7,7 +7,7 @@
         density="compact"
         color="primary"
         divided
-        rounded="xl"
+        rounded
       >
         <v-tooltip bottom :openDelay="1000" v-for="option in dateOptions">
           <template v-slot:activator="{ props }">
@@ -47,9 +47,8 @@ import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
 
 const { setDateRange, onDateBtnClick } = useDataVisStore()
-const { dateOptions, beginDate, endDate, selectedDateBtnId } = storeToRefs(
-  useDataVisStore()
-)
+const { dateOptions, beginDate, endDate, selectedDateBtnId } =
+  storeToRefs(useDataVisStore())
 </script>
 
 <style scoped>
