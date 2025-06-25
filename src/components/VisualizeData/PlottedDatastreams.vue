@@ -6,6 +6,10 @@
       :base-color="qcDatastream == datastream ? COLORS[0] : COLORS[index + 1]"
       :active="qcDatastream == datastream"
     >
+      <template #title="{ title }">
+        <span :title="`${title}`">{{  title }}</span>
+      </template>
+
       <template #prepend>
         <v-list-item-action start>
           <v-radio
