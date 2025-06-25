@@ -1,49 +1,106 @@
-import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
-import { aliases, mdi } from 'vuetify/iconsets/mdi'
+import '@fortawesome/fontawesome-free/css/all.css'
+import 'vuetify/styles'
 
 import { createVuetify, ThemeDefinition } from 'vuetify'
+import { VBtn } from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import * as components from 'vuetify/components'
+import { md3 } from 'vuetify/blueprints'
 
+// Material theme Colors: https://vuetifyjs.com/en/styles/colors/
 const light: ThemeDefinition = {
   dark: false,
   colors: {
-    primary: '#3fd',
-    accent: '#3fd',
-    secondary: '#3fd',
-    info: '#3fd',
-    warning: '#3fd',
-    error: '#3fd',
-    success: '#3fd',
+    primary: '#2196F3', // blue
+    secondary: '#4CAF50', // green
+    // background: '#FAFAFA', // grey-lighten-5
+    background: '#f3f7fa',
+    surface: '#FFFFFF', // white
+    default: '#757575', // grey-darken-1
+    delete: '#F44336', // red
+    error: '#F44336', // red
+    info: '#03A9F4', // light-blue
+    success: '#4CAF50', // green
+    warning: '#FF9800', // orange
+    navbar: '#272e3d',
   },
 }
 
 const dark: ThemeDefinition = {
   dark: true,
   colors: {
-    primary: '#33c',
-    accent: '#33c',
-    secondary: '#33c',
-    info: '#33c',
-    warning: '#33c',
-    error: '#33c',
-    success: '#33c',
+    primary: '#2196F3', // blue
+    secondary: '#4CAF50', // green
+    default: '#757575', // grey-darken-1
+    delete: '#F44336', // red
+    error: '#F44336', // red
+    info: '#03A9F4', // light-blue
+    success: '#4CAF50', // green
+    warning: '#FF9800', // orange
+
+    navbar: '#272e3d',
+    surface: '#18212a',
+    background: '#f3f7fa',
   },
 }
 
+const textFieldAttrs = {
+  density: 'comfortable',
+  variant: 'outlined',
+}
+
 export default createVuetify({
-  components,
+  blueprint: md3,
   directives,
-  aliases: {},
-  icons: {
-    defaultSet: 'mdi',
-    aliases,
-    sets: {
-      mdi,
+  aliases: {
+    VBtnPrimary: VBtn,
+    VBtnSecondary: VBtn,
+    VBtnCancel: VBtn,
+    VBtnDelete: VBtn,
+    VBtnAdd: VBtn,
+  },
+  defaults: {
+    VTextField: textFieldAttrs,
+    VAutocomplete: textFieldAttrs,
+    VTextarea: textFieldAttrs,
+    VCheckbox: textFieldAttrs,
+    VSelect: textFieldAttrs,
+    VTable: {
+      density: 'comfortable',
+    },
+    VCombobox: {
+      variant: 'outlined',
+    },
+    // VBtn: {
+    //   color: 'primary',
+    //   density: 'comfortable',
+    //   rounded: false,
+    // },
+    VBtnPrimary: {
+      color: 'primary',
+      density: 'comfortable',
+    },
+    VBtnSecondary: {
+      color: 'secondary',
+      density: 'comfortable',
+    },
+    VBtnDelete: {
+      color: 'delete',
+      density: 'comfortable',
+    },
+    VBtnCancel: {
+      color: 'grey',
+      density: 'comfortable',
+      variant: 'text',
+    },
+    VBtnAdd: {
+      color: 'secondary',
+      prependIcon: 'mdi-plus',
+      rounded: true,
+      density: 'comfortable',
+      variant: 'elevated',
     },
   },
-  defaults: {},
   theme: {
     defaultTheme: 'light',
     themes: {
