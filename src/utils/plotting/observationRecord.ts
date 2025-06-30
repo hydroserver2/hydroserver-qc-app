@@ -1,4 +1,4 @@
-import { Datastream, EnumDictionary, HistoryItem } from '@/types'
+import { EnumDictionary, HistoryItem } from '@/types'
 import {
   FilterOperation,
   FilterOperationFn,
@@ -7,13 +7,11 @@ import {
   RateOfChangeOperation,
   TimeUnit,
 } from '@/store/userInterface'
-import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'
-import { useObservationStore } from '@/store/observations'
 import { usePlotlyStore } from '@/store/plotly'
 import { shiftDatetime, timeUnitMultipliers } from '../format'
-import { findLastLessOrEqual, findFirstGreaterOrEqual } from './plotly'
 import { measureEllapsedTime } from '../ellapsedTime'
+import { findFirstGreaterOrEqual, findLastLessOrEqual } from '../observationsUtils'
 
 export enum EnumEditOperations {
   ADD_POINTS = 'ADD_POINTS',
@@ -52,36 +50,41 @@ export class ObservationRecord {
       y: Float32Array<SharedArrayBuffer>
     }
   } = {
-    dimensions: components,
-    source: {
-      x: new Float64Array(
-        new SharedArrayBuffer(
-          INCREASE_AMOUNT * Float64Array.BYTES_PER_ELEMENT,
-          {
-            maxByteLength: INCREASE_AMOUNT * Float64Array.BYTES_PER_ELEMENT, // Max size the array can reach
-          }
-        )
-      ),
-      y: new Float32Array(
-        new SharedArrayBuffer(
-          INCREASE_AMOUNT * Float32Array.BYTES_PER_ELEMENT,
-          {
-            maxByteLength: INCREASE_AMOUNT * Float32Array.BYTES_PER_ELEMENT, // Max size the array can reach
-          }
-        )
-      ),
-    },
-  }
+      dimensions: components,
+      source: {
+        x: new Float64Array(
+          new SharedArrayBuffer(
+            INCREASE_AMOUNT * Float64Array.BYTES_PER_ELEMENT,
+            {
+              maxByteLength: INCREASE_AMOUNT * Float64Array.BYTES_PER_ELEMENT, // Max size the array can reach
+            }
+          )
+        ),
+        y: new Float32Array(
+          new SharedArrayBuffer(
+            INCREASE_AMOUNT * Float32Array.BYTES_PER_ELEMENT,
+            {
+              maxByteLength: INCREASE_AMOUNT * Float32Array.BYTES_PER_ELEMENT, // Max size the array can reach
+            }
+          )
+        ),
+      },
+    }
   history: HistoryItem[] = []
   loadingTime: number | null = null
   isLoading: boolean = true
-  ds: Datastream
+  rawData: {
+    datetimes: Float64Array<ArrayBuffer>
+    dataValues: Float32Array<ArrayBuffer>
+  }
 
-  constructor(ds: Datastream) {
-    const { observationsRaw } = storeToRefs(useObservationStore())
+  constructor(dataArrays: {
+    datetimes: Float64Array<ArrayBuffer>
+    dataValues: Float32Array<ArrayBuffer>
+  }) {
     this.history = []
-    this.ds = ds
-    this.loadData(observationsRaw.value[this.ds.id])
+    this.rawData = dataArrays
+    this.loadData(dataArrays)
   }
 
   async loadData(dataArrays: {
@@ -186,17 +189,13 @@ export class ObservationRecord {
   }
 
   /**
-   * Reloads the dataset
+   * Reloads the dataset with the raw data
    */
   async reload() {
-    const { beginDate, endDate } = storeToRefs(useDataVisStore())
-    const { fetchObservationsInRange } = useObservationStore()
-    const { observationsRaw } = storeToRefs(useObservationStore())
-
     this.loadingTime = null
     this.isLoading = true
-    await fetchObservationsInRange(this.ds, beginDate.value, endDate.value)
-    await this.loadData(observationsRaw.value[this.ds.id])
+    this.history.length = 0
+    await this.loadData(this.rawData)
   }
 
   /**
@@ -423,7 +422,7 @@ export class ObservationRecord {
     const interpolatedValue =
       lowerValue +
       ((datetime - lowerDatetime) * (upperValue - lowerValue)) /
-        (upperDatetime - lowerDatetime)
+      (upperDatetime - lowerDatetime)
 
     return interpolatedValue
   }
@@ -527,12 +526,12 @@ export class ObservationRecord {
       while (nextFillDatetime < rightDatetime) {
         const val: number = interpolateValues
           ? this._interpolateLinear(
-              nextFillDatetime,
-              this.dataX[currentGap[0]],
-              this.dataY[currentGap[0]],
-              this.dataX[currentGap[1]],
-              this.dataY[currentGap[1]]
-            )
+            nextFillDatetime,
+            this.dataX[currentGap[0]],
+            this.dataY[currentGap[0]],
+            this.dataX[currentGap[1]],
+            this.dataY[currentGap[1]]
+          )
           : -9999
 
         fillPoints.push([nextFillDatetime, val])

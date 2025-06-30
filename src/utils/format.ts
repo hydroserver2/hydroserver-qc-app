@@ -67,7 +67,7 @@ export const shiftDatetime = (
     return currentDate.getTime()
   } else if (unit === TimeUnit.YEAR) {
     const currentDate = new Date(datetime)
-    currentDate.setFullYear(currentDate.getFullYear() + 1)
+    currentDate.setFullYear(currentDate.getFullYear() + amount)
     return currentDate.getTime()
   } else {
     return datetime + amount * timeUnitMultipliers[unit] * 1000

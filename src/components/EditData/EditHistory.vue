@@ -128,6 +128,7 @@ import { storeToRefs } from 'pinia'
 import { usePlotlyStore } from '@/store/plotly'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { formatDuration } from '@/utils/format'
+import { useDataVisStore } from '@/store/dataVisualization'
 
 const { editHistory, selectedSeries, isUpdating } =
   storeToRefs(usePlotlyStore())
@@ -136,9 +137,12 @@ const { clearSelected } = useDataSelection()
 
 const onReload = async () => {
   isUpdating.value = true
+
   setTimeout(async () => {
+    const { refreshGraphSeriesArray } = useDataVisStore()
+    selectedSeries.value.data.history = []
+    await refreshGraphSeriesArray()
     await selectedSeries.value.data.reload()
-    editHistory.value = []
     await clearSelected()
     isUpdating.value = false
     await redraw()

@@ -5,6 +5,7 @@ import Plotly from 'plotly.js-dist'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { debounce, isEqual } from 'lodash-es'
+import { findFirstGreaterOrEqual } from '../observationsUtils'
 
 // TODO: import these directly from Plotly
 // https://github.com/plotly/plotly.js/blob/v2.14.0/src/components/color/attributes.js#L5-L16
@@ -287,7 +288,7 @@ export const handleNewPlot = async (element?: any) => {
     'plotly_selected',
     debounce(handleSelected, debounceDelay)
   )
-  plotlyRef.value?.on('plotly_deselec', debounce(handleDeselect, debounceDelay))
+  plotlyRef.value?.on('plotly_deselec', debounce(handleSelected, debounceDelay))
   plotlyRef.value?.on('plotly_click', handleClick)
   plotlyRef.value?.on('plotly_doubleclick', handleDoubleClick)
 }
@@ -374,11 +375,6 @@ export const handleRelayout = async (eventData: any) => {
   })
 }
 
-export const handleDeselect = async (_eventData: any) => {
-  console.log('handleDeselect')
-  handleSelected()
-}
-
 export const handleDoubleClick = async () => {
   console.log('handleDoubleClick')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
@@ -400,33 +396,7 @@ export const handleDoubleClick = async () => {
   selectedData.value = []
 }
 
-export const findFirstGreaterOrEqual = (
-  array: number[] | Float64Array<SharedArrayBuffer>,
-  target: number
-) => {
-  let low = 0,
-    high = array.length
-  while (low < high) {
-    const mid = (low + high) >> 1
-    if (array[mid] < target) low = mid + 1
-    else high = mid
-  }
-  return low
-}
 
-export const findLastLessOrEqual = (
-  array: number[] | Float64Array<SharedArrayBuffer>,
-  target: number
-) => {
-  let low = 0,
-    high = array.length
-  while (low < high) {
-    const mid = (low + high) >> 1
-    if (array[mid] > target) high = mid
-    else low = mid + 1
-  }
-  return low - 1
-}
 
 export const cropXaxisRange = async () => {
   const { plotlyOptions, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
