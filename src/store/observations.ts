@@ -1,9 +1,8 @@
-import { defineStore, storeToRefs } from 'pinia'
+import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Datastream } from '@/types'
 import { fetchObservationsSync } from '@/utils/observationsUtils'
 import { ObservationRecord } from '@/utils/plotting/observationRecord'
-import { useDataVisStore } from './dataVisualization'
 
 export const useObservationStore = defineStore(
   'observations',
@@ -42,7 +41,6 @@ export const useObservationStore = defineStore(
 
       // If nothing is stored yet, create a new record
       if (!observations.value[id]) {
-        const { observationsRaw } = storeToRefs(useObservationStore())
         observations.value[id] = new ObservationRecord(observationsRaw.value[datastream.id])
       }
 

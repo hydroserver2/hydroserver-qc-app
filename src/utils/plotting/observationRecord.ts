@@ -7,8 +7,6 @@ import {
   RateOfChangeOperation,
   TimeUnit,
 } from '@/store/userInterface'
-import { storeToRefs } from 'pinia'
-import { usePlotlyStore } from '@/store/plotly'
 import { shiftDatetime, timeUnitMultipliers } from '../format'
 import { measureEllapsedTime } from '../ellapsedTime'
 import { findFirstGreaterOrEqual, findLastLessOrEqual } from '../observationsUtils'
@@ -95,8 +93,6 @@ export class ObservationRecord {
       return
     }
     this.isLoading = true
-    const { editHistory } = storeToRefs(usePlotlyStore())
-
     const measurement = await measureEllapsedTime(() => {
       this._growBuffer(dataArrays.datetimes.length)
       this._resizeTo(dataArrays.datetimes.length)
@@ -108,7 +104,6 @@ export class ObservationRecord {
     this.loadingTime = measurement.duration
 
     this.history.length = 0
-    editHistory.value = []
     this.isLoading = false
   }
 
@@ -240,7 +235,6 @@ export class ObservationRecord {
     action: EnumEditOperations | [EnumEditOperations, ...any][],
     ...args: any
   ) {
-    const { editHistory } = storeToRefs(usePlotlyStore())
     const actions: EnumDictionary<EnumEditOperations, Function> = {
       [EnumEditOperations.ADD_POINTS]: this._addDataPoints,
       [EnumEditOperations.CHANGE_VALUES]: this._changeValues,
@@ -277,7 +271,6 @@ export class ObservationRecord {
           }
           this.history.push(historyItem)
         }
-        editHistory.value = [...this.history]
 
         for (
           let i = this.history.length - action.length;
@@ -305,7 +298,6 @@ export class ObservationRecord {
           isLoading: true,
         }
         this.history.push(historyItem)
-        editHistory.value = [...this.history]
         const measurement = await measureEllapsedTime(async () => {
           return await actions[action].apply(this, args)
         })
