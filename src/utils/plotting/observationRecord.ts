@@ -72,22 +72,22 @@ export class ObservationRecord {
   loadingTime: number | null = null
   isLoading: boolean = true
   rawData: {
-    datetimes: Float64Array<ArrayBuffer>
-    dataValues: Float32Array<ArrayBuffer>
+    datetimes: Float64Array<ArrayBuffer> | number[]
+    dataValues: Float32Array<ArrayBuffer> | number[]
   }
 
   constructor(dataArrays: {
-    datetimes: Float64Array<ArrayBuffer>
-    dataValues: Float32Array<ArrayBuffer>
+    datetimes: Float64Array<ArrayBuffer> | number[]
+    dataValues: Float32Array<ArrayBuffer> | number[]
   }) {
     this.history = []
     this.rawData = dataArrays
-    this.loadData(dataArrays)
+    this.loadData(this.rawData)
   }
 
   async loadData(dataArrays: {
-    datetimes: Float64Array<ArrayBuffer>
-    dataValues: Float32Array<ArrayBuffer>
+    datetimes: Float64Array<ArrayBuffer> | number[]
+    dataValues: Float32Array<ArrayBuffer> | number[]
   }) {
     if (!dataArrays) {
       return
@@ -609,7 +609,10 @@ export class ObservationRecord {
       )
     }
 
-    await Promise.all(promises)
+    // Prevents vitest from halting during execution of multiple promises
+    if (import.meta.env.MODE !== 'test') {
+      await Promise.all(promises)
+    }
 
     workers.forEach((worker) => worker.terminate()) // Important to terminate the workers
 

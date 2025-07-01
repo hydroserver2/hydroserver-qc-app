@@ -34,6 +34,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '127.0.0.1',
       port: 1203,
+      strictPort: true,
       // These headers are required to enable workers
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements
       headers: {
@@ -58,6 +59,7 @@ export default defineConfig(({ mode }) => {
           inline: ['vuetify'],
         },
       },
+      setupFiles: ['@vitest/web-worker'],
       environment: 'jsdom',
       coverage: {
         exclude: [

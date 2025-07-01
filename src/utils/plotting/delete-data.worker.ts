@@ -1,4 +1,4 @@
-self.onmessage = function (e) {
+self.onmessage = (e) => {
   const {
     bufferX,
     bufferY,
@@ -30,6 +30,7 @@ self.onmessage = function (e) {
       writePtr++
     }
   }
+
 
   self.postMessage('Done')
 }

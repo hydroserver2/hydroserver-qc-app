@@ -1,32 +1,27 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { mockDatastream } from './mock'
-import { ObservationRecord } from '../observationRecord'
+import { EnumEditOperations, ObservationRecord } from '../observationRecord'
+import { Operator } from '@/store/userInterface';
 
-const datetimes = new Float64Array(
-  new ArrayBuffer(
-    mockDatastream.phenomenon_time.length * Float64Array.BYTES_PER_ELEMENT,
-    {
-      maxByteLength: mockDatastream.phenomenon_time.length * Float64Array.BYTES_PER_ELEMENT, // Max size the array can reach
-    }
-  )
-)
-const dataValues = new Float32Array(
-  new ArrayBuffer(
-    mockDatastream.result.length * Float32Array.BYTES_PER_ELEMENT,
-    {
-      maxByteLength: mockDatastream.result.length * Float32Array.BYTES_PER_ELEMENT, // Max size the array can reach
-    }
-  )
-)
+function _generateDistinctRandomNumbers(amount: number, min: number, max: number) {
+  const result = new Set<number>();
+  const rangeSize = max - min + 1;
 
-datetimes.set(mockDatastream.phenomenon_time.map(dateString => new Date(dateString).getTime()))
-dataValues.set(mockDatastream.result)
+  while (result.size < amount) {
+    const randomNumber = Math.floor(Math.random() * rangeSize) + min;
+    result.add(randomNumber);
+  }
 
+  return Array.from(result).sort((a, b) => a - b);
+}
 
 const rawData: {
-  datetimes: Float64Array<ArrayBuffer>
-  dataValues: Float32Array<ArrayBuffer>
-} = { datetimes, dataValues }
+  datetimes: number[]
+  dataValues: number[]
+} = {
+  datetimes: mockDatastream.phenomenon_time.map(dateString => new Date(dateString).getTime()),
+  dataValues: mockDatastream.result
+}
 
 const obsRecord = new ObservationRecord(rawData)
 
@@ -35,12 +30,60 @@ beforeEach(async () => {
   return
 })
 
-
 describe('observationRecord', () => {
   it('loads data', async () => {
-    const length = obsRecord.dataX.length
-    expect(length).toBe(rawData.datetimes.length)
-    // const measurement = await measureEllapsedTime(doSomething)
-    // expect(measurement.duration).to.be.greaterThanOrEqual(duration)
+    expect(obsRecord.dataX.length).toBe(rawData.datetimes.length)
+    expect(obsRecord.dataY.length).toBe(rawData.dataValues.length)
   })
+
+  it('adds data points', async () => {
+    const toAdd = 100
+    const originalLength = obsRecord.dataX.length
+
+    const randomDatetimes = _generateDistinctRandomNumbers(toAdd, rawData.datetimes[0], rawData.datetimes[rawData.datetimes.length - 1])
+    const dataPointsToAdd = randomDatetimes.map((datetime) => {
+      return [datetime, (Math.random() * 10).toFixed(3)]
+    })
+
+    await obsRecord.dispatch(
+      EnumEditOperations.ADD_POINTS,
+      dataPointsToAdd
+    )
+
+    const newLength = obsRecord.dataX.length
+    expect(newLength).toBe(originalLength + toAdd)
+  })
+
+  it('deletes data points', async () => {
+    const toDelete = 100
+    const randomIndexes = _generateDistinctRandomNumbers(toDelete, 0, obsRecord.dataX.length - 1)
+    const originalLength = obsRecord.dataX.length
+
+    await obsRecord.dispatch(
+      EnumEditOperations.DELETE_POINTS,
+      randomIndexes
+    )
+
+    const newLength = obsRecord.dataX.length
+    expect(newLength).toBe(originalLength - toDelete)
+  })
+
+  it('changes values', async () => {
+    const toChange = 100
+    const randomIndexes = _generateDistinctRandomNumbers(toChange, 0, obsRecord.dataX.length - 1)
+
+    // ADD
+    await obsRecord.dispatch(
+      EnumEditOperations.CHANGE_VALUES,
+      randomIndexes,
+      Operator.ADD,
+      2
+    )
+
+    const expected = randomIndexes.map(index => +(rawData.dataValues[index] + 2).toFixed(3))
+    const changedValues = randomIndexes.map(index => +obsRecord.dataY[index].toFixed(3))
+    expect(changedValues).toEqual(expected)
+  })
+
+
 })
