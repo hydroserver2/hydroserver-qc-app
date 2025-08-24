@@ -72,7 +72,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations } from '@uwrl/qc-utils'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
 import { Operator, useUIStore } from '@/store/userInterface'

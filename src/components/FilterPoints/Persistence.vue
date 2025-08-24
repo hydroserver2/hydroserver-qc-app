@@ -51,7 +51,7 @@
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
+import { EnumFilterOperations } from '@uwrl/qc-utils'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
 

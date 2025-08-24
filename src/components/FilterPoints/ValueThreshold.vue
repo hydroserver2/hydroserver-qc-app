@@ -73,7 +73,7 @@
 import { Ref, ref } from 'vue'
 import { FilterOperation } from '@/store/userInterface'
 import { storeToRefs } from 'pinia'
-import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
+import { EnumFilterOperations } from '@uwrl/qc-utils'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
 

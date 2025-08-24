@@ -257,11 +257,11 @@ export const handleSelected = async (eventData?: any) => {
   const { selectedData } = storeToRefs(useDataVisStore())
   const { qcDatastream } = storeToRefs(useDataVisStore())
 
-  const traceIndex = plotlyRef.value?.data.findIndex(
+  const trace = plotlyRef.value?.data.find(
     (trace: any) => trace.id == qcDatastream.value?.id
   )
 
-  selectedData.value = plotlyRef.value?.data[traceIndex].selectedpoints || null
+  selectedData.value = trace.selectedpoints || null
 
   // TODO: prevent selection on other traces
 }

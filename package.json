@@ -16,6 +16,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@mdi/js": "^7.4.47",
+    "@uwrl/qc-utils": "^0.0.15",
     "dotenv": "^16.5.0",
     "jsdom": "^26.1.0",
     "jszip": "^3.10.1",
@@ -40,6 +41,7 @@
     "@vitest/web-worker": "^3.2.4",
     "@vue/compiler-sfc": "^3.5.17",
     "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.8.1",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "prettier": "^3.6.1",

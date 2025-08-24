@@ -75,7 +75,7 @@ import { ref } from 'vue'
 import { dateTimeFormat, required, requiredNumber } from '@/utils/rules'
 import { VForm } from 'vuetify/components'
 import { storeToRefs } from 'pinia'
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations } from '@uwrl/qc-utils'
 import { usePlotlyStore } from '@/store/plotly'
 
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())

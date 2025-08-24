@@ -1,7 +1,7 @@
 import {
   EnumEditOperations,
   ObservationRecord,
-} from '@/utils/plotting/observationRecord'
+} from "@uwrl/qc-utils"
 
 export type EnumDictionary<T extends string | symbol | number, U> = {
   [K in T]: U
@@ -359,7 +359,7 @@ export class Organization {
   description?: string
   link?: string
 
-  constructor() {}
+  constructor() { }
 }
 
 export class User {
