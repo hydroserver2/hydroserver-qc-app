@@ -79,9 +79,9 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations } from '@uwrl/qc-utils'
 import { computed } from 'vue'
-import { formatDate } from '@/utils/format'
+import { formatDate } from '@uwrl/qc-utils'
 import { usePlotlyStore } from '@/store/plotly'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { useUIStore, DriftCorrectionMethods } from '@/store/userInterface'

@@ -73,7 +73,7 @@
 import { Ref, ref } from 'vue'
 import { FilterOperation } from '@/store/userInterface'
 import { storeToRefs } from 'pinia'
-import { EnumFilterOperations } from '@/utils/plotting/observationRecord'
+import { EnumFilterOperations } from '@uwrl/qc-utils'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
 
@@ -94,7 +94,6 @@ const filterValue = ref(0)
 const appliedFilters: Ref<{ [key: string]: number }> = ref({})
 
 const clearFilters = async () => {
-  console.log('clearFilters')
   appliedFilters.value = {}
   isUpdating.value = true
   setTimeout(async () => {

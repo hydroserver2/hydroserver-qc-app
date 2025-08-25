@@ -55,7 +55,7 @@ import FileDrawer from '@/components/Navigation/FileDrawer.vue'
 import SelectDrawer from '@/components/Navigation/SelectDrawer.vue'
 import { useAuthStore } from '@/store/authentication'
 import { useUIStore, DrawerType } from '@/store/userInterface'
-import { Snackbar } from '@/utils/notifications'
+import { Snackbar } from '@uwrl/qc-utils'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 

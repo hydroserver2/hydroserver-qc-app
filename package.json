@@ -11,7 +11,8 @@
     "build-prod": "vue-tsc && vite build --mode prod",
     "preview": "vite preview",
     "test": "vitest",
-    "coverage": "vitest run --coverage --environment jsdom"
+    "coverage": "vitest run --coverage --environment jsdom",
+    "link-qc-utils": "npm link @uwrl/qc-utils"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
@@ -23,6 +24,7 @@
     "lodash-es": "^4.17.21",
     "maska": "^3.1.1",
     "npm": "^11.4.2",
+    "p-limit": "^7.1.0",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.3.0",
     "plotly.js-dist": "^3.0.1",
@@ -37,8 +39,10 @@
     "@types/node": "^22.15.33",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/web-worker": "^3.2.4",
     "@vue/compiler-sfc": "^3.5.17",
     "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.8.1",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "prettier": "^3.6.1",
