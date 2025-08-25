@@ -75,8 +75,13 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
     const color = COLORS[index + 1] // The first color is reserved for the QC datastream
     const xData = s.data?.dataX
 
-    maxDatetime = Math.max(xData[xData.length - 1], maxDatetime)
-    minDatetime = Math.min(xData[0], minDatetime)
+    if (xData?.length) {
+      const xDataStart = xData[0] as number
+      const xDataEnd = xData[xData.length - 1] as number
+
+      maxDatetime = Math.max(xDataEnd, maxDatetime)
+      minDatetime = Math.min(xDataStart, minDatetime)
+    }
 
     const trace: any = {
       id: s.id,
@@ -467,7 +472,7 @@ export const cropYaxisRange = async (_eventData: any) => {
 
       // Could use Math.max and Math.min and spread operator, but this is more memory efficient
       for (let i = startIdx; i < endIdx; i++) {
-        const val = yData[i]
+        const val = yData[i] as number
         if (yMin > val && val > yAxis.range[0]) {
           yMin = val
         }
