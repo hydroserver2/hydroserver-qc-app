@@ -3,7 +3,7 @@ import { defineStore, storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { usePlotlyStore } from './plotly'
 import { useObservationStore } from './observations'
-import { Snackbar } from '@/utils/notifications'
+import { Snackbar } from '@uwrl/qc-utils'
 import { handleNewPlot } from '@/utils/plotting/plotly'
 
 export const useDataVisStore = defineStore('dataVisualization', () => {
@@ -209,7 +209,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     start: Date,
     end: Date
   ) => {
-    console.log('updateOrFetchGraphSeries')
     try {
       const seriesIndex = graphSeriesArray.value.findIndex(
         (series) => series.id === datastream.id
@@ -246,7 +245,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
 
   /** Refreshes the graphSeriesArray based on the current selection of datastreams */
   const refreshGraphSeriesArray = async () => {
-    console.log('refreshGraphSeriesArray')
     // Remove graphSeries that are no longer selected
     const currentIds = new Set(plottedDatastreams.value.map((ds) => ds.id))
     graphSeriesArray.value = graphSeriesArray.value.filter((s) =>

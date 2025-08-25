@@ -2,7 +2,7 @@ import { Datastream, GraphSeries, HistoryItem } from '@/types'
 import { defineStore, storeToRefs } from 'pinia'
 import { computed, ComputedRef, Ref, ref, watch } from 'vue'
 
-import { api } from '@/services/api'
+import { api } from '@uwrl/qc-utils'
 // import { preProcessData } from '@/utils/observationsUtils'
 import { useDataVisStore } from './dataVisualization'
 // @ts-ignore no type definitions
@@ -81,8 +81,6 @@ export const usePlotlyStore = defineStore('Plotly', () => {
    * @param recomputeXaxisRange Useful for when an operation can add or delete elements in the array and the axis range needs to be updated.
    */
   async function redraw(recomputeXaxisRange?: boolean) {
-    console.log('redraw')
-
     updateOptions()
 
     // Update all traces
@@ -105,7 +103,6 @@ export const usePlotlyStore = defineStore('Plotly', () => {
     start: Date,
     end: Date
   ) => {
-    console.log('fetchGraphSeries')
     const { fetchObservationsInRange } = useObservationStore()
     const observationsPromise = fetchObservationsInRange(datastream, start, end)
     const fetchUnitPromise = api.getUnit(datastream.unitId).catch((error) => {

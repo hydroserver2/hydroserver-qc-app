@@ -99,7 +99,7 @@ import { useDataVisStore } from '@/store/dataVisualization'
 import { Datastream, Owner, Unit } from '@/types'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, ref } from 'vue'
-import { api } from '@/services/api'
+import { api } from '@uwrl/qc-utils'
 import { downloadDatastreamCSV } from '@/utils/CSVDownloadUtils'
 
 const props = defineProps({

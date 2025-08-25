@@ -68,11 +68,11 @@ import { useAuthStore } from '@/store/authentication'
 import { onMounted, ref } from 'vue'
 import { rules } from '@/utils/rules'
 import OAuth from '@/components/account/OAuth.vue'
-import { api } from '@/services/api'
+import { api } from '@uwrl/qc-utils'
 import router from '@/router/router'
 import { useUserStore } from '@/store/user'
 import { useRoute } from 'vue-router'
-import { Snackbar } from '@/utils/notifications'
+import { Snackbar } from '@uwrl/qc-utils'
 
 const email = ref('')
 const password = ref('')

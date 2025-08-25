@@ -36,7 +36,6 @@ export const useObservationStore = defineStore(
       beginTime: Date,
       endTime: Date
     ): Promise<ObservationRecord> => {
-      console.log('fetchObservationsInRange')
       const id = datastream.id
 
       // If nothing is stored yet, create a new record

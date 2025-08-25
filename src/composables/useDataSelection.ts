@@ -1,6 +1,6 @@
 import { useDataVisStore } from '@/store/dataVisualization'
 import { usePlotlyStore } from '@/store/plotly'
-import { formatDate } from '@/utils/format'
+import { formatDate } from '@uwrl/qc-utils'
 import { handleSelected } from '@/utils/plotting/plotly'
 import { storeToRefs } from 'pinia'
 

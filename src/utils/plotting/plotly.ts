@@ -5,7 +5,7 @@ import Plotly from 'plotly.js-dist'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { debounce, isEqual } from 'lodash-es'
-import { findFirstGreaterOrEqual } from '../observationsUtils'
+import { findFirstGreaterOrEqual } from '@uwrl/qc-utils'
 
 // TODO: import these directly from Plotly
 // https://github.com/plotly/plotly.js/blob/v2.14.0/src/components/color/attributes.js#L5-L16
@@ -57,7 +57,6 @@ const selectorOptions = {
 }
 
 export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
-  console.log('createPlotlyOption')
   const { qcDatastream } = storeToRefs(useDataVisStore())
 
   const traces: any = []
@@ -218,7 +217,6 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
 }
 
 export const handleClick = async (eventData: any) => {
-  console.log('handleClick')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
 
   const point = eventData.points[0]
@@ -252,7 +250,6 @@ export const handleClick = async (eventData: any) => {
 }
 
 export const handleSelected = async (eventData?: any) => {
-  console.log('handleSelected')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
   const { selectedData } = storeToRefs(useDataVisStore())
   const { qcDatastream } = storeToRefs(useDataVisStore())
@@ -320,7 +317,6 @@ export const handleRelayout = async (eventData: any) => {
   isUpdating.value = true
 
   setTimeout(async () => {
-    console.log('handleRelayout')
     try {
       const layoutUpdates = { ...plotlyOptions.value.layout }
 
@@ -376,7 +372,6 @@ export const handleRelayout = async (eventData: any) => {
 }
 
 export const handleDoubleClick = async () => {
-  console.log('handleDoubleClick')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
 
   // Removes selected areas
@@ -400,8 +395,6 @@ export const handleDoubleClick = async () => {
 
 export const cropXaxisRange = async () => {
   const { plotlyOptions, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
-
-  console.log('cropXaxisRange')
 
   isUpdating.value = true
 
@@ -439,7 +432,6 @@ export const cropYaxisRange = async (_eventData: any) => {
     storeToRefs(usePlotlyStore())
 
   isUpdating.value = true
-  console.log('cropYaxisRange')
 
   try {
     const layoutUpdates: any = {}

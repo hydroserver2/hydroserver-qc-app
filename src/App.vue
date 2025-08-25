@@ -14,7 +14,7 @@ import Notifications from '@/components/base/Notifications.vue'
 import FullScreenLoader from '@/components/base/FullScreenLoader.vue'
 
 import { setupRouteGuards } from '@/router/router'
-import { api } from '@/services/api'
+import { api } from '@uwrl/qc-utils'
 import { ref } from 'vue'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { storeToRefs } from 'pinia'

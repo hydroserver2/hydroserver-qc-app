@@ -11,12 +11,12 @@
     "build-prod": "vue-tsc && vite build --mode prod",
     "preview": "vite preview",
     "test": "vitest",
-    "coverage": "vitest run --coverage --environment jsdom"
+    "coverage": "vitest run --coverage --environment jsdom",
+    "link-qc-utils": "npm link @uwrl/qc-utils"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@mdi/js": "^7.4.47",
-    "@uwrl/qc-utils": "^0.0.15",
     "dotenv": "^16.5.0",
     "jsdom": "^26.1.0",
     "jszip": "^3.10.1",
@@ -24,6 +24,7 @@
     "lodash-es": "^4.17.21",
     "maska": "^3.1.1",
     "npm": "^11.4.2",
+    "p-limit": "^7.1.0",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.3.0",
     "plotly.js-dist": "^3.0.1",

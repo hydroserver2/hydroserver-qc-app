@@ -1,11 +1,5 @@
-import { DataArray, DataPoint, Datastream, TimeSpacingUnit } from '@/types'
-import { api, getObservationsEndpoint } from '@/services/api'
-
-export function subtractHours(timestamp: string, hours: number): string {
-  const date = new Date(timestamp)
-  date.setHours(date.getHours() - hours)
-  return date.toISOString()
-}
+import { Datastream } from '@/types'
+import { api, getObservationsEndpoint } from '@uwrl/qc-utils'
 
 export const fetchObservationsSync = async (
   datastream: Datastream,
@@ -23,14 +17,13 @@ export const fetchObservationsSync = async (
   const maxPages = Math.ceil(valueCount / pageSize)
   while (page <= maxPages) {
     endpoints.push(
-      getObservationsEndpoint({
+      getObservationsEndpoint(
         id,
         pageSize,
-        startTime: startTime?.toISOString() ?? phenomenonBeginTime,
-        endTime: endTime?.toISOString() ?? phenomenonEndTime,
+        startTime?.toISOString() ?? phenomenonBeginTime,
+        endTime?.toISOString() ?? phenomenonEndTime,
         page,
-        addResultQualifiers: true,
-      })
+      )
     )
     page++
   }
@@ -40,7 +33,7 @@ export const fetchObservationsSync = async (
 
     for (const endpoint of endpoints) {
       const result = await api.fetchObservations(endpoint)
-      if (!result.phenomenon_time.length) {
+      if (!result.phenomenonTime.length) {
         break
       }
       results.push(result)
@@ -66,7 +59,7 @@ export const fetchObservationsSync = async (
     results.forEach((r) => {
       datetimes = [
         ...datetimes,
-        ...r.phenomenon_time.map((dateString: string) =>
+        ...r.phenomenonTime.map((dateString: string) =>
           new Date(dateString).getTime()
         ),
       ]
@@ -156,33 +149,3 @@ export const fetchObservationsSync = async (
 //   }
 //   return data
 // }
-
-/** Returns the index of the first value that is greater or equal to the target value */
-export const findFirstGreaterOrEqual = (
-  array: number[] | Float64Array<SharedArrayBuffer>,
-  target: number
-) => {
-  let low = 0,
-    high = array.length
-  while (low < high) {
-    const mid = (low + high) >> 1
-    if (array[mid] < target) low = mid + 1
-    else high = mid
-  }
-  return low
-}
-
-/** Returns the index of the last value that is lesser or equal to the target value */
-export const findLastLessOrEqual = (
-  array: number[] | Float64Array<SharedArrayBuffer>,
-  target: number
-) => {
-  let low = 0,
-    high = array.length
-  while (low < high) {
-    const mid = (low + high) >> 1
-    if (array[mid] > target) high = mid
-    else low = mid + 1
-  }
-  return low - 1
-}

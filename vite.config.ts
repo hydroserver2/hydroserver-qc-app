@@ -5,6 +5,7 @@ import { resolve } from 'path'
 import vue from '@vitejs/plugin-vue'
 import vuetify from 'vite-plugin-vuetify'
 
+// @ts-ignore
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   const base = env.VITE_APP_ROUTE || '/'
@@ -29,11 +30,14 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
+      include: [
+        // '@uwrl/qc-utils',
+      ],
       exclude: ['vuetify'],
     },
     server: {
       host: '127.0.0.1',
-      port: 1203,
+      port: 5173,
       strictPort: true,
       // These headers are required to enable workers
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements
@@ -70,9 +74,6 @@ export default defineConfig(({ mode }) => {
           '**/src/store/**',
           '**/src/types/**',
           '**/src/config/**',
-          '**/src/services/api.ts',
-          '**/src/services/apiMethods.ts',
-          '**/src/services/handle401.ts',
           '**/src/utils/mdi-icons.ts',
           '**/src/utils/materialColors.ts',
           '**/src/utils/CSVDownloadUtils.ts',

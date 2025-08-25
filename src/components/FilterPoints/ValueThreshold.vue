@@ -94,7 +94,6 @@ const filterValue = ref(0)
 const appliedFilters: Ref<{ [key: string]: number }> = ref({})
 
 const clearFilters = async () => {
-  console.log('clearFilters')
   appliedFilters.value = {}
   isUpdating.value = true
   setTimeout(async () => {

@@ -1,9 +1,5 @@
+import { api } from '@uwrl/qc-utils'
 import { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
-import { useAuthStore } from '../store/authentication'
-import { Snackbar } from '../utils/notifications'
-import { useUserStore } from '../store/user'
-import { storeToRefs } from 'pinia'
-import { api } from '../services/api'
 
 export type RouteGuard = (
   to: RouteLocationNormalized,

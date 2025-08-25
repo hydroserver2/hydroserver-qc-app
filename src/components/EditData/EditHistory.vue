@@ -127,7 +127,7 @@
 import { storeToRefs } from 'pinia'
 import { usePlotlyStore } from '@/store/plotly'
 import { useDataSelection } from '@/composables/useDataSelection'
-import { formatDuration } from '@/utils/format'
+import { formatDuration } from '@uwrl/qc-utils'
 import { useDataVisStore } from '@/store/dataVisualization'
 
 const { editHistory, selectedSeries, isUpdating } =
