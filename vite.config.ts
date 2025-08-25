@@ -30,14 +30,11 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      include: [
-        // '@uwrl/qc-utils',
-      ],
       exclude: ['vuetify'],
     },
     server: {
       host: '127.0.0.1',
-      port: 5173,
+      port: 1203,
       strictPort: true,
       // These headers are required to enable workers
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements
@@ -68,7 +65,6 @@ export default defineConfig(({ mode }) => {
       coverage: {
         exclude: [
           '**/src/**/*.vue',
-          '**/src/composables/useUserTags.ts',
           '**/src/plugins/**',
           '**/src/router/**',
           '**/src/store/**',
@@ -77,13 +73,11 @@ export default defineConfig(({ mode }) => {
           '**/src/utils/mdi-icons.ts',
           '**/src/utils/materialColors.ts',
           '**/src/utils/CSVDownloadUtils.ts',
-          '**/src/utils/plotting/graphSeriesUtils.ts',
+          '**/src/utils/observationsUtils.ts',
           '**/src/utils/test/**',
-          '**/src/utils/googleMaps/**',
           '**/src/utils/rules.ts',
           '**/src/App.vue',
           '**/src/main.ts',
-          '**/src/vocabularies.ts',
           '**/*.d.ts',
           '**/postcss.config.js',
         ],

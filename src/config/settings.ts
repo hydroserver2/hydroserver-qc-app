@@ -4,7 +4,7 @@ let scriptTag: HTMLScriptElement | null;
 
 if (import.meta.env.DEV) {
   const xhr = new XMLHttpRequest();
-  xhr.open('GET', 'http://127.0.0.1:5173', false);
+  xhr.open('GET', 'http://127.0.0.1:1203', false);
   xhr.send(null);
   const indexHtml = xhr.status >= 200 && xhr.status < 300 ? xhr.responseText : null
   const parser = new DOMParser();
