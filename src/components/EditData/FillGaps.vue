@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { TimeUnit, useUIStore } from '@/store/userInterface'
+import { useUIStore } from '@/store/userInterface'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 const { fillUnits, gapUnits } = useUIStore()
@@ -84,7 +84,7 @@ const {
   selectedFillUnit,
   fillAmount,
 } = storeToRefs(useUIStore())
-import { EnumEditOperations } from '@uwrl/qc-utils'
+import { EnumEditOperations, TimeUnit } from '@uwrl/qc-utils'
 import { useDataSelection } from '@/composables/useDataSelection'
 
 import { usePlotlyStore } from '@/store/plotly'
@@ -98,7 +98,7 @@ const onFillGaps = async () => {
   isUpdating.value = true
 
   setTimeout(async () => {
-    await selectedSeries.value.data.dispatch(
+    await selectedSeries.value?.data.dispatch(
       EnumEditOperations.FILL_GAPS,
       // @ts-ignore
       [+gapAmount.value, TimeUnit[selectedGapUnit.value]],

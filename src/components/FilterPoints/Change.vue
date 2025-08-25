@@ -1,14 +1,16 @@
 <template>
   <v-card rounded>
-    <v-card-title class="text-body-1">Filter by rate of change</v-card-title>
+    <v-card-title class="text-body-1">Filter by change</v-card-title>
     <v-divider></v-divider>
 
     <v-card-text>
-      <v-label class="mb-4">Select points where the rate of change is</v-label>
+      <v-label class="mb-4"
+        >Select points where the change threshold is</v-label
+      >
       <v-select
         label="Comparison operator"
         :items="logicalComparators"
-        v-model="selectedRateOfChangeComparator"
+        v-model="selectedChangeComparator"
         return-object
       ></v-select>
       <v-text-field
@@ -16,8 +18,7 @@
         type="number"
         clearable
         step="1"
-        append-inner-icon="mdi-percent-outline"
-        v-model="rateOfChangeValue"
+        v-model="changeValue"
       />
     </v-card-text>
 
@@ -25,10 +26,8 @@
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Cancel</v-btn-cancel>
       <v-btn
-        @click="
-          onFilter(selectedRateOfChangeComparator?.title, rateOfChangeValue)
-        "
-        :disabled="isUpdating || rateOfChangeValue == null"
+        @click="onFilter(selectedChangeComparator?.title, changeValue)"
+        :disabled="isUpdating || changeValue == null"
         >Filter</v-btn
       >
     </v-card-actions>
@@ -44,8 +43,7 @@ import { storeToRefs } from 'pinia'
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { dispatchSelection, clearSelected } = useDataSelection()
 const emit = defineEmits(['filter', 'close'])
-const { selectedRateOfChangeComparator, rateOfChangeValue } =
-  storeToRefs(useUIStore())
+const { selectedChangeComparator, changeValue } = storeToRefs(useUIStore())
 
 const { logicalComparators } = useUIStore()
 
@@ -54,9 +52,9 @@ const onFilter = async (key: string, value: number) => {
   setTimeout(async () => {
     await clearSelected()
     const selection = await selectedSeries.value?.data.dispatchFilter(
-      EnumFilterOperations.RATE_OF_CHANGE,
+      EnumFilterOperations.CHANGE,
       key,
-      +value / 100
+      +value
     )
 
     await dispatchSelection(selection)

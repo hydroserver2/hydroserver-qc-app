@@ -14,16 +14,16 @@
       <v-timeline side="end" hide-opposite density="compact">
         <v-timeline-item dot-color="green" fill-dot size="small">
           <div class="d-flex align-center">
-            <span v-if="selectedSeries.data.isLoading" class="text-body-1 mr-2"
+            <span v-if="selectedSeries?.data.isLoading" class="text-body-1 mr-2"
               >Loading Data...</span
             >
             <span v-else class="text-body-1 mr-2">Data loaded</span>
             <v-spacer></v-spacer>
-            <div v-if="selectedSeries.data.loadingTime">
-              {{ formatDuration(selectedSeries.data.loadingTime) }}
+            <div v-if="selectedSeries?.data.loadingTime">
+              {{ formatDuration(selectedSeries?.data.loadingTime) }}
             </div>
             <v-progress-circular
-              v-if="selectedSeries.data.isLoading"
+              v-if="selectedSeries?.data.isLoading"
               size="20"
               color="primary"
               indeterminate
@@ -140,9 +140,11 @@ const onReload = async () => {
 
   setTimeout(async () => {
     const { refreshGraphSeriesArray } = useDataVisStore()
-    selectedSeries.value.data.history = []
+    if (selectedSeries.value) {
+      selectedSeries.value.data.history = []
+    }
     await refreshGraphSeriesArray()
-    await selectedSeries.value.data.reload()
+    await selectedSeries.value?.data.reload()
     await clearSelected()
     isUpdating.value = false
     await redraw()
@@ -153,7 +155,7 @@ const onReloadHistory = async (index: number) => {
   if (index < editHistory.value.length) {
     isUpdating.value = true
     setTimeout(async () => {
-      await selectedSeries.value.data.reloadHistory(index)
+      await selectedSeries.value?.data.reloadHistory(index)
       isUpdating.value = false
       await redraw()
     })
@@ -164,7 +166,7 @@ const onRemoveHistoryItem = async (index: number) => {
   isUpdating.value = true
 
   setTimeout(async () => {
-    await selectedSeries.value.data.removeHistoryItem(index)
+    await selectedSeries.value?.data.removeHistoryItem(index)
     isUpdating.value = false
     await redraw()
   })
