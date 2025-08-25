@@ -68,6 +68,10 @@
     <Gaps @close="openGaps = false" />
   </v-dialog>
 
+  <v-dialog v-model="openChange" max-width="500">
+    <Change @close="openChange = false" />
+  </v-dialog>
+
   <v-dialog v-model="openRateOfChange" max-width="500">
     <RateOfChange @close="openRateOfChange = false" />
   </v-dialog>
@@ -111,6 +115,7 @@
 import { ref } from 'vue'
 
 import ValueThreshold from '@/components/FilterPoints/ValueThreshold.vue'
+import Change from '@/components/FilterPoints/Change.vue'
 import RateOfChange from '@/components/FilterPoints/RateOfChange.vue'
 import Persistence from '@/components/FilterPoints/Persistence.vue'
 import Gaps from '@/components/FilterPoints/Gaps.vue'
@@ -128,6 +133,7 @@ import { useDataVisStore } from '@/store/dataVisualization'
 // FILTER POINTS
 const openValueThreshold = ref(false)
 const openRateOfChange = ref(false)
+const openChange = ref(false)
 const openGaps = ref(false)
 const openPersistence = ref(false)
 
@@ -149,6 +155,15 @@ const filterPoints = [
     value: 1,
     clickAction: () => {
       openValueThreshold.value = true
+    },
+  },
+  {
+    title: 'Change Threshold',
+    props: {
+      prependIcon: 'mdi-swap-vertical',
+    },
+    clickAction: () => {
+      openChange.value = true
     },
   },
   {

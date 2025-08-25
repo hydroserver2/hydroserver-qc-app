@@ -57,9 +57,9 @@
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { useDataSelection } from '@/composables/useDataSelection'
-import { EnumFilterOperations } from '@uwrl/qc-utils'
+import { EnumFilterOperations, TimeUnit } from '@uwrl/qc-utils'
 import { usePlotlyStore } from '@/store/plotly'
-import { TimeUnit, useUIStore } from '@/store/userInterface'
+import { useUIStore } from '@/store/userInterface'
 
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
 const { gapAmount, gapUnits, selectedGapUnit } = storeToRefs(useUIStore())
@@ -73,7 +73,7 @@ const onFindGaps = async () => {
 
   setTimeout(async () => {
     const gaps: [number, number][] =
-      await selectedSeries.value.data.dispatchFilter(
+      await selectedSeries.value?.data.dispatchFilter(
         EnumFilterOperations.FIND_GAPS,
         +gapAmount.value,
         // @ts-ignore

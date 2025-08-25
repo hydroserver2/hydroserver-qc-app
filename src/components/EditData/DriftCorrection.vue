@@ -102,8 +102,9 @@ const selectedGroups = computed((): number[][] => {
   let groups: number[][] = [[]]
 
   selectedData.value.reduce((acc: number[][], curr) => {
-    const target: number[] = acc[acc.length - 1]
+    const target: number[] = acc[acc.length - 1] as number[]
 
+    // @ts-ignore
     if (!target.length || curr == target[target.length - 1] + 1) {
       target.push(curr)
     } else {
@@ -133,7 +134,7 @@ const onDriftCorrection = async () => {
       ])
     })
 
-    await selectedSeries.value.data.dispatch(actions)
+    await selectedSeries.value?.data.dispatch(actions)
     await clearSelected()
     isUpdating.value = false
     await redraw()
@@ -143,7 +144,7 @@ const onDriftCorrection = async () => {
 
 const getDotTooltip = (group: number[]) => {
   const xData = plotlyRef.value?.data[0].x
-  const start = formatDate(new Date(xData[group[0]]))
+  const start = formatDate(new Date(xData[group[0] as number]))
   return `${group.length} Points starting at ${start}`
 }
 </script>

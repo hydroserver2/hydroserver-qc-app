@@ -60,7 +60,7 @@
       <v-spacer />
       <v-btn-cancel @click="$emit('close')">Close</v-btn-cancel>
       <v-btn
-        @click="onAddFilter(selectedFilter.title, filterValue)"
+        @click="onAddFilter(selectedFilter?.title, filterValue)"
         :disabled="isUpdating || (!filterValue && filterValue !== 0)"
         prepend-icon="mdi-plus"
         >Add Filter</v-btn
@@ -71,9 +71,8 @@
 
 <script setup lang="ts">
 import { Ref, ref } from 'vue'
-import { FilterOperation } from '@/store/userInterface'
 import { storeToRefs } from 'pinia'
-import { EnumFilterOperations } from '@uwrl/qc-utils'
+import { EnumFilterOperations, FilterOperation } from '@uwrl/qc-utils'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
 
@@ -97,7 +96,7 @@ const clearFilters = async () => {
   appliedFilters.value = {}
   isUpdating.value = true
   setTimeout(async () => {
-    const selection = await selectedSeries.value.data.dispatchFilter(
+    const selection = await selectedSeries.value?.data.dispatchFilter(
       EnumFilterOperations.VALUE_THRESHOLD,
       appliedFilters.value
     )
@@ -117,7 +116,7 @@ const onAddFilter = async (key: string, value: number) => {
 
 const _addFilter = async (key: string, value: number) => {
   appliedFilters.value[key] = +value
-  const selection = await selectedSeries.value.data.dispatchFilter(
+  const selection = await selectedSeries.value?.data.dispatchFilter(
     EnumFilterOperations.VALUE_THRESHOLD,
     appliedFilters.value
   )
@@ -129,7 +128,7 @@ const removeFilter = async (key: string) => {
   isUpdating.value = true
   delete appliedFilters.value[key]
   setTimeout(async () => {
-    const selection = await selectedSeries.value.data.dispatchFilter(
+    const selection = await selectedSeries.value?.data.dispatchFilter(
       EnumFilterOperations.VALUE_THRESHOLD,
       appliedFilters.value
     )
