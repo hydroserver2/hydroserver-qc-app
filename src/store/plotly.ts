@@ -1,6 +1,6 @@
 import { Datastream, GraphSeries, HistoryItem } from '@/types'
 import { defineStore, storeToRefs } from 'pinia'
-import { computed, ComputedRef, Ref, ref, watch } from 'vue'
+import { computed, Ref, ref } from 'vue'
 
 import { api } from '@uwrl/qc-utils'
 // import { preProcessData } from '@/utils/observationsUtils'

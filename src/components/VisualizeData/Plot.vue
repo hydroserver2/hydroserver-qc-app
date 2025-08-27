@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex flex-column">
-    <div class="d-flex">
+    <div class="d-flex px-4">
       <div class="d-flex align-center gap-2">
         <v-switch
           v-model="areTooltipsEnabled"
@@ -46,7 +46,30 @@
       </v-chip>
     </div>
     <v-divider></v-divider>
-    <div ref="plot" class="flex-grow-1"></div>
+
+    <div class="d-flex flex-row flex-grow-1">
+      <v-tabs
+        v-model="tab"
+        @update:model-value="onTabChange"
+        direction="vertical"
+        style="width: 50px; border-right: 1px solid #ddd"
+        class="bg-grey-lighten-4"
+      >
+        <v-tab value="plot"><v-icon icon="mdi-chart-line"></v-icon></v-tab>
+        <v-tab value="table"><v-icon icon="mdi-table"></v-icon></v-tab>
+      </v-tabs>
+
+      <v-tabs-window v-model="tab" class="flex-grow-1">
+        <v-tabs-window-item value="plot" class="fill-height">
+          <div ref="plot" class="fill-height"></div>
+        </v-tabs-window-item>
+
+        <v-tabs-window-item value="table" class="fill-height">
+          <!-- Important to NOT keep the DataTable component in memory if the tab is not shown -->
+          <DataTable v-if="tab === 'table'" class="fill-height"
+        /></v-tabs-window-item>
+      </v-tabs-window>
+    </div>
   </div>
 </template>
 
@@ -58,15 +81,30 @@ import { usePlotlyStore } from '@/store/plotly'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { handleNewPlot, handleRelayout } from '@/utils/plotting/plotly'
+import DataTable from '@/components/VisualizeData/DataTable.vue'
+import { useDataSelection } from '@/composables/useDataSelection'
+const { dispatchSelection } = useDataSelection()
 
 const plot = ref<HTMLDivElement>()
 const { isUpdating, areTooltipsEnabled, visiblePoints, tooltipsMaxDataPoints } =
   storeToRefs(usePlotlyStore())
 const { selectedData } = storeToRefs(useDataVisStore())
+const tab = ref('plot')
 
 onMounted(async () => {
-  handleNewPlot(plot.value)
+  // This timeout halts the execution of handleNewPlot until the view switching animation is complete, and the container has expanded.
+  setTimeout(() => {
+    handleNewPlot(plot.value)
+  }, 200)
 })
+
+const onTabChange = () => {
+  if (tab.value === 'plot') {
+    setTimeout(() => {
+      dispatchSelection(selectedData.value || [])
+    })
+  }
+}
 </script>
 
 <style scoped>
@@ -90,5 +128,9 @@ onMounted(async () => {
     stroke: #f2f2f2 !important;
     stroke-width: 1px !important;
   }
+}
+
+:deep(.v-window__container) {
+  height: 100%;
 }
 </style>
