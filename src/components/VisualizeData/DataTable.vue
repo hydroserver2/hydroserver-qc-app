@@ -71,7 +71,11 @@ const onSelectChange = (isSelected: boolean, index: number) => {
 
 const getRowProps = (data: any) => {
   return {
-    class: { 'bg-grey-lighten-4': selectedData.value?.includes(data.index) },
+    class: {
+      'bg-grey-lighten-4': selectedData.value?.includes(
+        data.internalItem.index
+      ),
+    },
   }
 }
 

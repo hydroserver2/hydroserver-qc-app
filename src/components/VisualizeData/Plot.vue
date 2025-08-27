@@ -33,17 +33,21 @@
 
       <v-spacer></v-spacer>
 
-      <v-chip
-        v-if="selectedData?.length"
-        color="grey-darken-2"
-        variant="outlined"
-        class="align-self-center"
-        hide-details
-      >
-        <b class="mr-2 text-red">{{ selectedData?.length }}</b>
-        Data Point{{ selectedData?.length === 1 ? '' : 's' }}
-        selected
-      </v-chip>
+      <div v-if="selectedData?.length" class="d-flex align-center gap-1">
+        <v-chip
+          color="grey-darken-2"
+          variant="outlined"
+          class="align-self-center"
+          hide-details
+        >
+          <b class="mr-2 text-red">{{ selectedData?.length }}</b>
+          Data Point{{ selectedData?.length === 1 ? '' : 's' }}
+          selected
+        </v-chip>
+        <v-btn @click="clearSelected" size="small" variant="outlined"
+          >Clear Selected</v-btn
+        >
+      </div>
     </div>
     <v-divider></v-divider>
 
@@ -84,7 +88,7 @@ import { handleNewPlot, handleRelayout } from '@/utils/plotting/plotly'
 import DataTable from '@/components/VisualizeData/DataTable.vue'
 import { useDataSelection } from '@/composables/useDataSelection'
 const { dispatchSelection } = useDataSelection()
-
+const { clearSelected } = useDataSelection()
 const plot = ref<HTMLDivElement>()
 const { isUpdating, areTooltipsEnabled, visiblePoints, tooltipsMaxDataPoints } =
   storeToRefs(usePlotlyStore())
