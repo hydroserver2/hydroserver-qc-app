@@ -263,7 +263,7 @@ export const handleSelected = async (eventData?: any) => {
     (trace: any) => trace.id == qcDatastream.value?.id
   )
 
-  selectedData.value = trace.selectedpoints || null
+  selectedData.value = trace?.selectedpoints || null
 
   // TODO: prevent selection on other traces
 }
