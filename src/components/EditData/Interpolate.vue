@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations } from '@uwrl/qc-utils'
 import { usePlotlyStore } from '@/store/plotly'
 import { InterpolationMethods, useUIStore } from '@/store/userInterface'
 import { useDataSelection } from '@/composables/useDataSelection'
@@ -59,7 +59,7 @@ const onInterpolate = async () => {
   isUpdating.value = true
 
   setTimeout(async () => {
-    await selectedSeries.value.data.dispatch(
+    await selectedSeries.value?.data.dispatch(
       EnumEditOperations.INTERPOLATE,
       selectedData.value
     )

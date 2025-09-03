@@ -3,7 +3,7 @@ import { defineStore, storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { usePlotlyStore } from './plotly'
 import { useObservationStore } from './observations'
-import { Snackbar } from '@/utils/notifications'
+import { Snackbar } from '@uwrl/qc-utils'
 import { handleNewPlot } from '@/utils/plotting/plotly'
 
 export const useDataVisStore = defineStore('dataVisualization', () => {
@@ -182,7 +182,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
       plottedDatastreams.value.length
     ) {
       const { redraw } = usePlotlyStore()
-      await refreshGraphSeriesArray(plottedDatastreams.value)
+      await refreshGraphSeriesArray()
       redraw()
     }
   }
@@ -209,7 +209,6 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     start: Date,
     end: Date
   ) => {
-    console.log('updateOrFetchGraphSeries')
     try {
       const seriesIndex = graphSeriesArray.value.findIndex(
         (series) => series.id === datastream.id
@@ -245,15 +244,14 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
   }
 
   /** Refreshes the graphSeriesArray based on the current selection of datastreams */
-  const refreshGraphSeriesArray = async (datastreams: Datastream[]) => {
-    console.log('refreshGraphSeriesArray')
+  const refreshGraphSeriesArray = async () => {
     // Remove graphSeries that are no longer selected
-    const currentIds = new Set(datastreams.map((ds) => ds.id))
+    const currentIds = new Set(plottedDatastreams.value.map((ds) => ds.id))
     graphSeriesArray.value = graphSeriesArray.value.filter((s) =>
       currentIds.has(s.id)
     )
 
-    const updateOrFetchPromises = datastreams.map(async (ds) => {
+    const updateOrFetchPromises = plottedDatastreams.value.map(async (ds) => {
       loadingStates.value.set(ds.id, true)
       return updateOrFetchGraphSeries(ds, beginDate.value, endDate.value)
     })
@@ -310,7 +308,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
         }
 
         if (newDatastreamIds !== prevDatastreamIds) {
-          await refreshGraphSeriesArray(newDs)
+          await refreshGraphSeriesArray()
           // Call above will make data available and show plot before updateOptions
           updateOptions()
 
@@ -386,6 +384,7 @@ export const useDataVisStore = defineStore('dataVisualization', () => {
     matchesSelectedThing,
     setDateRange,
     onDateBtnClick,
+    refreshGraphSeriesArray,
     resetState,
     toggleDatastream,
     // updateOrFetchGraphSeries,

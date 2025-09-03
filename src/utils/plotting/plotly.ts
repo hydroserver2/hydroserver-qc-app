@@ -5,6 +5,7 @@ import Plotly from 'plotly.js-dist'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 import { debounce, isEqual } from 'lodash-es'
+import { findFirstGreaterOrEqual } from '@uwrl/qc-utils'
 
 // TODO: import these directly from Plotly
 // https://github.com/plotly/plotly.js/blob/v2.14.0/src/components/color/attributes.js#L5-L16
@@ -56,7 +57,6 @@ const selectorOptions = {
 }
 
 export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
-  console.log('createPlotlyOption')
   const { qcDatastream } = storeToRefs(useDataVisStore())
 
   const traces: any = []
@@ -75,8 +75,13 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
     const color = COLORS[index + 1] // The first color is reserved for the QC datastream
     const xData = s.data?.dataX
 
-    maxDatetime = Math.max(xData[xData.length - 1], maxDatetime)
-    minDatetime = Math.min(xData[0], minDatetime)
+    if (xData?.length) {
+      const xDataStart = xData[0] as number
+      const xDataEnd = xData[xData.length - 1] as number
+
+      maxDatetime = Math.max(xDataEnd, maxDatetime)
+      minDatetime = Math.min(xDataStart, minDatetime)
+    }
 
     const trace: any = {
       id: s.id,
@@ -121,7 +126,7 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
         linecolor: COLORS[0],
       }
       const { editHistory } = storeToRefs(usePlotlyStore())
-      editHistory.value = [...s.data.history]
+      editHistory.value = s.data.history
     } else {
       traces.push(trace)
 
@@ -217,7 +222,6 @@ export const createPlotlyOption = (seriesArray: GraphSeries[]) => {
 }
 
 export const handleClick = async (eventData: any) => {
-  console.log('handleClick')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
 
   const point = eventData.points[0]
@@ -251,16 +255,15 @@ export const handleClick = async (eventData: any) => {
 }
 
 export const handleSelected = async (eventData?: any) => {
-  console.log('handleSelected')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
   const { selectedData } = storeToRefs(useDataVisStore())
   const { qcDatastream } = storeToRefs(useDataVisStore())
 
-  const traceIndex = plotlyRef.value?.data.findIndex(
+  const trace = plotlyRef.value?.data.find(
     (trace: any) => trace.id == qcDatastream.value?.id
   )
 
-  selectedData.value = plotlyRef.value?.data[traceIndex].selectedpoints || null
+  selectedData.value = trace?.selectedpoints || null
 
   // TODO: prevent selection on other traces
 }
@@ -287,7 +290,7 @@ export const handleNewPlot = async (element?: any) => {
     'plotly_selected',
     debounce(handleSelected, debounceDelay)
   )
-  plotlyRef.value?.on('plotly_deselec', debounce(handleDeselect, debounceDelay))
+  plotlyRef.value?.on('plotly_deselec', debounce(handleSelected, debounceDelay))
   plotlyRef.value?.on('plotly_click', handleClick)
   plotlyRef.value?.on('plotly_doubleclick', handleDoubleClick)
 }
@@ -319,7 +322,6 @@ export const handleRelayout = async (eventData: any) => {
   isUpdating.value = true
 
   setTimeout(async () => {
-    console.log('handleRelayout')
     try {
       const layoutUpdates = { ...plotlyOptions.value.layout }
 
@@ -374,13 +376,7 @@ export const handleRelayout = async (eventData: any) => {
   })
 }
 
-export const handleDeselect = async (_eventData: any) => {
-  console.log('handleDeselect')
-  handleSelected()
-}
-
 export const handleDoubleClick = async () => {
-  console.log('handleDoubleClick')
   const { plotlyRef } = storeToRefs(usePlotlyStore())
 
   // Removes selected areas
@@ -400,38 +396,10 @@ export const handleDoubleClick = async () => {
   selectedData.value = []
 }
 
-export const findFirstGreaterOrEqual = (
-  array: number[] | Float64Array<SharedArrayBuffer>,
-  target: number
-) => {
-  let low = 0,
-    high = array.length
-  while (low < high) {
-    const mid = (low + high) >> 1
-    if (array[mid] < target) low = mid + 1
-    else high = mid
-  }
-  return low
-}
 
-export const findLastLessOrEqual = (
-  array: number[] | Float64Array<SharedArrayBuffer>,
-  target: number
-) => {
-  let low = 0,
-    high = array.length
-  while (low < high) {
-    const mid = (low + high) >> 1
-    if (array[mid] > target) high = mid
-    else low = mid + 1
-  }
-  return low - 1
-}
 
 export const cropXaxisRange = async () => {
   const { plotlyOptions, plotlyRef, isUpdating } = storeToRefs(usePlotlyStore())
-
-  console.log('cropXaxisRange')
 
   isUpdating.value = true
 
@@ -469,7 +437,6 @@ export const cropYaxisRange = async (_eventData: any) => {
     storeToRefs(usePlotlyStore())
 
   isUpdating.value = true
-  console.log('cropYaxisRange')
 
   try {
     const layoutUpdates: any = {}
@@ -505,7 +472,7 @@ export const cropYaxisRange = async (_eventData: any) => {
 
       // Could use Math.max and Math.min and spread operator, but this is more memory efficient
       for (let i = startIdx; i < endIdx; i++) {
-        const val = yData[i]
+        const val = yData[i] as number
         if (yMin > val && val > yAxis.range[0]) {
           yMin = val
         }

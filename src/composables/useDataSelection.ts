@@ -1,6 +1,6 @@
 import { useDataVisStore } from '@/store/dataVisualization'
 import { usePlotlyStore } from '@/store/plotly'
-import { formatDate } from '@/utils/format'
+import { formatDate } from '@uwrl/qc-utils'
 import { handleSelected } from '@/utils/plotting/plotly'
 import { storeToRefs } from 'pinia'
 
@@ -49,24 +49,24 @@ export function useDataSelection() {
   }
 
   const startDateString = computed(() => {
-    let datetime = selectedSeries.value.data.beginTime
-    if (selectedData.value) {
-      const startIndex = selectedData.value[0]
+    let datetime = selectedSeries.value?.data.beginTime
+    if (selectedData.value?.length) {
+      const startIndex = selectedData.value[0] as number
       datetime =
         new Date(plotlyRef.value?.data[0].x[startIndex]) ||
-        selectedSeries.value.data.beginTime
+        selectedSeries.value?.data.beginTime
     }
 
     return datetime ? formatDate(datetime) : ''
   })
 
   const endDateString = computed(() => {
-    let datetime = selectedSeries.value.data.endTime
-    if (selectedData.value) {
-      const endIndex = selectedData.value[selectedData.value.length - 1]
+    let datetime = selectedSeries.value?.data.endTime
+    if (selectedData.value?.length) {
+      const endIndex = selectedData.value[selectedData.value.length - 1] as number
       datetime =
         new Date(plotlyRef.value?.data[0].x[endIndex]) ||
-        selectedSeries.value.data.endTime
+        selectedSeries.value?.data.endTime
     }
 
     return datetime ? formatDate(datetime) : ''

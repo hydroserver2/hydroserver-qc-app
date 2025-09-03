@@ -75,7 +75,7 @@ import { ref } from 'vue'
 import { dateTimeFormat, required, requiredNumber } from '@/utils/rules'
 import { VForm } from 'vuetify/components'
 import { storeToRefs } from 'pinia'
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations } from '@uwrl/qc-utils'
 import { usePlotlyStore } from '@/store/plotly'
 
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
@@ -114,12 +114,12 @@ const onAddDataPoints = async () => {
         /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/
       )
       if (matches) {
-        const year = parseInt(matches[1])
-        const month = parseInt(matches[2]) - 1
-        const day = parseInt(matches[3])
-        const hour = parseInt(matches[4])
-        const minute = parseInt(matches[5])
-        const second = parseInt(matches[6])
+        const year = parseInt(matches[1] as string)
+        const month = parseInt(matches[2] as string) - 1
+        const day = parseInt(matches[3] as string)
+        const hour = parseInt(matches[4] as string)
+        const minute = parseInt(matches[5] as string)
+        const second = parseInt(matches[6] as string)
         const date = new Date(year, month, day, hour, minute, second).getTime()
         return [date, point[1]]
         // return [date.toISOString().substring(0, 19) + 'Z', point[1], point[2]]
@@ -132,7 +132,7 @@ const onAddDataPoints = async () => {
   isUpdating.value = true
 
   setTimeout(async () => {
-    await selectedSeries.value.data.dispatch(
+    await selectedSeries.value?.data.dispatch(
       EnumEditOperations.ADD_POINTS,
       transformedDataPoints
     )

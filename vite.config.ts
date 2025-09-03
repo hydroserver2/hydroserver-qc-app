@@ -5,6 +5,7 @@ import { resolve } from 'path'
 import vue from '@vitejs/plugin-vue'
 import vuetify from 'vite-plugin-vuetify'
 
+// @ts-ignore
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   const base = env.VITE_APP_ROUTE || '/'
@@ -34,13 +35,16 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '127.0.0.1',
       port: 1203,
+      strictPort: true,
+      // These headers are required to enable workers
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements
       headers: {
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',
       },
     },
     resolve: {
-      extensions: ['.js', '.json', '.vue', '.less', '.scss', '.ts'],
+      extensions: ['.js', '.json', '.vue', '.less', '.scss', '.ts', '.py'],
       alias: {
         '@': resolve(__dirname, 'src'),
       },
@@ -56,29 +60,24 @@ export default defineConfig(({ mode }) => {
           inline: ['vuetify'],
         },
       },
+      setupFiles: ['@vitest/web-worker'],
       environment: 'jsdom',
       coverage: {
         exclude: [
           '**/src/**/*.vue',
-          '**/src/composables/useUserTags.ts',
           '**/src/plugins/**',
           '**/src/router/**',
           '**/src/store/**',
           '**/src/types/**',
           '**/src/config/**',
-          '**/src/services/api.ts',
-          '**/src/services/apiMethods.ts',
-          '**/src/services/handle401.ts',
           '**/src/utils/mdi-icons.ts',
           '**/src/utils/materialColors.ts',
           '**/src/utils/CSVDownloadUtils.ts',
-          '**/src/utils/plotting/graphSeriesUtils.ts',
+          '**/src/utils/observationsUtils.ts',
           '**/src/utils/test/**',
-          '**/src/utils/googleMaps/**',
           '**/src/utils/rules.ts',
           '**/src/App.vue',
           '**/src/main.ts',
-          '**/src/vocabularies.ts',
           '**/*.d.ts',
           '**/postcss.config.js',
         ],

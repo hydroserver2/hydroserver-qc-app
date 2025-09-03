@@ -3,13 +3,16 @@
     v-if="currentView === DrawerType.Select"
     class="fill-height pa-4 d-flex flex-column"
   >
-    <div class="d-flex gap-1">
+    <div class="d-flex gap-1" style="min-height: 40vh">
       <v-expansion-panels v-model="panels" @update:model-value="onExpand">
-        <v-expansion-panel title="Data visualization">
+        <v-expansion-panel
+          title="Data visualization"
+          class="d-flex flex-column"
+        >
           <v-divider></v-divider>
-          <v-expansion-panel-text>
+          <div class="flex-grow-1">
             <DataVisualization />
-          </v-expansion-panel-text>
+          </div>
         </v-expansion-panel>
       </v-expansion-panels>
 
@@ -43,9 +46,9 @@
     </v-col>
     <v-col class="pa-0">
       <v-card class="fill-height" min-height="40rem">
-        <v-card-text class="fill-height">
+        <div class="fill-height">
           <DataVisualization />
-        </v-card-text>
+        </div>
       </v-card>
     </v-col>
     <v-col cols="12" md="3" class="pa-0 d-flex flex-column gap-1">

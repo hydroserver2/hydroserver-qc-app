@@ -5,7 +5,6 @@ import store from '@/store'
 import App from './App.vue'
 import router from './router/router'
 import vuetify from '@/plugins/vuetify'
-import { _Window } from './types'
 
 const app = createApp(App)
 

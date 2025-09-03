@@ -111,7 +111,6 @@ import { storeToRefs } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import DatastreamInformationCard from './DatastreamInformationCard.vue'
 import { downloadPlottedDatastreamsCSVs } from '@/utils/CSVDownloadUtils'
-import { usePlotlyStore } from '@/store/plotly'
 import { useObservationStore } from '@/store/observations'
 const { observationsRaw } = storeToRefs(useObservationStore())
 const { loadingStates } = storeToRefs(useDataVisStore())
@@ -122,7 +121,6 @@ const {
   plottedDatastreams,
   observedProperties,
   processingLevels,
-  qcDatastream,
 } = storeToRefs(useDataVisStore())
 const { toggleDatastream } = useDataVisStore()
 
@@ -191,8 +189,6 @@ function clearSelected() {
 
 const isChecked = (item: Datastream) =>
   plottedDatastreams.value.some((sds) => sds.id === item.id)
-
-const isSelected = (ds: Datastream) => ds.id === qcDatastream.value?.id
 
 const search = ref()
 const headers = reactive([

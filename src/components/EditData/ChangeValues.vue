@@ -72,10 +72,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations, Operator } from '@uwrl/qc-utils'
 import { useDataSelection } from '@/composables/useDataSelection'
 import { usePlotlyStore } from '@/store/plotly'
-import { Operator, useUIStore } from '@/store/userInterface'
+import { useUIStore } from '@/store/userInterface'
 
 const { redraw } = usePlotlyStore()
 const { selectedSeries, isUpdating } = storeToRefs(usePlotlyStore())
@@ -95,7 +95,7 @@ const onChangeValues = async () => {
 
   isUpdating.value = true
   setTimeout(async () => {
-    await selectedSeries.value.data.dispatch(
+    await selectedSeries.value?.data.dispatch(
       EnumEditOperations.CHANGE_VALUES,
       selectedData.value,
       operator,

@@ -1,4 +1,4 @@
-import { api } from '@/services/api'
+import { api } from '@uwrl/qc-utils'
 import { Datastream } from '@/types'
 import JSZip from 'jszip'
 

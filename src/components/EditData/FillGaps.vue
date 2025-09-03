@@ -6,6 +6,7 @@
 
     <v-card-text>
       <v-timeline
+        v-if="selectedData?.length"
         direction="horizontal"
         align="center"
         side="start"
@@ -61,6 +62,12 @@
       <v-checkbox
         label="Interpolate Fill Values"
         v-model="interpolateValues"
+        :hint="
+          interpolateValues
+            ? ''
+            : 'NoData values (e.g., -9999) will be inserted to fill the gaps.'
+        "
+        persistent-hint
       ></v-checkbox>
     </v-card-text>
 
@@ -73,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { TimeUnit, useUIStore } from '@/store/userInterface'
+import { useUIStore } from '@/store/userInterface'
 import { storeToRefs } from 'pinia'
 import { useDataVisStore } from '@/store/dataVisualization'
 const { fillUnits, gapUnits } = useUIStore()
@@ -84,7 +91,7 @@ const {
   selectedFillUnit,
   fillAmount,
 } = storeToRefs(useUIStore())
-import { EnumEditOperations } from '@/utils/plotting/observationRecord'
+import { EnumEditOperations, TimeUnit } from '@uwrl/qc-utils'
 import { useDataSelection } from '@/composables/useDataSelection'
 
 import { usePlotlyStore } from '@/store/plotly'
@@ -98,7 +105,7 @@ const onFillGaps = async () => {
   isUpdating.value = true
 
   setTimeout(async () => {
-    await selectedSeries.value.data.dispatch(
+    await selectedSeries.value?.data.dispatch(
       EnumEditOperations.FILL_GAPS,
       // @ts-ignore
       [+gapAmount.value, TimeUnit[selectedGapUnit.value]],

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Datastream } from '@/types'
 import { fetchObservationsSync } from '@/utils/observationsUtils'
-import { ObservationRecord } from '@/utils/plotting/observationRecord'
+import { ObservationRecord } from "@uwrl/qc-utils"
 
 export const useObservationStore = defineStore(
   'observations',
@@ -18,6 +18,15 @@ export const useObservationStore = defineStore(
       >
     >({})
 
+    // const fetchQcData = async () => {
+    //   const { qcDatastream } = storeToRefs(useDataVisStore())
+    //   if (qcDatastream.value) {
+    //     const { beginDate, endDate } = storeToRefs(useDataVisStore())
+    //     const { fetchObservationsInRange } = useObservationStore()
+    //     await fetchObservationsInRange(qcDatastream.value, beginDate.value, endDate.value)
+    //   }
+    // }
+
     /**
      * Fetches requested observations that aren't currently in the pinia store,
      * updates the store, then returns the corresponding `ObservationRecord`.
@@ -27,12 +36,11 @@ export const useObservationStore = defineStore(
       beginTime: Date,
       endTime: Date
     ): Promise<ObservationRecord> => {
-      console.log('fetchObservationsInRange')
       const id = datastream.id
 
       // If nothing is stored yet, create a new record
       if (!observations.value[id]) {
-        observations.value[id] = new ObservationRecord(datastream)
+        observations.value[id] = new ObservationRecord(observationsRaw.value[datastream.id])
       }
 
       let beginDataPromise: Promise<{
@@ -62,7 +70,7 @@ export const useObservationStore = defineStore(
 
         const rawEndDatetime = new Date(
           observationsRaw.value[id].datetimes[
-            observationsRaw.value[id].datetimes.length - 1
+          observationsRaw.value[id].datetimes.length - 1
           ]
         )
 
@@ -125,11 +133,13 @@ export const useObservationStore = defineStore(
         observationsRaw.value[id].dataValues = newArrayY
       }
 
+      const obsRecord = observations.value[id]
       if (beginData.dataValues.length || endData.dataValues.length) {
-        observations.value[id].loadData(observationsRaw.value[id])
+        obsRecord.loadData(observationsRaw.value[id])
+        obsRecord.rawData = observationsRaw.value[id]
       }
 
-      return observations.value[id]
+      return obsRecord
     }
 
     return {

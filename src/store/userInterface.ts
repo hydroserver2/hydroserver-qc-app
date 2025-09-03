@@ -1,90 +1,6 @@
-import { EnumDictionary } from '@/types'
+import { LogicalOperation, Operator, TimeUnit } from '@uwrl/qc-utils'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-
-export enum TimeUnit {
-  SECOND = 's',
-  MINUTE = 'm',
-  HOUR = 'h',
-  DAY = 'D',
-  WEEK = 'W',
-  MONTH = 'M',
-  YEAR = 'Y',
-}
-
-export enum Operator {
-  ADD = 'ADD',
-  SUB = 'SUB',
-  MULT = 'MULT',
-  DIV = 'DIV',
-  ASSIGN = 'ASSIGN',
-}
-
-export enum FilterOperation {
-  LT = 'Less than',
-  LTE = 'Less than or equal to',
-  GT = 'Greater than',
-  GTE = 'Greater than or equal to',
-  E = 'Equal',
-  START = 'Start datetime',
-  END = 'End datetime',
-}
-
-export const FilterOperationFn: EnumDictionary<
-  FilterOperation,
-  (value: number, toCompare: number) => boolean
-> = {
-  [FilterOperation.LT]: (value: number, toCompare: number) => {
-    return value < toCompare
-  },
-  [FilterOperation.LTE]: (value: number, toCompare: number) => {
-    return value <= toCompare
-  },
-  [FilterOperation.GT]: (value: number, toCompare: number) => {
-    return value > toCompare
-  },
-  [FilterOperation.GTE]: (value: number, toCompare: number) => {
-    return value >= toCompare
-  },
-  [FilterOperation.E]: (value: number, toCompare: number) => {
-    return value == toCompare
-  },
-  [FilterOperation.START]: (value: number, toCompare: number) => {
-    return value == toCompare
-  },
-  [FilterOperation.END]: (value: number, toCompare: number) => {
-    return value == toCompare
-  },
-}
-
-export enum RateOfChangeOperation {
-  LT = 'Less than',
-  LTE = 'Less than or equal to',
-  GT = 'Greater than',
-  GTE = 'Greater than or equal to',
-  E = 'Equal',
-}
-
-export const RateOfChangeComparator: EnumDictionary<
-  RateOfChangeOperation,
-  (value: number, toCompare: number) => boolean
-> = {
-  [RateOfChangeOperation.LT]: (value: number, toCompare: number) => {
-    return value < toCompare
-  },
-  [RateOfChangeOperation.LTE]: (value: number, toCompare: number) => {
-    return value <= toCompare
-  },
-  [RateOfChangeOperation.GT]: (value: number, toCompare: number) => {
-    return value > toCompare
-  },
-  [RateOfChangeOperation.GTE]: (value: number, toCompare: number) => {
-    return value >= toCompare
-  },
-  [RateOfChangeOperation.E]: (value: number, toCompare: number) => {
-    return value == toCompare
-  },
-}
 
 export enum InterpolationMethods {
   LINEAR = 'LINEAR',
@@ -152,6 +68,21 @@ export const useUIStore = defineStore('userInterface', () => {
   const selectedShiftUnit = ref(shiftUnits[1])
   const shiftAmount = ref(15)
 
+  // RATE OF CHANGE
+  const logicalComparators = [
+    ...Object.keys(LogicalOperation).map((key) => ({
+      value: key,
+      // @ts-ignore
+      title: LogicalOperation[key],
+    })),
+  ]
+  const selectedRateOfChangeComparator = ref(logicalComparators[2])
+  const rateOfChangeValue = ref(0)
+
+  // CHANGE
+  const selectedChangeComparator = ref(logicalComparators[2])
+  const changeValue = ref(0)
+
   return {
     selectedDrawer,
     isDrawerOpen,
@@ -175,5 +106,10 @@ export const useUIStore = defineStore('userInterface', () => {
     selectedFillUnit,
     fillAmount,
     fillUnits,
+    logicalComparators,
+    selectedRateOfChangeComparator,
+    rateOfChangeValue,
+    selectedChangeComparator,
+    changeValue,
   }
 })
