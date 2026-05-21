@@ -1,44 +1,63 @@
 <template>
-  <v-row align="center" class="no-wrap">
-    <v-col cols="auto">
-      <v-btn-toggle
-        v-model="selectedDateBtnId"
-        variant="outlined"
-        density="compact"
-        color="primary"
-        divided
-        rounded
-      >
-        <v-tooltip bottom :openDelay="1000" v-for="option in dateOptions">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              :label="option.label"
-              @click="onDateBtnClick(option.id)"
-              v-bind:="props"
-            >
-              <v-icon>{{ option.icon }}</v-icon>
-            </v-btn>
-          </template>
-          {{ option.label }}
-        </v-tooltip>
-      </v-btn-toggle>
-    </v-col>
+  <div class="time-filters d-flex flex-column gap-2">
+    <!-- Section header -->
+    <div>
+      <div class="text-caption text-medium-emphasis font-weight-medium text-uppercase mb-1">
+        Loaded time window
+      </div>
+      <div class="text-caption text-medium-emphasis" style="line-height: 1.4">
+        Changing the range re-fetches observations from the server.
+      </div>
+    </div>
 
-    <v-col cols="12" class="datepicker">
-      <DatePickerField
-        :model-value="beginDate"
-        placeholder="Begin Date"
-        @update:model-value="setDateRange({ begin: $event })"
-      />
-    </v-col>
-    <v-col cols="12" class="datepicker">
-      <DatePickerField
-        :model-value="endDate"
-        placeholder="End Date"
-        @update:model-value="setDateRange({ end: $event })"
-      />
-    </v-col>
-  </v-row>
+    <!-- Date inputs — the source of truth -->
+    <div class="d-flex flex-column gap-1">
+      <div>
+        <div class="text-caption text-medium-emphasis mb-1">From</div>
+        <DatePickerField
+          :model-value="beginDate"
+          placeholder="Start date"
+          @update:model-value="setDateRange({ begin: $event })"
+        />
+      </div>
+      <div>
+        <div class="text-caption text-medium-emphasis mb-1">To</div>
+        <DatePickerField
+          :model-value="endDate"
+          placeholder="End date"
+          @update:model-value="setDateRange({ end: $event })"
+        />
+      </div>
+    </div>
+
+    <!-- Preset quick-selects -->
+    <div>
+      <div class="time-filters__presets">
+        <v-chip
+          v-for="option in dateOptions"
+          :key="option.id"
+          :color="selectedDateBtnId === option.id ? 'primary' : undefined"
+          :variant="selectedDateBtnId === option.id ? 'tonal' : 'outlined'"
+          size="small"
+          :title="(option as any).title ?? option.label"
+          class="time-filters__preset-chip"
+          @click="onDateBtnClick(option.id)"
+        >
+          {{ option.label }}
+        </v-chip>
+        <v-chip
+          v-if="selectedDateBtnId === -1"
+          color="secondary"
+          variant="tonal"
+          size="small"
+          class="time-filters__preset-chip"
+          title="Date range set manually"
+        >
+          Custom
+        </v-chip>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -52,7 +71,20 @@ const { dateOptions, beginDate, endDate, selectedDateBtnId } =
 </script>
 
 <style scoped>
-.datepicker {
-  min-width: 175px;
+.time-filters {
+  width: 100%;
+}
+
+.time-filters__presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.time-filters__preset-chip {
+  min-width: 0;
+  justify-content: center;
+  font-size: 0.75rem !important;
+  height: 26px !important;
 }
 </style>

@@ -1,4 +1,4 @@
-import { RouteRecordRaw } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router';
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -7,8 +7,18 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/Home.vue'),
     meta: {
       hasAuthGuard: true,
+      hasWorkspaceGuard: true,
       title: 'Home',
       hasRibbon: true,
+    },
+  },
+  {
+    path: '/workspaces',
+    name: 'Workspaces',
+    component: () => import('@/pages/Workspaces.vue'),
+    meta: {
+      hasAuthGuard: true,
+      title: 'Workspaces',
     },
   },
   {
