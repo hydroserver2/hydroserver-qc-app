@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
-    "@hydroserver/client": "^0.4.4",
+    "@hydroserver/client": "^0.5.0",
     "@mdi/js": "^7.4.47",
     "@uwrl/qc-utils": "^0.1.1",
     "dotenv": "^17.4.2",
