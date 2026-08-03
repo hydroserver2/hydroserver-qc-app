@@ -57,7 +57,7 @@
     "autoprefixer": "^10.5.4",
     "cross-env": "^10.1.0",
     "eslint": "^10.8.0",
-    "eslint-plugin-vue": "^10.9.2",
+    "eslint-plugin-vue": "^10.10.0",
     "postcss": "^8.5.23",
     "prettier": "^3.9.6",
     "rxjs": "^7.8.2",
